@@ -3,3 +3,6 @@ pnpm --filter api dev
 
 # Terminal 2
 pnpm --filter web dev
+
+
+-- prochainement, continuer avec grok, suivre les etapes qu'il recommande.
