@@ -8,9 +8,9 @@ import {
   Delete,
   ParseUUIDPipe,
 } from '@nestjs/common';
-import { EstablishmentsService } from './establishments.service';
-import { CreateEstablishmentDto } from './dto/create-establishment.dto';
-import { UpdateEstablishmentDto } from './dto/update-establishment.dto';
+import { EstablishmentsService } from './establishments.service.js';
+import { CreateEstablishmentDto } from './dto/create-establishment.dto.js';
+import { UpdateEstablishmentDto } from './dto/update-establishment.dto.js';
 
 @Controller('establishments')
 export class EstablishmentsController {

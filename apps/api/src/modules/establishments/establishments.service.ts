@@ -3,9 +3,9 @@ import {
   NotFoundException,
   ConflictException,
 } from '@nestjs/common';
-import { PrismaService } from '../../prisma/prisma.service';
-import { CreateEstablishmentDto } from './dto/create-establishment.dto';
-import { UpdateEstablishmentDto } from './dto/update-establishment.dto';
+import { PrismaService } from '../../prisma/prisma.service.js';
+import { CreateEstablishmentDto } from './dto/create-establishment.dto.js';
+import { UpdateEstablishmentDto } from './dto/update-establishment.dto.js';
 
 @Injectable()
 export class EstablishmentsService {
