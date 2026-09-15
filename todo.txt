@@ -1,0 +1,5 @@
+# Terminal 1
+pnpm --filter api dev
+
+# Terminal 2
+pnpm --filter web dev
