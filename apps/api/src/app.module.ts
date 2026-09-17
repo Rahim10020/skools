@@ -6,6 +6,7 @@ import { PrismaModule } from './prisma/prisma.module.js';
 import { EstablishmentsModule } from './modules/establishments/establishments.module.js';
 import { AuthModule } from './modules/auth/auth.module.js';
 import { AcademicYearsModule } from './modules/academic/academic-years/academic-years.module.js';
+import { CyclesModule } from './modules/academic/cycles/cycles.module.js';
 
 @Module({
   imports: [
@@ -15,6 +16,7 @@ import { AcademicYearsModule } from './modules/academic/academic-years/academic-
     PrismaModule,
     EstablishmentsModule,
     AcademicYearsModule,
+    CyclesModule,
     AuthModule,
   ],
   controllers: [AppController],
