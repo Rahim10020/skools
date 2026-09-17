@@ -80,13 +80,56 @@ export class AuthService {
     };
   }
 
-  async refresh(userId: string, email: string) {
-    return this.generateTokens(userId, email);
+  async refresh(refreshToken: string) {
+    try {
+      const payload = await this.jwtService.verifyAsync(refreshToken, {
+        secret: process.env.JWT_SECRET || 'skools-super-secret-change-me',
+      });
+
+      // Vérifie que le token existe toujours en base et n’est pas révoqué
+      const storedToken = await this.prisma.refreshToken.findFirst({
+        where: {
+          userId: payload.sub,
+          token: refreshToken,
+          revokedAt: null,
+          expiresAt: { gt: new Date() },
+        },
+      });
+
+      if (!storedToken) {
+        throw new UnauthorizedException('Refresh token invalide');
+      }
+
+      // On révoque l’ancien refresh token (rotation)
+      await this.prisma.refreshToken.update({
+        where: { id: storedToken.id },
+        data: { revokedAt: new Date() },
+      });
+
+      return this.generateTokens(payload.sub, payload.email);
+    } catch {
+      throw new UnauthorizedException('Refresh token invalide ou expiré');
+    }
   }
 
-  async logout(userId: string) {
-    // Pour l’instant on ne gère pas encore la révocation des refresh tokens en base.
-    // On pourra l’ajouter plus tard.
+  async logout(userId: string, refreshToken?: string) {
+    if (refreshToken) {
+      await this.prisma.refreshToken.updateMany({
+        where: {
+          userId,
+          token: refreshToken,
+          revokedAt: null,
+        },
+        data: { revokedAt: new Date() },
+      });
+    } else {
+      // Révoque tous les tokens de l’utilisateur
+      await this.prisma.refreshToken.updateMany({
+        where: { userId, revokedAt: null },
+        data: { revokedAt: new Date() },
+      });
+    }
+
     return { message: 'Déconnexion réussie' };
   }
 
@@ -101,6 +144,18 @@ export class AuthService {
         phone: true,
         avatarUrl: true,
         createdAt: true,
+        establishments: {
+          select: {
+            role: true,
+            establishment: {
+              select: {
+                id: true,
+                name: true,
+                slug: true,
+              },
+            },
+          },
+        },
       },
     });
 
@@ -120,6 +175,18 @@ export class AuthService {
 
     const refreshToken = await this.jwtService.signAsync(payload, {
       expiresIn: '7d',
+    });
+
+    // Stocke le refresh token en base
+    const expiresAt = new Date();
+    expiresAt.setDate(expiresAt.getDate() + 7);
+
+    await this.prisma.refreshToken.create({
+      data: {
+        userId,
+        token: refreshToken,
+        expiresAt,
+      },
     });
 
     return {
