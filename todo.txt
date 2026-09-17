@@ -7,4 +7,4 @@ pnpm --filter web dev
 -- post mdp
 
 
--- prochainement, continuer avec grok, suivre les etapes qu'il recommande.
+-- prochainement, continuer avec le module Level
