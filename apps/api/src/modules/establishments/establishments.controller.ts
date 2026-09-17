@@ -7,11 +7,12 @@ import {
   Param,
   Delete,
   ParseUUIDPipe,
+  Request,
+  UseGuards,
 } from '@nestjs/common';
 import { EstablishmentsService } from './establishments.service.js';
 import { CreateEstablishmentDto } from './dto/create-establishment.dto.js';
 import { UpdateEstablishmentDto } from './dto/update-establishment.dto.js';
-import { UseGuards } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard.js';
 
 @Controller('establishments')
@@ -20,8 +21,8 @@ export class EstablishmentsController {
   constructor(private readonly establishmentsService: EstablishmentsService) {}
 
   @Post()
-  create(@Body() createEstablishmentDto: CreateEstablishmentDto) {
-    return this.establishmentsService.create(createEstablishmentDto);
+  create(@Body() dto: CreateEstablishmentDto, @Request() req: any) {
+    return this.establishmentsService.createWithOwner(dto, req.user.id);
   }
 
   @Get()
