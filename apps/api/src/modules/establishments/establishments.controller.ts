@@ -11,8 +11,11 @@ import {
 import { EstablishmentsService } from './establishments.service.js';
 import { CreateEstablishmentDto } from './dto/create-establishment.dto.js';
 import { UpdateEstablishmentDto } from './dto/update-establishment.dto.js';
+import { UseGuards } from '@nestjs/common';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard.js';
 
 @Controller('establishments')
+@UseGuards(JwtAuthGuard)
 export class EstablishmentsController {
   constructor(private readonly establishmentsService: EstablishmentsService) {}
 
