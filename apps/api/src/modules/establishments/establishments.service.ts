@@ -30,6 +30,46 @@ export class EstablishmentsService {
     });
   }
 
+  async createWithOwner(dto: CreateEstablishmentDto, userId: string) {
+    const existing = await this.prisma.establishment.findUnique({
+      where: { slug: dto.slug },
+    });
+
+    if (existing) {
+      throw new ConflictException('Ce slug est déjà utilisé');
+    }
+
+    // Création de l’établissement + liaison du créateur en tant que DIRECTOR
+    return this.prisma.establishment.create({
+      data: {
+        name: dto.name,
+        slug: dto.slug,
+        type: dto.type,
+        logoUrl: dto.logoUrl,
+        users: {
+          create: {
+            userId,
+            role: 'DIRECTOR',
+          },
+        },
+      },
+      include: {
+        users: {
+          include: {
+            user: {
+              select: {
+                id: true,
+                email: true,
+                firstName: true,
+                lastName: true,
+              },
+            },
+          },
+        },
+      },
+    });
+  }
+
   async findAll() {
     return this.prisma.establishment.findMany({
       where: { isActive: true },
