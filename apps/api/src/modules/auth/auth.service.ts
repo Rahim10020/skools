@@ -67,7 +67,21 @@ export class AuthService {
       throw new UnauthorizedException('Identifiants invalides');
     }
 
-    const tokens = await this.generateTokens(user.id, user.email);
+    // Récupère le premier établissement actif de l'utilisateur
+    const userEstablishment = await this.prisma.userEstablishment.findFirst({
+      where: {
+        userId: user.id,
+        isActive: true,
+      },
+      orderBy: { createdAt: 'asc' },
+    });
+
+    const tokens = await this.generateTokens(
+      user.id,
+      user.email,
+      userEstablishment?.establishmentId,
+      userEstablishment?.role,
+    );
 
     return {
       user: {
@@ -76,6 +90,8 @@ export class AuthService {
         firstName: user.firstName,
         lastName: user.lastName,
       },
+      establishmentId: userEstablishment?.establishmentId ?? null,
+      role: userEstablishment?.role ?? null,
       ...tokens,
     };
   }
