@@ -166,8 +166,18 @@ export class AuthService {
     return user;
   }
 
-  private async generateTokens(userId: string, email: string) {
-    const payload = { sub: userId, email };
+  private async generateTokens(
+    userId: string,
+    email: string,
+    establishmentId?: string,
+    role?: string,
+  ) {
+    const payload: any = { sub: userId, email };
+
+    if (establishmentId) {
+      payload.establishmentId = establishmentId;
+      payload.role = role;
+    }
 
     const accessToken = await this.jwtService.signAsync(payload, {
       expiresIn: '15m',
@@ -177,7 +187,6 @@ export class AuthService {
       expiresIn: '7d',
     });
 
-    // Stocke le refresh token en base
     const expiresAt = new Date();
     expiresAt.setDate(expiresAt.getDate() + 7);
 
