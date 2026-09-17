@@ -6,6 +6,7 @@ import {
 import { PrismaService } from '../../prisma/prisma.service.js';
 import { CreateEstablishmentDto } from './dto/create-establishment.dto.js';
 import { UpdateEstablishmentDto } from './dto/update-establishment.dto.js';
+import { Role } from '@prisma/client';
 
 @Injectable()
 export class EstablishmentsService {
@@ -105,6 +106,26 @@ export class EstablishmentsService {
     return this.prisma.establishment.update({
       where: { id },
       data: { isActive: false },
+    });
+  }
+
+  async assignUser(establishmentId: string, userId: string, role: Role) {
+    // Vérifie que l’établissement existe
+    await this.findOne(establishmentId);
+
+    return this.prisma.userEstablishment.upsert({
+      where: {
+        userId_establishmentId: {
+          userId,
+          establishmentId,
+        },
+      },
+      update: { role, isActive: true },
+      create: {
+        userId,
+        establishmentId,
+        role,
+      },
     });
   }
 }
