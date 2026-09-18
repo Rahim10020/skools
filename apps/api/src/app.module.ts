@@ -7,6 +7,7 @@ import { EstablishmentsModule } from './modules/establishments/establishments.mo
 import { AuthModule } from './modules/auth/auth.module.js';
 import { AcademicYearsModule } from './modules/academic/academic-years/academic-years.module.js';
 import { CyclesModule } from './modules/academic/cycles/cycles.module.js';
+import { LevelsModule } from './modules/academic/levels/levels.module.js';
 
 @Module({
   imports: [
@@ -17,6 +18,7 @@ import { CyclesModule } from './modules/academic/cycles/cycles.module.js';
     EstablishmentsModule,
     AcademicYearsModule,
     CyclesModule,
+    LevelsModule,
     AuthModule,
   ],
   controllers: [AppController],
