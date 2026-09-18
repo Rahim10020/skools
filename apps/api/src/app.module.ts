@@ -8,6 +8,7 @@ import { AuthModule } from './modules/auth/auth.module.js';
 import { AcademicYearsModule } from './modules/academic/academic-years/academic-years.module.js';
 import { CyclesModule } from './modules/academic/cycles/cycles.module.js';
 import { LevelsModule } from './modules/academic/levels/levels.module.js';
+import { SeriesModule } from './modules/academic/series/series.module.js';
 
 @Module({
   imports: [
@@ -19,6 +20,7 @@ import { LevelsModule } from './modules/academic/levels/levels.module.js';
     AcademicYearsModule,
     CyclesModule,
     LevelsModule,
+    SeriesModule,
     AuthModule,
   ],
   controllers: [AppController],
