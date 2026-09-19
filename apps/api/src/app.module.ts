@@ -10,6 +10,7 @@ import { CyclesModule } from './modules/academic/cycles/cycles.module.js';
 import { LevelsModule } from './modules/academic/levels/levels.module.js';
 import { SeriesModule } from './modules/academic/series/series.module.js';
 import { ClassroomsModule } from './modules/academic/classrooms/classrooms.module.js';
+import { SubjectsModule } from './modules/academic/subjects/subjects.module.js';
 
 @Module({
   imports: [
@@ -23,6 +24,7 @@ import { ClassroomsModule } from './modules/academic/classrooms/classrooms.modul
     LevelsModule,
     SeriesModule,
     ClassroomsModule,
+    SubjectsModule,
     AuthModule,
   ],
   controllers: [AppController],
