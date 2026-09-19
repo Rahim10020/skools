@@ -9,6 +9,7 @@ import { AcademicYearsModule } from './modules/academic/academic-years/academic-
 import { CyclesModule } from './modules/academic/cycles/cycles.module.js';
 import { LevelsModule } from './modules/academic/levels/levels.module.js';
 import { SeriesModule } from './modules/academic/series/series.module.js';
+import { ClassroomsModule } from './modules/academic/classrooms/classrooms.module.js';
 
 @Module({
   imports: [
@@ -21,6 +22,7 @@ import { SeriesModule } from './modules/academic/series/series.module.js';
     CyclesModule,
     LevelsModule,
     SeriesModule,
+    ClassroomsModule,
     AuthModule,
   ],
   controllers: [AppController],
