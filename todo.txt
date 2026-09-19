@@ -7,4 +7,4 @@ pnpm --filter web dev
 -- post mdp
 
 
--- prochainement, continuer avec le module Classroom
+-- prochainement, continuer avec la partie C : frontend
