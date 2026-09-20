@@ -1,7 +1,7 @@
 import axios from "axios";
 
 const api = axios.create({
-  baseURL: "http://localhost:3000", // URL de ton API NestJS
+  baseURL: "http://localhost:3000/api/v1", // URL de ton API NestJS
   headers: {
     "Content-Type": "application/json",
   },
@@ -29,7 +29,7 @@ api.interceptors.response.use(
       if (refreshToken) {
         try {
           const { data } = await axios.post(
-            "http://localhost:3000/auth/refresh",
+            "http://localhost:3000/api/v1/auth/refresh",
             {
               refreshToken,
             },
