@@ -22,8 +22,6 @@ export default function CreateEstablishmentPage() {
   const navigate = useNavigate();
   const setAuth = useAuthStore((state) => state.setAuth);
   const user = useAuthStore((state) => state.user);
-  const accessToken = useAuthStore((state) => state.accessToken);
-  const refreshToken = useAuthStore((state) => state.refreshToken);
 
   const {
     register,
@@ -37,10 +35,12 @@ export default function CreateEstablishmentPage() {
   const onSubmit = async (data: FormData) => {
     try {
       const response = await api.post("/establishments", data);
-      const establishment = response.data;
+      const { accessToken, refreshToken, ...establishment } = response.data;
 
-      // On met à jour le store avec le nouvel establishmentId + rôle
-      if (user && accessToken && refreshToken) {
+      localStorage.setItem("accessToken", accessToken);
+      localStorage.setItem("refreshToken", refreshToken);
+
+      if (user) {
         setAuth({
           user,
           accessToken,
