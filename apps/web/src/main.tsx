@@ -9,6 +9,7 @@ import RegisterPage from "./features/auth/RegisterPage";
 import DashboardPage from "./features/dashboard/DashboardPage";
 import AppLayout from "./components/layout/AppLayout";
 import ProtectedRoute from "./components/layout/ProtectedRoute";
+import CreateEstablishmentPage from "./features/establishments/CreateEstablishmentPage";
 
 const queryClient = new QueryClient();
 
@@ -26,6 +27,10 @@ createRoot(document.getElementById("root")!).render(
             element={
               <ProtectedRoute>
                 <AppLayout />
+                <Route
+                  path="/create-establishment"
+                  element={<CreateEstablishmentPage />}
+                />
               </ProtectedRoute>
             }
           >
