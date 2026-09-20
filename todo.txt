@@ -7,4 +7,4 @@ pnpm --filter web dev
 -- post mdp
 
 
--- prochainement, continuer avec la partie C : frontend
+-- prochainement, continuer avec grok
