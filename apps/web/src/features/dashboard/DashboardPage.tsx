@@ -1,7 +1,16 @@
+import { useNavigate } from "react-router-dom";
 import { useAuthStore } from "../../stores/auth-store";
+import { useEffect } from "react";
 
 export default function DashboardPage() {
   const { user, role, establishmentId } = useAuthStore();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (!establishmentId) {
+      navigate("/create-establishment");
+    }
+  }, [establishmentId, navigate]);
 
   return (
     <div>
