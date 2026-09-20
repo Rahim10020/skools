@@ -1,0 +1,68 @@
+import { Link, Outlet, useNavigate } from "react-router-dom";
+import { useAuthStore } from "../../stores/auth-store";
+
+export default function AppLayout() {
+  const { user, logout } = useAuthStore();
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    logout();
+    localStorage.removeItem("accessToken");
+    localStorage.removeItem("refreshToken");
+    navigate("/login");
+  };
+
+  return (
+    <div className="min-h-screen bg-gray-50">
+      {/* Header */}
+      <header className="bg-white border-b border-gray-200">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center h-16">
+            <div className="flex items-center gap-8">
+              <Link to="/dashboard" className="text-xl font-bold text-blue-600">
+                Skools
+              </Link>
+              <nav className="hidden md:flex gap-6">
+                <Link
+                  to="/dashboard"
+                  className="text-sm font-medium text-gray-700 hover:text-blue-600"
+                >
+                  Tableau de bord
+                </Link>
+                <Link
+                  to="/academic-years"
+                  className="text-sm font-medium text-gray-700 hover:text-blue-600"
+                >
+                  Années scolaires
+                </Link>
+                <Link
+                  to="/classrooms"
+                  className="text-sm font-medium text-gray-700 hover:text-blue-600"
+                >
+                  Classes
+                </Link>
+              </nav>
+            </div>
+
+            <div className="flex items-center gap-4">
+              <span className="text-sm text-gray-600">
+                {user?.firstName} {user?.lastName}
+              </span>
+              <button
+                onClick={handleLogout}
+                className="text-sm font-medium text-red-600 hover:text-red-700"
+              >
+                Déconnexion
+              </button>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      {/* Contenu */}
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <Outlet />
+      </main>
+    </div>
+  );
+}
