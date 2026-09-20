@@ -10,6 +10,7 @@ import DashboardPage from "./features/dashboard/DashboardPage";
 import AppLayout from "./components/layout/AppLayout";
 import ProtectedRoute from "./components/layout/ProtectedRoute";
 import CreateEstablishmentPage from "./features/establishments/CreateEstablishmentPage";
+import AcademicYearsPage from "./features/academic/AcademicYearsPage";
 
 const queryClient = new QueryClient();
 
@@ -26,7 +27,11 @@ createRoot(document.getElementById("root")!).render(
           <Route element={<ProtectedRoute />}>
             <Route element={<AppLayout />}>
               <Route path="/dashboard" element={<DashboardPage />} />
-              <Route path="/create-establishment" element={<CreateEstablishmentPage />} />
+              <Route
+                path="/create-establishment"
+                element={<CreateEstablishmentPage />}
+              />
+              <Route path="/academic-years" element={<AcademicYearsPage />} />
             </Route>
           </Route>
 
