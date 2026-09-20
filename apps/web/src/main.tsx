@@ -23,19 +23,11 @@ createRoot(document.getElementById("root")!).render(
           <Route path="/register" element={<RegisterPage />} />
 
           {/* Routes protégées */}
-          <Route
-            element={
-              <ProtectedRoute>
-                <AppLayout />
-                <Route
-                  path="/create-establishment"
-                  element={<CreateEstablishmentPage />}
-                />
-              </ProtectedRoute>
-            }
-          >
-            <Route path="/dashboard" element={<DashboardPage />} />
-            {/* On ajoutera les autres pages ici plus tard */}
+          <Route element={<ProtectedRoute />}>
+            <Route element={<AppLayout />}>
+              <Route path="/dashboard" element={<DashboardPage />} />
+              <Route path="/create-establishment" element={<CreateEstablishmentPage />} />
+            </Route>
           </Route>
 
           {/* Redirection par défaut */}
