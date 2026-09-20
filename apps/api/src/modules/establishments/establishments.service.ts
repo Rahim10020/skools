@@ -40,8 +40,7 @@ export class EstablishmentsService {
       throw new ConflictException('Ce slug est déjà utilisé');
     }
 
-    // Création de l’établissement + liaison du créateur en tant que DIRECTOR
-    return this.prisma.establishment.create({
+    const establishment = await this.prisma.establishment.create({
       data: {
         name: dto.name,
         slug: dto.slug,
@@ -54,21 +53,9 @@ export class EstablishmentsService {
           },
         },
       },
-      include: {
-        users: {
-          include: {
-            user: {
-              select: {
-                id: true,
-                email: true,
-                firstName: true,
-                lastName: true,
-              },
-            },
-          },
-        },
-      },
     });
+
+    return establishment;
   }
 
   async findAll() {
