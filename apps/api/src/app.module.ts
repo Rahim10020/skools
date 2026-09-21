@@ -14,6 +14,7 @@ import { SubjectsModule } from './modules/academic/subjects/subjects.module.js';
 import { PeriodsModule } from './modules/academic/periods/periods.module.js';
 import { StudentsModule } from './modules/students/students.module.js';
 import { TeachersModule } from './modules/teachers/teachers.module.js';
+import { ParentsModule } from './modules/parents/parents.module.js';
 
 @Module({
   imports: [
@@ -31,6 +32,7 @@ import { TeachersModule } from './modules/teachers/teachers.module.js';
     PeriodsModule,
     StudentsModule,
     TeachersModule,
+    ParentsModule,
     AuthModule,
   ],
   controllers: [AppController],
