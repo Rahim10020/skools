@@ -31,9 +31,6 @@ export default function LoginPage() {
       const { user, accessToken, refreshToken, establishmentId, role } =
         response.data;
 
-      localStorage.setItem("accessToken", accessToken);
-      localStorage.setItem("refreshToken", refreshToken);
-
       setAuth({
         user,
         accessToken,

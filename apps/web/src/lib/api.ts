@@ -2,23 +2,20 @@ import axios from "axios";
 import { useAuthStore } from "../stores/auth-store";
 
 const api = axios.create({
-  baseURL: "http://localhost:3000/api/v1", // URL de ton API NestJS
+  baseURL: "http://localhost:3000/api/v1",
   headers: {
     "Content-Type": "application/json",
   },
 });
 
-// Intercepteur pour ajouter le token automatiquement
 api.interceptors.request.use((config) => {
-  const token =
-    localStorage.getItem("accessToken") ?? useAuthStore.getState().accessToken;
+  const token = useAuthStore.getState().accessToken;
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
   return config;
 });
 
-// Intercepteur pour gérer le refresh token (version simple pour l’instant)
 api.interceptors.response.use(
   (response) => response,
   async (error) => {
@@ -27,9 +24,7 @@ api.interceptors.response.use(
     if (error.response?.status === 401 && !originalRequest._retry) {
       originalRequest._retry = true;
 
-      const refreshToken =
-        localStorage.getItem("refreshToken") ??
-        useAuthStore.getState().refreshToken;
+      const refreshToken = useAuthStore.getState().refreshToken;
       if (refreshToken) {
         try {
           const { data } = await axios.post(
@@ -39,14 +34,17 @@ api.interceptors.response.use(
             },
           );
 
-          localStorage.setItem("accessToken", data.accessToken);
-          localStorage.setItem("refreshToken", data.refreshToken);
+          const { accessToken, refreshToken: newRefreshToken } = data;
+          useAuthStore.getState().setAuth({
+            ...useAuthStore.getState(),
+            accessToken,
+            refreshToken: newRefreshToken,
+          });
 
-          originalRequest.headers.Authorization = `Bearer ${data.accessToken}`;
+          originalRequest.headers.Authorization = `Bearer ${accessToken}`;
           return api(originalRequest);
         } catch {
-          localStorage.removeItem("accessToken");
-          localStorage.removeItem("refreshToken");
+          useAuthStore.getState().logout();
           window.location.href = "/login";
         }
       }
