@@ -11,6 +11,7 @@ import AppLayout from "./components/layout/AppLayout";
 import ProtectedRoute from "./components/layout/ProtectedRoute";
 import CreateEstablishmentPage from "./features/establishments/CreateEstablishmentPage";
 import AcademicYearsPage from "./features/academic/AcademicYearsPage";
+import ClassroomsPage from "./features/academic/ClassroomsPage";
 
 const queryClient = new QueryClient();
 
@@ -32,6 +33,7 @@ createRoot(document.getElementById("root")!).render(
                 element={<CreateEstablishmentPage />}
               />
               <Route path="/academic-years" element={<AcademicYearsPage />} />
+              <Route path="/classrooms" element={<ClassroomsPage />} />
             </Route>
           </Route>
 
