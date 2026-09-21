@@ -7,4 +7,4 @@ pnpm --filter web dev
 -- post mdp
 
 
--- prochainement, continuer avec la phase 2 avec grok
+-- prochainement, continuer avec grok
