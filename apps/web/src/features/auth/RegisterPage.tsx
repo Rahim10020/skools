@@ -32,9 +32,6 @@ export default function RegisterPage() {
       const response = await api.post("/auth/register", data);
       const { user, accessToken, refreshToken } = response.data;
 
-      localStorage.setItem("accessToken", accessToken);
-      localStorage.setItem("refreshToken", refreshToken);
-
       setAuth({
         user,
         accessToken,

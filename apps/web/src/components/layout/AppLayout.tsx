@@ -7,8 +7,6 @@ export default function AppLayout() {
 
   const handleLogout = () => {
     logout();
-    localStorage.removeItem("accessToken");
-    localStorage.removeItem("refreshToken");
     navigate("/login");
   };
 

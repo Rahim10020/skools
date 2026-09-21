@@ -35,10 +35,13 @@ api.interceptors.response.use(
           );
 
           const { accessToken, refreshToken: newRefreshToken } = data;
+          const state = useAuthStore.getState();
           useAuthStore.getState().setAuth({
-            ...useAuthStore.getState(),
+            user: state.user!,
             accessToken,
             refreshToken: newRefreshToken,
+            establishmentId: state.establishmentId,
+            role: state.role,
           });
 
           originalRequest.headers.Authorization = `Bearer ${accessToken}`;
