@@ -16,6 +16,7 @@ import CyclesPage from "./features/academic/CyclesPage";
 import LevelsPage from "./features/academic/LevelsPage";
 import SeriesPage from "./features/academic/SeriesPage";
 import SubjectsPage from "./features/academic/SubjectsPage";
+import PeriodsPage from "./features/academic/PeriodsPage";
 
 const queryClient = new QueryClient();
 
@@ -42,6 +43,7 @@ createRoot(document.getElementById("root")!).render(
               <Route path="/levels" element={<LevelsPage />} />
               <Route path="/series" element={<SeriesPage />} />
               <Route path="/subjects" element={<SubjectsPage />} />
+              <Route path="/periods" element={<PeriodsPage />} />
             </Route>
           </Route>
 

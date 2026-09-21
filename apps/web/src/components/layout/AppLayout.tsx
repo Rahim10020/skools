@@ -65,6 +65,12 @@ export default function AppLayout() {
                 >
                   Matières
                 </Link>
+                <Link
+                  to="/periods"
+                  className="text-sm font-medium text-gray-700 hover:text-blue-600"
+                >
+                  Périodes
+                </Link>
               </nav>
             </div>
 
