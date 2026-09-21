@@ -12,6 +12,7 @@ import { SeriesModule } from './modules/academic/series/series.module.js';
 import { ClassroomsModule } from './modules/academic/classrooms/classrooms.module.js';
 import { SubjectsModule } from './modules/academic/subjects/subjects.module.js';
 import { PeriodsModule } from './modules/academic/periods/periods.module.js';
+import { StudentsModule } from './modules/students/students.module.js';
 
 @Module({
   imports: [
@@ -27,6 +28,7 @@ import { PeriodsModule } from './modules/academic/periods/periods.module.js';
     ClassroomsModule,
     SubjectsModule,
     PeriodsModule,
+    StudentsModule,
     AuthModule,
   ],
   controllers: [AppController],
