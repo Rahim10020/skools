@@ -13,6 +13,7 @@ import { ClassroomsModule } from './modules/academic/classrooms/classrooms.modul
 import { SubjectsModule } from './modules/academic/subjects/subjects.module.js';
 import { PeriodsModule } from './modules/academic/periods/periods.module.js';
 import { StudentsModule } from './modules/students/students.module.js';
+import { TeachersModule } from './modules/teachers/teachers.module.js';
 
 @Module({
   imports: [
@@ -29,6 +30,7 @@ import { StudentsModule } from './modules/students/students.module.js';
     SubjectsModule,
     PeriodsModule,
     StudentsModule,
+    TeachersModule,
     AuthModule,
   ],
   controllers: [AppController],
