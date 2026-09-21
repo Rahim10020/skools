@@ -1,4 +1,5 @@
 import axios from "axios";
+import { useAuthStore } from "../stores/auth-store";
 
 const api = axios.create({
   baseURL: "http://localhost:3000/api/v1", // URL de ton API NestJS
@@ -9,7 +10,8 @@ const api = axios.create({
 
 // Intercepteur pour ajouter le token automatiquement
 api.interceptors.request.use((config) => {
-  const token = localStorage.getItem("accessToken");
+  const token =
+    localStorage.getItem("accessToken") ?? useAuthStore.getState().accessToken;
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
@@ -25,7 +27,9 @@ api.interceptors.response.use(
     if (error.response?.status === 401 && !originalRequest._retry) {
       originalRequest._retry = true;
 
-      const refreshToken = localStorage.getItem("refreshToken");
+      const refreshToken =
+        localStorage.getItem("refreshToken") ??
+        useAuthStore.getState().refreshToken;
       if (refreshToken) {
         try {
           const { data } = await axios.post(
