@@ -53,6 +53,12 @@ export default function AppLayout() {
                 >
                   Niveaux
                 </Link>
+                <Link
+                  to="/series"
+                  className="text-sm font-medium text-gray-700 hover:text-blue-600"
+                >
+                  Séries
+                </Link>
               </nav>
             </div>
 
