@@ -122,7 +122,20 @@ export class AuthService {
         data: { revokedAt: new Date() },
       });
 
-      return this.generateTokens(payload.sub, payload.email);
+      const userEstablishment = await this.prisma.userEstablishment.findFirst({
+        where: {
+          userId: payload.sub,
+          isActive: true,
+        },
+        orderBy: { createdAt: 'asc' },
+      });
+
+      return this.generateTokens(
+        payload.sub,
+        payload.email,
+        userEstablishment?.establishmentId,
+        userEstablishment?.role,
+      );
     } catch {
       throw new UnauthorizedException('Refresh token invalide ou expiré');
     }
