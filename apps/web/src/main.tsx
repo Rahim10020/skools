@@ -12,6 +12,8 @@ import ProtectedRoute from "./components/layout/ProtectedRoute";
 import CreateEstablishmentPage from "./features/establishments/CreateEstablishmentPage";
 import AcademicYearsPage from "./features/academic/AcademicYearsPage";
 import ClassroomsPage from "./features/academic/ClassroomsPage";
+import CyclesPage from "./features/academic/CyclesPage";
+import LevelsPage from "./features/academic/LevelsPage";
 
 const queryClient = new QueryClient();
 
@@ -34,6 +36,8 @@ createRoot(document.getElementById("root")!).render(
               />
               <Route path="/academic-years" element={<AcademicYearsPage />} />
               <Route path="/classrooms" element={<ClassroomsPage />} />
+              <Route path="/cycles" element={<CyclesPage />} />
+              <Route path="/levels" element={<LevelsPage />} />
             </Route>
           </Route>
 
