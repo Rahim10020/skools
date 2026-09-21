@@ -41,6 +41,18 @@ export default function AppLayout() {
                 >
                   Classes
                 </Link>
+                <Link
+                  to="/cycles"
+                  className="text-sm font-medium text-gray-700 hover:text-blue-600"
+                >
+                  Cycles
+                </Link>
+                <Link
+                  to="/levels"
+                  className="text-sm font-medium text-gray-700 hover:text-blue-600"
+                >
+                  Niveaux
+                </Link>
               </nav>
             </div>
 
