@@ -59,6 +59,12 @@ export default function AppLayout() {
                 >
                   Séries
                 </Link>
+                <Link
+                  to="/subjects"
+                  className="text-sm font-medium text-gray-700 hover:text-blue-600"
+                >
+                  Matières
+                </Link>
               </nav>
             </div>
 
