@@ -15,6 +15,7 @@ import { PeriodsModule } from './modules/academic/periods/periods.module.js';
 import { StudentsModule } from './modules/students/students.module.js';
 import { TeachersModule } from './modules/teachers/teachers.module.js';
 import { ParentsModule } from './modules/parents/parents.module.js';
+import { EnrollmentsModule } from './modules/enrollments/enrollments.module.js';
 
 @Module({
   imports: [
@@ -33,6 +34,7 @@ import { ParentsModule } from './modules/parents/parents.module.js';
     StudentsModule,
     TeachersModule,
     ParentsModule,
+    EnrollmentsModule,
     AuthModule,
   ],
   controllers: [AppController],
