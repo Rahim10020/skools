@@ -81,6 +81,12 @@ export default function AppLayout() {
                 >
                   Enseignants
                 </Link>
+                <Link
+                  to="/parents"
+                  className="text-sm font-medium text-gray-700 hover:text-blue-600"
+                >
+                  Parents
+                </Link>
               </nav>
             </div>
 
