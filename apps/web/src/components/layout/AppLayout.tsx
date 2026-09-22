@@ -87,6 +87,12 @@ export default function AppLayout() {
                 >
                   Parents
                 </Link>
+                <Link
+                  to="/enrollments"
+                  className="text-sm font-medium text-gray-700 hover:text-blue-600"
+                >
+                  Inscriptions
+                </Link>
               </nav>
             </div>
 
