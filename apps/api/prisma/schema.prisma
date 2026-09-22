@@ -45,6 +45,8 @@ model Establishment {
   teachers    Teacher[]
   parents     Parent[]
   enrollments Enrollment[]
+  exams       Exam[]
+  grades      Grade[]
   type        EstablishmentType @default(MIXED)
   logoUrl     String?  @map("logo_url")
   isActive    Boolean  @default(true) @map("is_active")
@@ -126,6 +128,7 @@ model AcademicYear {
   endDate         DateTime @map("end_date")
   isCurrent       Boolean  @default(false) @map("is_current")
   enrollments     Enrollment[]
+  exams           Exam[]
   isActive        Boolean  @default(true) @map("is_active")
   createdAt       DateTime @default(now()) @map("created_at")
   updatedAt       DateTime @updatedAt @map("updated_at")
@@ -196,6 +199,7 @@ model Classroom {
   name            String   // 6ème A, Terminale C...
   capacity        Int?
   enrollments     Enrollment[]
+  exams           Exam[]
   isActive        Boolean  @default(true) @map("is_active")
   createdAt       DateTime @default(now()) @map("created_at")
   updatedAt       DateTime @updatedAt @map("updated_at")
@@ -214,6 +218,7 @@ model Subject {
   name            String
   code            String?  // MATH, FR, HG...
   description     String?
+  exams           Exam[]
   isActive        Boolean  @default(true) @map("is_active")
   createdAt       DateTime @default(now()) @map("created_at")
   updatedAt       DateTime @updatedAt @map("updated_at")
@@ -231,6 +236,7 @@ model Period {
   startDate       DateTime @map("start_date")
   endDate         DateTime @map("end_date")
   order           Int      @default(0)
+  exams           Exam[]
   isActive        Boolean  @default(true) @map("is_active")
   createdAt       DateTime @default(now()) @map("created_at")
   updatedAt       DateTime @updatedAt @map("updated_at")
@@ -255,6 +261,7 @@ model Student {
   address         String?
   photoUrl        String?   @map("photo_url")
   enrollments     Enrollment[]
+  grades          Grade[]
   isActive        Boolean   @default(true) @map("is_active")
   createdAt       DateTime  @default(now()) @map("created_at")
   updatedAt       DateTime  @updatedAt @map("updated_at")
@@ -336,4 +343,58 @@ model Enrollment {
 
   @@unique([studentId, academicYearId]) // un élève ne peut être inscrit qu'une fois par année
   @@map("enrollments")
+}
+
+enum ExamType {
+  INTERROGATION
+  DEVOIR
+  COMPOSITION
+  EXAMEN
+  AUTRE
+}
+
+model Exam {
+  id              String    @id @default(uuid())
+  establishmentId String    @map("establishment_id")
+  academicYearId  String    @map("academic_year_id")
+  periodId        String?   @map("period_id")
+  subjectId       String    @map("subject_id")
+  classroomId     String?   @map("classroom_id") // null = pour plusieurs classes
+  name            String
+  type            ExamType  @default(DEVOIR)
+  examDate        DateTime? @map("exam_date")
+  maxScore        Float     @default(20) @map("max_score")
+  coefficient     Float     @default(1)
+  isPublished     Boolean   @default(false) @map("is_published")
+  isActive        Boolean   @default(true) @map("is_active")
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+
+  establishment Establishment @relation(fields: [establishmentId], references: [id], onDelete: Cascade)
+  academicYear  AcademicYear  @relation(fields: [academicYearId], references: [id], onDelete: Cascade)
+  period        Period?       @relation(fields: [periodId], references: [id], onDelete: SetNull)
+  subject       Subject       @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+  classroom     Classroom?    @relation(fields: [classroomId], references: [id], onDelete: SetNull)
+  grades        Grade[]
+
+  @@map("exams")
+}
+
+model Grade {
+  id              String   @id @default(uuid())
+  establishmentId String   @map("establishment_id")
+  examId          String   @map("exam_id")
+  studentId       String   @map("student_id")
+  score           Float?
+  appreciation    String?
+  isAbsent        Boolean  @default(false) @map("is_absent")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  establishment Establishment @relation(fields: [establishmentId], references: [id], onDelete: Cascade)
+  exam          Exam          @relation(fields: [examId], references: [id], onDelete: Cascade)
+  student       Student       @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@unique([examId, studentId]) // une seule note par élève par examen
+  @@map("grades")
 }
