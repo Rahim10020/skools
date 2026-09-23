@@ -22,6 +22,7 @@ import TeachersPage from "./features/teachers/TeachersPage";
 import ParentsPage from "./features/parents/ParentsPage";
 import EnrollmentsPage from "./features/enrollments/EnrollmentsPage";
 import ExamsPage from "./features/exams/ExamsPage";
+import GradesPage from "./features/grades/GradesPage";
 
 const queryClient = new QueryClient();
 
@@ -54,6 +55,7 @@ createRoot(document.getElementById("root")!).render(
               <Route path="/parents" element={<ParentsPage />} />
               <Route path="/enrollments" element={<EnrollmentsPage />} />
               <Route path="/exams" element={<ExamsPage />} />
+              <Route path="/grades" element={<GradesPage />} />
             </Route>
           </Route>
 

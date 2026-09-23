@@ -99,6 +99,12 @@ export default function AppLayout() {
                 >
                   Examens
                 </Link>
+                <Link
+                  to="/grades"
+                  className="text-sm font-medium text-gray-700 hover:text-blue-600"
+                >
+                  Notes
+                </Link>
               </nav>
             </div>
 
