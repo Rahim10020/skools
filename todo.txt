@@ -10,4 +10,4 @@ pnpm --filter web dev
     comment corriger ca proprement ?
 
 
--- prochainement, continuer avec la phase 3: Notes et Examens
+-- prochainement, continuer avec Grok
