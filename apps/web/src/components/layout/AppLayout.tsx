@@ -129,6 +129,12 @@ export default function AppLayout() {
                 >
                   Emplois du temps
                 </Link>
+                <Link
+                  to="/report-cards"
+                  className="text-sm font-medium text-gray-700 hover:text-blue-600"
+                >
+                  Bulletins
+                </Link>
               </nav>
             </div>
 
