@@ -518,3 +518,43 @@ model Schedule {
 
   @@map("schedules")
 }
+
+enum DisciplineType {
+  WARNING          // Avertissement
+  REPRIMAND        // Blâme
+  DETENTION        // Retenue
+  SUSPENSION       // Exclusion temporaire
+  EXPULSION        // Exclusion définitive
+  OBSERVATION      // Simple observation
+  OTHER
+}
+
+enum DisciplineStatus {
+  PENDING
+  ACTIVE
+  RESOLVED
+  CANCELLED
+}
+
+model DisciplineRecord {
+  id              String           @id @default(uuid())
+  establishmentId String           @map("establishment_id")
+  studentId       String           @map("student_id")
+  reportedById    String?          @map("reported_by_id") // utilisateur qui a signalé
+  type            DisciplineType
+  status          DisciplineStatus @default(PENDING)
+  title           String
+  description     String?
+  incidentDate    DateTime         @map("incident_date")
+  resolution      String?          // suite donnée
+  resolvedAt      DateTime?        @map("resolved_at")
+  isActive        Boolean          @default(true) @map("is_active")
+  createdAt       DateTime         @default(now()) @map("created_at")
+  updatedAt       DateTime         @updatedAt @map("updated_at")
+
+  establishment Establishment @relation(fields: [establishmentId], references: [id], onDelete: Cascade)
+  student       Student       @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  reportedBy    User?         @relation(fields: [reportedById], references: [id], onDelete: SetNull)
+
+  @@map("discipline_records")
+}
