@@ -18,6 +18,7 @@ import { ParentsModule } from './modules/parents/parents.module.js';
 import { EnrollmentsModule } from './modules/enrollments/enrollments.module.js';
 import { ExamsModule } from './modules/exams/exams.module.js';
 import { GradesModule } from './modules/grades/grades.module.js';
+import { ParentStudentsModule } from './modules/parent-students/parent-students.module.js';
 
 @Module({
   imports: [
@@ -39,6 +40,7 @@ import { GradesModule } from './modules/grades/grades.module.js';
     EnrollmentsModule,
     ExamsModule,
     GradesModule,
+    ParentStudentsModule,
     AuthModule,
   ],
   controllers: [AppController],
