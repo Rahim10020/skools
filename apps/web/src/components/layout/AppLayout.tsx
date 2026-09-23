@@ -105,6 +105,12 @@ export default function AppLayout() {
                 >
                   Notes
                 </Link>
+                <Link
+                  to="/link-parents"
+                  className="text-sm font-medium text-gray-700 hover:text-blue-600"
+                >
+                  Lier Parents
+                </Link>
               </nav>
             </div>
 
