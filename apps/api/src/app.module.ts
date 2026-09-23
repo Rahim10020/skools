@@ -23,6 +23,7 @@ import { TeacherAssignmentsModule } from './modules/teacher-assignments/teacher-
 import { AttendancesModule } from './modules/attendances/attendances.module.js';
 import { SchedulesModule } from './modules/schedules/schedules.module.js';
 import { ReportCardsModule } from './modules/report-cards/report-cards.module.js';
+import { DisciplineModule } from './modules/discipline/discipline.module.js';
 
 @Module({
   imports: [
@@ -49,6 +50,7 @@ import { ReportCardsModule } from './modules/report-cards/report-cards.module.js
     AttendancesModule,
     SchedulesModule,
     ReportCardsModule,
+    DisciplineModule,
     AuthModule,
   ],
   controllers: [AppController],
