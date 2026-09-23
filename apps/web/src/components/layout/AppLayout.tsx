@@ -93,6 +93,12 @@ export default function AppLayout() {
                 >
                   Inscriptions
                 </Link>
+                <Link
+                  to="/exams"
+                  className="text-sm font-medium text-gray-700 hover:text-blue-600"
+                >
+                  Examens
+                </Link>
               </nav>
             </div>
 
