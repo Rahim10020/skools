@@ -262,6 +262,7 @@ model Student {
   photoUrl        String?   @map("photo_url")
   enrollments     Enrollment[]
   grades          Grade[]
+  parents         ParentStudent[]
   isActive        Boolean   @default(true) @map("is_active")
   createdAt       DateTime  @default(now()) @map("created_at")
   updatedAt       DateTime  @updatedAt @map("updated_at")
@@ -306,6 +307,7 @@ model Parent {
   email           String?
   address         String?
   profession      String?
+  students        ParentStudent[]
   isActive        Boolean  @default(true) @map("is_active")
   createdAt       DateTime @default(now()) @map("created_at")
   updatedAt       DateTime @updatedAt @map("updated_at")
@@ -397,4 +399,26 @@ model Grade {
 
   @@unique([examId, studentId]) // une seule note par élève par examen
   @@map("grades")
+}
+
+enum ParentRelation {
+  FATHER
+  MOTHER
+  GUARDIAN
+  OTHER
+}
+
+model ParentStudent {
+  id         String         @id @default(uuid())
+  parentId   String         @map("parent_id")
+  studentId  String         @map("student_id")
+  relation   ParentRelation @default(OTHER)
+  isPrimary  Boolean        @default(false) @map("is_primary") // contact principal
+  createdAt  DateTime       @default(now()) @map("created_at")
+
+  parent  Parent  @relation(fields: [parentId], references: [id], onDelete: Cascade)
+  student Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@unique([parentId, studentId])
+  @@map("parent_students")
 }
