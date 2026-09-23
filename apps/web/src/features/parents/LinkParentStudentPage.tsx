@@ -3,16 +3,17 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+import axios from "axios";
 import api from "../../lib/api";
 
 const schema = z.object({
   parentId: z.string().uuid("Parent requis"),
-  studentId: z.string().uuid("Élève requis"),
   relation: z.enum(["FATHER", "MOTHER", "GUARDIAN", "OTHER"]),
   isPrimary: z.boolean().optional(),
 });
 
 type FormData = z.infer<typeof schema>;
+type LinkData = FormData & { studentId: string };
 
 export default function LinkParentStudentPage() {
   const queryClient = useQueryClient();
@@ -41,7 +42,7 @@ export default function LinkParentStudentPage() {
   });
 
   const linkMutation = useMutation({
-    mutationFn: (data: FormData) => api.post("/parent-students", data),
+    mutationFn: (data: LinkData) => api.post("/parent-students", data),
     onSuccess: () => {
       queryClient.invalidateQueries({
         queryKey: ["parent-students", selectedStudentId],
@@ -63,7 +64,7 @@ export default function LinkParentStudentPage() {
     register,
     handleSubmit,
     reset,
-    formState: { errors, isSubmitting },
+    formState: { errors },
   } = useForm<FormData>({
     resolver: zodResolver(schema),
     defaultValues: {
@@ -121,6 +122,15 @@ export default function LinkParentStudentPage() {
               Ajouter un parent
             </h2>
 
+            {linkMutation.isError && (
+              <p className="text-sm text-red-600">
+                {axios.isAxiosError(linkMutation.error)
+                  ? (linkMutation.error.response?.data?.message ??
+                    "La liaison n'a pas pu être créée.")
+                  : "La liaison n'a pas pu être créée."}
+              </p>
+            )}
+
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700">
@@ -173,10 +183,10 @@ export default function LinkParentStudentPage() {
 
             <button
               type="submit"
-              disabled={isSubmitting}
+              disabled={linkMutation.isPending}
               className="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-md hover:bg-blue-700 disabled:opacity-50"
             >
-              {isSubmitting ? "Liaison..." : "Lier ce parent"}
+              {linkMutation.isPending ? "Liaison..." : "Lier ce parent"}
             </button>
           </form>
 
