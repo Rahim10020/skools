@@ -111,6 +111,12 @@ export default function AppLayout() {
                 >
                   Lier Parents
                 </Link>
+                <Link
+                  to="/teacher-assignments"
+                  className="text-sm font-medium text-gray-700 hover:text-blue-600"
+                >
+                  Affectations
+                </Link>
               </nav>
             </div>
 
