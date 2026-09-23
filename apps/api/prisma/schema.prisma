@@ -49,6 +49,7 @@ model Establishment {
   grades              Grade[]
   attendances         Attendance[]
   schedules           Schedule[]
+  disciplineRecords   DisciplineRecord[]
   teacherAssignments  TeacherAssignment[]
   type                EstablishmentType @default(MIXED)
   logoUrl             String?  @map("logo_url")
@@ -86,6 +87,7 @@ model User {
   establishments UserEstablishment[]
   refreshTokens  RefreshToken[]
   recordedAttendances Attendance[]
+  reportedDisciplines DisciplineRecord[]
 
   @@map("users")
 }
@@ -273,6 +275,7 @@ model Student {
   enrollments     Enrollment[]
   grades          Grade[]
   attendances     Attendance[]
+  disciplineRecords DisciplineRecord[]
   parents         ParentStudent[]
   isActive        Boolean   @default(true) @map("is_active")
   createdAt       DateTime  @default(now()) @map("created_at")
