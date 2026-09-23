@@ -14,6 +14,7 @@ interface AuthState {
   refreshToken: string | null;
   establishmentId: string | null;
   role: string | null;
+  hasHydrated: boolean;
   setAuth: (data: {
     user: User;
     accessToken: string;
@@ -23,6 +24,7 @@ interface AuthState {
   }) => void;
   logout: () => void;
   isAuthenticated: () => boolean;
+  setHasHydrated: (hasHydrated: boolean) => void;
 }
 
 export const useAuthStore = create<AuthState>()(
@@ -33,6 +35,7 @@ export const useAuthStore = create<AuthState>()(
       refreshToken: null,
       establishmentId: null,
       role: null,
+      hasHydrated: false,
 
       setAuth: (data) =>
         set({
@@ -53,9 +56,13 @@ export const useAuthStore = create<AuthState>()(
         }),
 
       isAuthenticated: () => !!get().accessToken,
+      setHasHydrated: (hasHydrated) => set({ hasHydrated }),
     }),
     {
       name: "skools-auth",
+      onRehydrateStorage: () => (state) => {
+        state?.setHasHydrated(true);
+      },
     },
   ),
 );
