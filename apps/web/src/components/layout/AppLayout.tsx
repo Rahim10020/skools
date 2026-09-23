@@ -117,6 +117,12 @@ export default function AppLayout() {
                 >
                   Affectations
                 </Link>
+                <Link
+                  to="/attendances"
+                  className="text-sm font-medium text-gray-700 hover:text-blue-600"
+                >
+                  Présences
+                </Link>
               </nav>
             </div>
 
