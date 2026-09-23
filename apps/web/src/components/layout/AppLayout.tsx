@@ -135,6 +135,12 @@ export default function AppLayout() {
                 >
                   Bulletins
                 </Link>
+                <Link
+                  to="/discipline"
+                  className="text-sm font-medium text-gray-700 hover:text-blue-600"
+                >
+                  Discipline
+                </Link>
               </nav>
             </div>
 
