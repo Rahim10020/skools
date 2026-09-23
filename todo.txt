@@ -10,4 +10,4 @@ pnpm --filter web dev
     comment corriger ca proprement ? Meme chose pour presences.
     les valeurs ont bien ete enregistres dans la bd je crois.
 
--- prochainement, continuer avec Grok
+-- prochainement, continuer avec la conception du design.
