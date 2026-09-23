@@ -4,6 +4,8 @@ import api from "../../lib/api";
 
 type AttendanceStatus = "PRESENT" | "ABSENT" | "LATE" | "EXCUSED";
 
+const EMPTY_LIST = [] as never[];
+
 export default function AttendancesPage() {
   const queryClient = useQueryClient();
   const [selectedClassroomId, setSelectedClassroomId] = useState("");
@@ -14,13 +16,13 @@ export default function AttendancesPage() {
     {},
   );
 
-  const { data: classrooms = [] } = useQuery({
+  const { data: classrooms = EMPTY_LIST } = useQuery({
     queryKey: ["classrooms"],
     queryFn: async () => (await api.get("/classrooms")).data,
   });
 
   // Élèves inscrits dans la classe sélectionnée (via enrollments)
-  const { data: enrollments = [] } = useQuery({
+  const { data: enrollments = EMPTY_LIST } = useQuery({
     queryKey: ["enrollments"],
     queryFn: async () => (await api.get("/enrollments")).data,
   });
@@ -30,7 +32,7 @@ export default function AttendancesPage() {
     .map((e: any) => e.student)
     .filter(Boolean);
 
-  const { data: existingAttendances = [], isLoading } = useQuery({
+  const { data: existingAttendances = EMPTY_LIST, isLoading } = useQuery({
     queryKey: ["attendances", selectedClassroomId, selectedDate],
     queryFn: async () => {
       if (!selectedClassroomId || !selectedDate) return [];
@@ -44,21 +46,33 @@ export default function AttendancesPage() {
 
   // Pré-remplir les statuts existants
   useEffect(() => {
+    const initial: Record<string, AttendanceStatus> = {};
+
     if (existingAttendances.length > 0) {
-      const initial: Record<string, AttendanceStatus> = {};
       existingAttendances.forEach((att: any) => {
         initial[att.studentId] = att.status;
       });
-      setStatuses(initial);
     } else {
       // Par défaut tout le monde est présent
-      const initial: Record<string, AttendanceStatus> = {};
-      studentsInClass.forEach((student: any) => {
-        initial[student.id] = "PRESENT";
-      });
-      setStatuses(initial);
+      enrollments
+        .filter((e: any) => e.classroomId === selectedClassroomId && e.isActive)
+        .map((e: any) => e.student)
+        .filter(Boolean)
+        .forEach((student: any) => {
+          initial[student.id] = "PRESENT";
+        });
     }
-  }, [existingAttendances, selectedClassroomId, selectedDate]);
+
+    setStatuses((current) => {
+      const currentKeys = Object.keys(current);
+      const initialKeys = Object.keys(initial);
+      const unchanged =
+        currentKeys.length === initialKeys.length &&
+        initialKeys.every((key) => current[key] === initial[key]);
+
+      return unchanged ? current : initial;
+    });
+  }, [existingAttendances, enrollments, selectedClassroomId, selectedDate]);
 
   const saveMutation = useMutation({
     mutationFn: async () => {
