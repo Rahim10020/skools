@@ -7,7 +7,7 @@ pnpm --filter web dev
 -- post mdp
 -- saisie des notes: quand j'enregistre une note, j'ai un alert dialog qui vient et qui dis que la note a ete enregistre 
     avec succes et ensuite que je quitte la page et que je reviens, je ne vois pas la note. est ce un probleme ? 
-    comment corriger ca proprement ?
+    comment corriger ca proprement ? Meme chose pour presences.
 
 
 -- prochainement, continuer avec Grok

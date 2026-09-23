@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import api from "../../lib/api";
+import { useAuthStore } from "../../stores/auth-store";
 
 type AttendanceStatus = "PRESENT" | "ABSENT" | "LATE" | "EXCUSED";
 
@@ -8,6 +9,7 @@ const EMPTY_LIST = [] as never[];
 
 export default function AttendancesPage() {
   const queryClient = useQueryClient();
+  const { accessToken, hasHydrated } = useAuthStore();
   const [selectedClassroomId, setSelectedClassroomId] = useState("");
   const [selectedDate, setSelectedDate] = useState(
     new Date().toISOString().split("T")[0],
@@ -19,12 +21,14 @@ export default function AttendancesPage() {
   const { data: classrooms = EMPTY_LIST } = useQuery({
     queryKey: ["classrooms"],
     queryFn: async () => (await api.get("/classrooms")).data,
+    enabled: hasHydrated && !!accessToken,
   });
 
   // Élèves inscrits dans la classe sélectionnée (via enrollments)
   const { data: enrollments = EMPTY_LIST } = useQuery({
     queryKey: ["enrollments"],
     queryFn: async () => (await api.get("/enrollments")).data,
+    enabled: hasHydrated && !!accessToken,
   });
 
   const studentsInClass = enrollments
@@ -41,7 +45,8 @@ export default function AttendancesPage() {
       );
       return res.data;
     },
-    enabled: !!selectedClassroomId && !!selectedDate,
+    enabled:
+      hasHydrated && !!accessToken && !!selectedClassroomId && !!selectedDate,
   });
 
   // Pré-remplir les statuts existants
