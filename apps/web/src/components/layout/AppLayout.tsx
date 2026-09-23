@@ -123,6 +123,12 @@ export default function AppLayout() {
                 >
                   Présences
                 </Link>
+                <Link
+                  to="/schedules"
+                  className="text-sm font-medium text-gray-700 hover:text-blue-600"
+                >
+                  Emplois du temps
+                </Link>
               </nav>
             </div>
 
