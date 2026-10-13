@@ -1,252 +1,286 @@
 import { useState } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
-import api from "../../lib/api";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import api, { getErrorMessage } from "../../lib/api";
+import { PageHeader } from "../../layouts/PageHeader";
+import { Button } from "../../components/ui/button";
+import { Card } from "../../components/ui/card";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableCellPrimary,
+  TableContainer,
+  TableHeader,
+  TableHeaderCell,
+  TableRow,
+} from "../../components/ui/table";
+import { Select } from "../../components/ui/select";
+import { Badge } from "../../components/ui/badge";
+import { Modal } from "../../components/ui/use-modal";
+import { EmptyState, ErrorState } from "../../components/ui/empty-state";
+import { Skeleton } from "../../components/ui/skeleton";
+import { toast } from "../../components/ui/toast";
 
-const schema = z.object({
-  teacherId: z.string().uuid("Enseignant requis"),
-  subjectId: z.string().uuid("Matière requise"),
-  classroomId: z.string().uuid("Classe requise"),
-  academicYearId: z.string().uuid("Année scolaire requise"),
-});
+interface IdName {
+  id: string;
+  name: string;
+}
 
-type FormData = z.infer<typeof schema>;
+interface TeacherOption {
+  id: string;
+  firstName: string;
+  lastName: string;
+}
+
+interface TeacherAssignment {
+  id: string;
+  teacher: { id: string; firstName: string; lastName: string };
+  subject: { id: string; name: string };
+  classroom: { id: string; name: string };
+  academicYear: { id: string; name: string; isCurrent?: boolean };
+}
 
 export default function TeacherAssignmentsPage() {
   const queryClient = useQueryClient();
-  const [showForm, setShowForm] = useState(false);
+  const [teacherId, setTeacherId] = useState("");
+  const [subjectId, setSubjectId] = useState("");
+  const [classroomId, setClassroomId] = useState("");
+  const [academicYearId, setAcademicYearId] = useState("");
+  const [formError, setFormError] = useState<string | null>(null);
+  const [removeTarget, setRemoveTarget] = useState<TeacherAssignment | null>(null);
 
-  const { data: assignments = [], isLoading } = useQuery({
+  const assignmentsQuery = useQuery({
     queryKey: ["teacher-assignments"],
-    queryFn: async () => (await api.get("/teacher-assignments")).data,
+    queryFn: async () => (await api.get<TeacherAssignment[]>("/teacher-assignments")).data,
   });
-
-  const { data: teachers = [] } = useQuery({
+  const teachersQuery = useQuery({
     queryKey: ["teachers"],
-    queryFn: async () => (await api.get("/teachers")).data,
+    queryFn: async () => (await api.get<TeacherOption[]>("/teachers")).data,
   });
-
-  const { data: subjects = [] } = useQuery({
+  const subjectsQuery = useQuery({
     queryKey: ["subjects"],
-    queryFn: async () => (await api.get("/subjects")).data,
+    queryFn: async () => (await api.get<IdName[]>("/subjects")).data,
   });
-
-  const { data: classrooms = [] } = useQuery({
+  const classroomsQuery = useQuery({
     queryKey: ["classrooms"],
-    queryFn: async () => (await api.get("/classrooms")).data,
+    queryFn: async () => (await api.get<IdName[]>("/classrooms")).data,
   });
-
-  const { data: academicYears = [] } = useQuery({
+  const yearsQuery = useQuery({
     queryKey: ["academic-years"],
-    queryFn: async () => (await api.get("/academic-years")).data,
+    queryFn: async () => (await api.get<IdName[]>("/academic-years")).data,
   });
 
   const createMutation = useMutation({
-    mutationFn: (data: FormData) => api.post("/teacher-assignments", data),
+    mutationFn: async (data: { teacherId: string; subjectId: string; classroomId: string; academicYearId: string }) =>
+      (await api.post("/teacher-assignments", data)).data,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["teacher-assignments"] });
-      setShowForm(false);
-      reset();
+      toast.success("Affectation enregistrée");
+      setTeacherId("");
+      setSubjectId("");
+      setClassroomId("");
+      setAcademicYearId("");
+      setFormError(null);
     },
+    onError: (error) => setFormError(getErrorMessage(error)),
   });
 
-  const deleteMutation = useMutation({
-    mutationFn: (id: string) => api.delete(`/teacher-assignments/${id}`),
+  const removeMutation = useMutation({
+    mutationFn: async (id: string) => (await api.delete(`/teacher-assignments/${id}`)).data,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["teacher-assignments"] });
+      toast.success("Affectation retirée");
+      setRemoveTarget(null);
     },
+    onError: (error) => toast.error(getErrorMessage(error)),
   });
 
-  const {
-    register,
-    handleSubmit,
-    reset,
-    formState: { errors, isSubmitting },
-  } = useForm<FormData>({
-    resolver: zodResolver(schema),
-  });
+  const handleCreate = (event: React.FormEvent) => {
+    event.preventDefault();
+    if (!teacherId || !subjectId || !classroomId || !academicYearId) {
+      setFormError("Sélectionnez un enseignant, une matière, une classe et une année scolaire.");
+      return;
+    }
+    setFormError(null);
+    createMutation.mutate({ teacherId, subjectId, classroomId, academicYearId });
+  };
+
+  const assignments = assignmentsQuery.data ?? [];
 
   return (
     <div>
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">
-          Affectations Enseignants
-        </h1>
-        <button
-          onClick={() => setShowForm(!showForm)}
-          className="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-md hover:bg-blue-700"
-        >
-          {showForm ? "Annuler" : "Nouvelle affectation"}
-        </button>
+      <PageHeader
+        title="Affectations"
+        description="Qui enseigne quelle matière, dans quelle classe, pour quelle année. Sans modification : retirer puis recréer."
+      />
+
+      <div className="flex flex-col gap-p6">
+        <Card className="p-p4">
+          <h2 className="text-sb16 text-(--skools-text-primary)">Nouvelle affectation</h2>
+          <form onSubmit={handleCreate} className="mt-p4 grid grid-cols-1 gap-p4 md:grid-cols-2" noValidate>
+            <div className="flex flex-col gap-p1">
+              <span className="text-m12 text-(--skools-text-primary)">Enseignant</span>
+              <Select
+                label="Choisir…"
+                value={teacherId}
+                onChange={setTeacherId}
+                options={(teachersQuery.data ?? []).map((teacher) => ({
+                  label: `${teacher.lastName} ${teacher.firstName}`,
+                  value: teacher.id,
+                }))}
+              />
+            </div>
+            <div className="flex flex-col gap-p1">
+              <span className="text-m12 text-(--skools-text-primary)">Matière</span>
+              <Select
+                label="Choisir…"
+                value={subjectId}
+                onChange={setSubjectId}
+                options={(subjectsQuery.data ?? []).map((subject) => ({
+                  label: subject.name,
+                  value: subject.id,
+                }))}
+              />
+            </div>
+            <div className="flex flex-col gap-p1">
+              <span className="text-m12 text-(--skools-text-primary)">Classe</span>
+              <Select
+                label="Choisir…"
+                value={classroomId}
+                onChange={setClassroomId}
+                options={(classroomsQuery.data ?? []).map((classroom) => ({
+                  label: classroom.name,
+                  value: classroom.id,
+                }))}
+              />
+            </div>
+            <div className="flex flex-col gap-p1">
+              <span className="text-m12 text-(--skools-text-primary)">Année scolaire</span>
+              <Select
+                label="Choisir…"
+                value={academicYearId}
+                onChange={setAcademicYearId}
+                options={(yearsQuery.data ?? []).map((year) => ({ label: year.name, value: year.id }))}
+              />
+            </div>
+            {formError && (
+              <p role="alert" className="text-r14 text-(--common-red) md:col-span-2">
+                {formError}
+              </p>
+            )}
+            <div className="md:col-span-2">
+              <Button
+                type="submit"
+                fullWidth={false}
+                variant={createMutation.isPending ? "loading" : "primary"}
+                disabled={createMutation.isPending}
+              >
+                Affecter
+              </Button>
+            </div>
+          </form>
+        </Card>
+
+        {assignmentsQuery.isError ? (
+          <ErrorState
+            message={getErrorMessage(assignmentsQuery.error)}
+            onRetry={() => {
+              void assignmentsQuery.refetch();
+            }}
+          />
+        ) : assignmentsQuery.isPending ? (
+          <Skeleton className="h-[200px] rounded-r2" />
+        ) : assignments.length === 0 ? (
+          <EmptyState
+            title="Aucune affectation pour le moment"
+            description="Créez la première affectation avec le formulaire ci-dessus."
+          />
+        ) : (
+          <TableContainer>
+            <Table>
+              <TableHeader>
+                <tr>
+                  <TableHeaderCell>Enseignant</TableHeaderCell>
+                  <TableHeaderCell>Matière</TableHeaderCell>
+                  <TableHeaderCell>Classe</TableHeaderCell>
+                  <TableHeaderCell>Année scolaire</TableHeaderCell>
+                  <TableHeaderCell>
+                    <span className="sr-only">Actions</span>
+                  </TableHeaderCell>
+                </tr>
+              </TableHeader>
+              <TableBody>
+                {assignments.map((assignment) => (
+                  <TableRow key={assignment.id}>
+                    <TableCellPrimary>
+                      {assignment.teacher.lastName} {assignment.teacher.firstName}
+                    </TableCellPrimary>
+                    <TableCell>{assignment.subject.name}</TableCell>
+                    <TableCell>{assignment.classroom.name}</TableCell>
+                    <TableCell>
+                      <span className="inline-flex items-center gap-p2">
+                        {assignment.academicYear.name}
+                        {assignment.academicYear.isCurrent && (
+                          <Badge variant="success">En cours</Badge>
+                        )}
+                      </span>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex justify-end">
+                        <button
+                          type="button"
+                          aria-label={`Retirer l'affectation de ${assignment.teacher.firstName} ${assignment.teacher.lastName}`}
+                          onClick={() => setRemoveTarget(assignment)}
+                          className="text-r12 font-medium text-(--common-red) hover:underline"
+                        >
+                          Retirer
+                        </button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </TableContainer>
+        )}
       </div>
 
-      {showForm && (
-        <form
-          onSubmit={handleSubmit((data) => createMutation.mutate(data))}
-          className="bg-white p-6 rounded-lg border border-gray-200 mb-6 space-y-4"
-        >
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700">
-                Enseignant
-              </label>
-              <select
-                {...register("teacherId")}
-                className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
+      <Modal.Root
+        size="sm"
+        open={removeTarget !== null}
+        onOpenChange={(open) => {
+          if (!open) setRemoveTarget(null);
+        }}
+      >
+        {removeTarget && (
+          <Modal.Content labelledBy="remove-assignment-title">
+            <Modal.Header>
+              <Modal.Title id="remove-assignment-title">Retirer cette affectation ?</Modal.Title>
+              <Modal.Description>
+                {removeTarget.teacher.firstName} {removeTarget.teacher.lastName} —{" "}
+                {removeTarget.subject.name} en {removeTarget.classroom.name}. Pour la modifier,
+                retirez-la puis recréez-la.
+              </Modal.Description>
+            </Modal.Header>
+            <Modal.Footer>
+              <Modal.Close>
+                <Button variant="secondary" fullWidth={false}>
+                  Annuler
+                </Button>
+              </Modal.Close>
+              <Button
+                fullWidth={false}
+                variant={removeMutation.isPending ? "loading" : "primary"}
+                disabled={removeMutation.isPending}
+                onClick={() => removeMutation.mutate(removeTarget.id)}
+                className="bg-(--common-red)!"
               >
-                <option value="">Sélectionner</option>
-                {teachers.map((teacher: any) => (
-                  <option key={teacher.id} value={teacher.id}>
-                    {teacher.lastName} {teacher.firstName}
-                  </option>
-                ))}
-              </select>
-              {errors.teacherId && (
-                <p className="mt-1 text-sm text-red-600">
-                  {errors.teacherId.message}
-                </p>
-              )}
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700">
-                Matière
-              </label>
-              <select
-                {...register("subjectId")}
-                className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
-              >
-                <option value="">Sélectionner</option>
-                {subjects.map((subject: any) => (
-                  <option key={subject.id} value={subject.id}>
-                    {subject.name}
-                  </option>
-                ))}
-              </select>
-              {errors.subjectId && (
-                <p className="mt-1 text-sm text-red-600">
-                  {errors.subjectId.message}
-                </p>
-              )}
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700">
-                Classe
-              </label>
-              <select
-                {...register("classroomId")}
-                className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
-              >
-                <option value="">Sélectionner</option>
-                {classrooms.map((classroom: any) => (
-                  <option key={classroom.id} value={classroom.id}>
-                    {classroom.name}
-                  </option>
-                ))}
-              </select>
-              {errors.classroomId && (
-                <p className="mt-1 text-sm text-red-600">
-                  {errors.classroomId.message}
-                </p>
-              )}
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700">
-                Année scolaire
-              </label>
-              <select
-                {...register("academicYearId")}
-                className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
-              >
-                <option value="">Sélectionner</option>
-                {academicYears.map((year: any) => (
-                  <option key={year.id} value={year.id}>
-                    {year.name} {year.isCurrent ? "(Courante)" : ""}
-                  </option>
-                ))}
-              </select>
-              {errors.academicYearId && (
-                <p className="mt-1 text-sm text-red-600">
-                  {errors.academicYearId.message}
-                </p>
-              )}
-            </div>
-          </div>
-
-          <button
-            type="submit"
-            disabled={isSubmitting}
-            className="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-md hover:bg-blue-700 disabled:opacity-50"
-          >
-            {isSubmitting ? "Affectation..." : "Créer l'affectation"}
-          </button>
-        </form>
-      )}
-
-      {isLoading ? (
-        <p className="text-gray-500">Chargement...</p>
-      ) : assignments.length === 0 ? (
-        <p className="text-gray-500">Aucune affectation pour le moment.</p>
-      ) : (
-        <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                  Enseignant
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                  Matière
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                  Classe
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                  Année
-                </th>
-                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">
-                  Actions
-                </th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-200">
-              {assignments.map((assignment: any) => (
-                <tr key={assignment.id}>
-                  <td className="px-6 py-4 text-sm font-medium text-gray-900">
-                    {assignment.teacher?.lastName}{" "}
-                    {assignment.teacher?.firstName}
-                  </td>
-                  <td className="px-6 py-4 text-sm text-gray-600">
-                    {assignment.subject?.name}
-                  </td>
-                  <td className="px-6 py-4 text-sm text-gray-600">
-                    {assignment.classroom?.name}
-                  </td>
-                  <td className="px-6 py-4 text-sm text-gray-600">
-                    {assignment.academicYear?.name}
-                  </td>
-                  <td className="px-6 py-4 text-sm text-right">
-                    <button
-                      onClick={() => {
-                        if (confirm("Supprimer cette affectation ?")) {
-                          deleteMutation.mutate(assignment.id);
-                        }
-                      }}
-                      className="text-red-600 hover:text-red-800"
-                    >
-                      Supprimer
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
+                Retirer
+              </Button>
+            </Modal.Footer>
+          </Modal.Content>
+        )}
+      </Modal.Root>
     </div>
   );
 }
