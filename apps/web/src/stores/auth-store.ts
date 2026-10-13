@@ -1,12 +1,8 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
+import type { AuthUser } from "../types/api";
 
-interface User {
-  id: string;
-  email: string;
-  firstName: string;
-  lastName: string;
-}
+type User = AuthUser;
 
 interface AuthState {
   user: User | null;
@@ -22,6 +18,10 @@ interface AuthState {
     establishmentId?: string | null;
     role?: string | null;
   }) => void;
+  /** Mise à jour du profil sans toucher aux tokens (ex. après PATCH /users ou GET /auth/me). */
+  setUser: (user: User) => void;
+  /** Mémorise l'établissement courant (ex. après POST /establishments qui régénère les tokens). */
+  setEstablishment: (establishmentId: string | null, role: string | null) => void;
   logout: () => void;
   isAuthenticated: () => boolean;
   setHasHydrated: (hasHydrated: boolean) => void;
@@ -45,6 +45,11 @@ export const useAuthStore = create<AuthState>()(
           establishmentId: data.establishmentId ?? null,
           role: data.role ?? null,
         }),
+
+      setUser: (user) => set({ user }),
+
+      setEstablishment: (establishmentId, role) =>
+        set({ establishmentId, role }),
 
       logout: () =>
         set({
