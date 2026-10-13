@@ -34,6 +34,16 @@ export class ParentsController {
     return this.parentsService.findAll(req.user.establishmentId);
   }
 
+  // Avant '/:id' : sinon 'me' est capturé comme UUID invalide (400).
+  @Get('me')
+  @Roles(Role.PARENT)
+  findMe(@Request() req: any) {
+    return this.parentsService.findByUserId(
+      req.user.id,
+      req.user.establishmentId,
+    );
+  }
+
   @Get(':id')
   findOne(@Param('id', ParseUUIDPipe) id: string, @Request() req: any) {
     return this.parentsService.findOne(id, req.user.establishmentId);

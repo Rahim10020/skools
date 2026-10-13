@@ -4,6 +4,7 @@ import {
   ConflictException,
 } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service.js';
+import { validateDossierUserLink } from '../../common/helpers/dossier-user-link.js';
 import { CreateTeacherDto } from './dto/create-teacher.dto.js';
 import { UpdateTeacherDto } from './dto/update-teacher.dto.js';
 
@@ -27,6 +28,15 @@ export class TeachersService {
       }
     }
 
+    if (dto.userId) {
+      await validateDossierUserLink(
+        this.prisma,
+        'teacher',
+        establishmentId,
+        dto.userId,
+      );
+    }
+
     return this.prisma.teacher.create({
       data: {
         establishmentId,
@@ -38,6 +48,7 @@ export class TeachersService {
         email: dto.email,
         address: dto.address,
         specialty: dto.specialty,
+        userId: dto.userId,
       },
     });
   }
@@ -61,8 +72,33 @@ export class TeachersService {
     return teacher;
   }
 
+  /** Dossier enseignant du compte connecté (rôle TEACHER). */
+  async findByUserId(userId: string, establishmentId: string) {
+    const teacher = await this.prisma.teacher.findFirst({
+      where: { userId, establishmentId },
+      select: { id: true, firstName: true, lastName: true, matricule: true },
+    });
+
+    if (!teacher) {
+      throw new NotFoundException(
+        'Dossier enseignant introuvable pour ce compte',
+      );
+    }
+
+    return teacher;
+  }
+
   async update(id: string, establishmentId: string, dto: UpdateTeacherDto) {
     await this.findOne(id, establishmentId);
+
+    if (dto.userId) {
+      await validateDossierUserLink(
+        this.prisma,
+        'teacher',
+        establishmentId,
+        dto.userId,
+      );
+    }
 
     return this.prisma.teacher.update({
       where: { id },

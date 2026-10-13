@@ -4,6 +4,7 @@ import {
   ConflictException,
 } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service.js';
+import { validateDossierUserLink } from '../../common/helpers/dossier-user-link.js';
 import { CreateStudentDto } from './dto/create-student.dto.js';
 import { UpdateStudentDto } from './dto/update-student.dto.js';
 
@@ -27,6 +28,15 @@ export class StudentsService {
       }
     }
 
+    if (dto.userId) {
+      await validateDossierUserLink(
+        this.prisma,
+        'student',
+        establishmentId,
+        dto.userId,
+      );
+    }
+
     return this.prisma.student.create({
       data: {
         establishmentId,
@@ -38,6 +48,7 @@ export class StudentsService {
         placeOfBirth: dto.placeOfBirth,
         phone: dto.phone,
         address: dto.address,
+        userId: dto.userId,
       },
     });
   }
@@ -77,6 +88,15 @@ export class StudentsService {
 
   async update(id: string, establishmentId: string, dto: UpdateStudentDto) {
     await this.findOne(id, establishmentId);
+
+    if (dto.userId) {
+      await validateDossierUserLink(
+        this.prisma,
+        'student',
+        establishmentId,
+        dto.userId,
+      );
+    }
 
     return this.prisma.student.update({
       where: { id },

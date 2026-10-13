@@ -3,6 +3,7 @@ import {
   IsNotEmpty,
   IsOptional,
   IsString,
+  IsUUID,
   MinLength,
 } from 'class-validator';
 
@@ -32,4 +33,9 @@ export class CreateParentDto {
   @IsString()
   @IsOptional()
   profession?: string;
+
+  /** Liaison compte → dossier (onboarding). UUID d'un User membre de l'établissement. */
+  @IsUUID()
+  @IsOptional()
+  userId?: string;
 }

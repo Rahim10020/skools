@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { CrudPage } from "../../components/crud/CrudPage";
-import { omitEmptyStrings } from "../../components/crud/crud-helpers";
+import { omitEmptyStrings, optionalUuidString } from "../../components/crud/crud-helpers";
 
 interface Teacher {
   id: string;
@@ -12,6 +12,7 @@ interface Teacher {
   email: string | null;
   specialty: string | null;
   address: string | null;
+  userId: string | null;
 }
 
 const schema = z.object({
@@ -23,6 +24,7 @@ const schema = z.object({
   email: z.string().email("Email invalide").optional().or(z.literal("")),
   specialty: z.string().optional(),
   address: z.string().optional(),
+  userId: optionalUuidString(),
 });
 
 const fullName = (teacher: Teacher) => `${teacher.lastName} ${teacher.firstName}`;
@@ -51,6 +53,13 @@ export default function TeachersPage() {
         { name: "email", label: "Email", type: "text", placeholder: "Ex : awa.diallo@ecole.sn" },
         { name: "specialty", label: "Spécialité", type: "text", placeholder: "Ex : Mathématiques" },
         { name: "address", label: "Adresse", type: "text" },
+        {
+          name: "userId",
+          label: "Compte utilisateur",
+          type: "text",
+          placeholder: "UUID du compte (optionnel)",
+          helperText: "Lier ce dossier à un compte membre de l'établissement.",
+        },
       ]}
       schema={schema}
       toDefaults={(teacher) => ({
@@ -62,6 +71,7 @@ export default function TeachersPage() {
         email: teacher?.email ?? "",
         specialty: teacher?.specialty ?? "",
         address: teacher?.address ?? "",
+        userId: teacher?.userId ?? "",
       })}
       toSubmit={(values) =>
         omitEmptyStrings({
@@ -73,6 +83,7 @@ export default function TeachersPage() {
           email: values.email,
           specialty: values.specialty,
           address: values.address,
+          userId: values.userId,
         })
       }
       nameOf={fullName}

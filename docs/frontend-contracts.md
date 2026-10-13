@@ -41,9 +41,10 @@
 
 ## Personnes (JWT)
 
-- `students` CRUD : `firstName (≥2), lastName (≥2), matricule?, gender?, dateOfBirth? ISO, placeOfBirth?, phone?, address?`. Pas de `?classroomId=` ni `?search=`.
-- `teachers` CRUD : `firstName (≥2), lastName (≥2), matricule?, gender?, phone?, email? (IsEmail), address?, specialty?`.
-- `parents` CRUD : `firstName (≥2), lastName (≥2), phone?, email?, address?, profession?`.
+- `students` CRUD : `firstName (≥2), lastName (≥2), matricule?, gender?, dateOfBirth? ISO, placeOfBirth?, phone?, address?, userId? UUID` (+ `GET /students/me` rôle STUDENT). `userId` = liaison compte → dossier : compte existant, membre actif de l'établissement, rôle STUDENT, non déjà lié (404/400/409 sinon).
+- `teachers` CRUD : `firstName (≥2), lastName (≥2), matricule?, gender?, phone?, email? (IsEmail), address?, specialty?, userId? UUID` (+ `GET /teachers/me` rôle TEACHER, mêmes garde-fous, rôle attendu TEACHER).
+- `parents` CRUD : `firstName (≥2), lastName (≥2), phone?, email?, address?, profession?, userId? UUID` (+ `GET /parents/me` rôle PARENT, mêmes garde-fous, rôle attendu PARENT).
+- `user-establishments` (DIRECTOR) : `GET /` (membres actifs), `POST /` (`email, role` sauf SUPER_ADMIN ; 404 compte inconnu, 409 déjà dans un établissement), `PATCH /:id` (`role`, sauf soi-même), `DELETE /:id` (sauf soi-même).
 - `POST /parent-students` : `parentId UUID, studentId UUID, relation?: FATHER\|MOTHER\|GUARDIAN\|OTHER, isPrimary?`. `GET /parent-students/student/:studentId`, `GET /parent-students/parent/:parentId`, `DELETE /:id` (id de la **liaison**). 409 si déjà liés. Pas de PATCH (unlink + re-link).
 - `POST /teacher-assignments` : `teacherId, subjectId, classroomId, academicYearId` (tous UUID requis). `GET /`, `DELETE /:id`. 409 si doublon, 400 si FK hors établissement. Pas de PATCH/GET :id.
 - `POST /enrollments` : `studentId, classroomId, academicYearId (UUID), status?: PENDING\|APPROVED\|REJECTED\|WITHDRAWN, notes?`. CRUD complet. 409 doublon (student+year). Pas de filtre query — filtrer côté client.

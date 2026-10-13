@@ -34,6 +34,16 @@ export class TeachersController {
     return this.teachersService.findAll(req.user.establishmentId);
   }
 
+  // Avant '/:id' : sinon 'me' est capturé comme UUID invalide (400).
+  @Get('me')
+  @Roles(Role.TEACHER)
+  findMe(@Request() req: any) {
+    return this.teachersService.findByUserId(
+      req.user.id,
+      req.user.establishmentId,
+    );
+  }
+
   @Get(':id')
   findOne(@Param('id', ParseUUIDPipe) id: string, @Request() req: any) {
     return this.teachersService.findOne(id, req.user.establishmentId);

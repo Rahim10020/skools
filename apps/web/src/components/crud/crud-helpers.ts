@@ -16,6 +16,20 @@ export function toOptionalNumber(value: string | undefined): number | undefined 
   return Number(value);
 }
 
+/** Champ UUID optionnel saisi en texte ("" = non renseigné, sinon UUID v4). */
+export const optionalUuidString = () =>
+  z
+    .string()
+    .trim()
+    .optional()
+    .refine(
+      (v) =>
+        v === undefined ||
+        v === "" ||
+        /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(v),
+      { message: "UUID invalide" },
+    );
+
 /** Supprime les chaînes vides (champs optionnels non renseignés). */
 export function omitEmptyStrings<T extends Record<string, unknown>>(obj: T): Partial<T> {
   const result: Record<string, unknown> = {};

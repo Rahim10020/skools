@@ -3,6 +3,7 @@ import { CrudPage } from "../../components/crud/CrudPage";
 import {
   formatDateFr,
   omitEmptyStrings,
+  optionalUuidString,
   toDateInput,
 } from "../../components/crud/crud-helpers";
 
@@ -16,6 +17,7 @@ interface Student {
   placeOfBirth: string | null;
   phone: string | null;
   address: string | null;
+  userId: string | null;
 }
 
 const schema = z.object({
@@ -27,6 +29,7 @@ const schema = z.object({
   placeOfBirth: z.string().optional(),
   phone: z.string().optional(),
   address: z.string().optional(),
+  userId: optionalUuidString(),
 });
 
 const fullName = (student: Student) => `${student.lastName} ${student.firstName}`;
@@ -55,6 +58,13 @@ export default function StudentsPage() {
         { name: "placeOfBirth", label: "Lieu de naissance", type: "text" },
         { name: "phone", label: "Téléphone", type: "text" },
         { name: "address", label: "Adresse", type: "text" },
+        {
+          name: "userId",
+          label: "Compte utilisateur",
+          type: "text",
+          placeholder: "UUID du compte (optionnel)",
+          helperText: "Lier ce dossier à un compte membre de l'établissement.",
+        },
       ]}
       schema={schema}
       toDefaults={(student) => ({
@@ -66,6 +76,7 @@ export default function StudentsPage() {
         placeOfBirth: student?.placeOfBirth ?? "",
         phone: student?.phone ?? "",
         address: student?.address ?? "",
+        userId: student?.userId ?? "",
       })}
       toSubmit={(values) =>
         omitEmptyStrings({
@@ -77,6 +88,7 @@ export default function StudentsPage() {
           placeOfBirth: values.placeOfBirth,
           phone: values.phone,
           address: values.address,
+          userId: values.userId,
         })
       }
       nameOf={fullName}

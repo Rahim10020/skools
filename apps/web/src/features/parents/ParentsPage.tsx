@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { CrudPage } from "../../components/crud/CrudPage";
-import { omitEmptyStrings } from "../../components/crud/crud-helpers";
+import { omitEmptyStrings, optionalUuidString } from "../../components/crud/crud-helpers";
 
 interface Parent {
   id: string;
@@ -10,6 +10,7 @@ interface Parent {
   email: string | null;
   profession: string | null;
   address: string | null;
+  userId: string | null;
 }
 
 const schema = z.object({
@@ -19,6 +20,7 @@ const schema = z.object({
   email: z.string().email("Email invalide").optional().or(z.literal("")),
   profession: z.string().optional(),
   address: z.string().optional(),
+  userId: optionalUuidString(),
 });
 
 const fullName = (parent: Parent) => `${parent.lastName} ${parent.firstName}`;
@@ -45,6 +47,13 @@ export default function ParentsPage() {
         { name: "email", label: "Email", type: "text" },
         { name: "profession", label: "Profession", type: "text" },
         { name: "address", label: "Adresse", type: "text" },
+        {
+          name: "userId",
+          label: "Compte utilisateur",
+          type: "text",
+          placeholder: "UUID du compte (optionnel)",
+          helperText: "Lier ce dossier à un compte membre de l'établissement.",
+        },
       ]}
       schema={schema}
       toDefaults={(parent) => ({
@@ -54,6 +63,7 @@ export default function ParentsPage() {
         email: parent?.email ?? "",
         profession: parent?.profession ?? "",
         address: parent?.address ?? "",
+        userId: parent?.userId ?? "",
       })}
       toSubmit={(values) =>
         omitEmptyStrings({
@@ -63,6 +73,7 @@ export default function ParentsPage() {
           email: values.email,
           profession: values.profession,
           address: values.address,
+          userId: values.userId,
         })
       }
       nameOf={fullName}

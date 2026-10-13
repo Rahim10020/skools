@@ -49,6 +49,7 @@ export const NAV_BY_ROLE: Record<string, string[]> = {
     "/attendances",
     "/schedules",
     "/discipline",
+    "/users",
     "/settings",
     "/profil",
   ],

@@ -1,5 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service.js';
+import { validateDossierUserLink } from '../../common/helpers/dossier-user-link.js';
 import { CreateParentDto } from './dto/create-parent.dto.js';
 import { UpdateParentDto } from './dto/update-parent.dto.js';
 
@@ -8,6 +9,15 @@ export class ParentsService {
   constructor(private readonly prisma: PrismaService) {}
 
   async create(establishmentId: string, dto: CreateParentDto) {
+    if (dto.userId) {
+      await validateDossierUserLink(
+        this.prisma,
+        'parent',
+        establishmentId,
+        dto.userId,
+      );
+    }
+
     return this.prisma.parent.create({
       data: {
         establishmentId,
@@ -17,6 +27,7 @@ export class ParentsService {
         email: dto.email,
         address: dto.address,
         profession: dto.profession,
+        userId: dto.userId,
       },
     });
   }
@@ -40,8 +51,31 @@ export class ParentsService {
     return parent;
   }
 
+  /** Dossier parent du compte connecté (rôle PARENT). */
+  async findByUserId(userId: string, establishmentId: string) {
+    const parent = await this.prisma.parent.findFirst({
+      where: { userId, establishmentId },
+      select: { id: true, firstName: true, lastName: true },
+    });
+
+    if (!parent) {
+      throw new NotFoundException('Dossier parent introuvable pour ce compte');
+    }
+
+    return parent;
+  }
+
   async update(id: string, establishmentId: string, dto: UpdateParentDto) {
     await this.findOne(id, establishmentId);
+
+    if (dto.userId) {
+      await validateDossierUserLink(
+        this.prisma,
+        'parent',
+        establishmentId,
+        dto.userId,
+      );
+    }
 
     return this.prisma.parent.update({
       where: { id },

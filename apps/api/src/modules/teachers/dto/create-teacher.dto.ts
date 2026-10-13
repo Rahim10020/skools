@@ -3,6 +3,7 @@ import {
   IsNotEmpty,
   IsOptional,
   IsString,
+  IsUUID,
   MinLength,
 } from 'class-validator';
 
@@ -40,4 +41,9 @@ export class CreateTeacherDto {
   @IsString()
   @IsOptional()
   specialty?: string;
+
+  /** Liaison compte → dossier (onboarding). UUID d'un User membre de l'établissement. */
+  @IsUUID()
+  @IsOptional()
+  userId?: string;
 }

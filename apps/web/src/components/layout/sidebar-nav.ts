@@ -32,10 +32,9 @@ export interface SidebarNavGroup {
 }
 
 /**
- * Navigation du shell. Les 21 routes existantes, groupées par domaine.
- * Filtrage par rôle : volontairement non appliqué en Phase 3 (l'API ne
- * contrôle aucun rôle — voir docs/frontend-contracts.md). La structure
- * `allowedRoles` accueillera la matrice quand elle sera définie (Phase 6).
+ * Navigation du shell. Les routes existantes, groupées par domaine.
+ * Filtrage par rôle via `canAccess` (matrice docs/access-matrix.md) dans Sidebar.
+ * "Utilisateurs & rôles" n'est visible que pour DIRECTOR (groupe Administration).
  */
 export const SIDEBAR_NAV: SidebarNavGroup[] = [
   {
@@ -79,6 +78,12 @@ export const SIDEBAR_NAV: SidebarNavGroup[] = [
       { to: "/attendances", label: "Présences", icon: CheckIcon },
       { to: "/schedules", label: "Emplois du temps", icon: DateIcon },
       { to: "/discipline", label: "Discipline", icon: InfoCircleIcon },
+    ],
+  },
+  {
+    title: "Administration",
+    items: [
+      { to: "/users", label: "Utilisateurs & rôles", icon: ContactsIcon },
     ],
   },
 ];
