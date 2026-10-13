@@ -31,6 +31,7 @@ import SchedulesPage from "./features/schedules/SchedulesPage";
 import ReportCardsPage from "./features/report-cards/ReportCardsPage";
 import DisciplinePage from "./features/discipline/DisciplinePage";
 import FoundationPreviewPage from "./features/foundation/FoundationPreviewPage";
+import UiPreviewPage from "./features/foundation/UiPreviewPage";
 
 initTheme();
 
@@ -49,6 +50,8 @@ createRoot(document.getElementById("root")!).render(
             path="/foundation-preview"
             element={<FoundationPreviewPage />}
           />
+          {/* Démo primitives Phase 2 — temporaire, supprimée en Phase 3 */}
+          <Route path="/ui-preview" element={<UiPreviewPage />} />
 
           {/* Routes protégées */}
           <Route element={<ProtectedRoute />}>

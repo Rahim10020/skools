@@ -1,0 +1,54 @@
+import { CheckIcon } from "../icons/CheckIcon";
+
+export type CheckboxProps = {
+  checked?: boolean;
+  onChange?: (checked: boolean) => void;
+  className?: string;
+  disabled?: boolean;
+  id?: string;
+  label?: string;
+};
+
+export function Checkbox({
+  checked = false,
+  onChange,
+  className,
+  disabled,
+  id,
+  label,
+}: CheckboxProps) {
+  const base =
+    "flex size-[16px] shrink-0 items-center justify-center transition-colors duration-150";
+
+  const visual = checked
+    ? "rounded-(--radius-r1) bg-(--primary) text-(--common-white)"
+    : "rounded-(--radius-r1) border border-(--skools-border-subtle) bg-transparent";
+
+  return (
+    <label
+      htmlFor={id}
+      className={["relative inline-flex shrink-0 items-center gap-p2", disabled ? "opacity-50" : "cursor-pointer"]
+        .filter(Boolean)
+        .join(" ")}
+    >
+      <span className="relative inline-flex shrink-0">
+        <input
+          id={id}
+          type="checkbox"
+          disabled={disabled}
+          checked={checked}
+          onChange={(e) => onChange?.(e.target.checked)}
+          className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+        />
+        <span className={[base, visual, className].filter(Boolean).join(" ")}>
+          {checked && <CheckIcon className="size-[12px]" />}
+        </span>
+      </span>
+      {label && (
+        <span className="text-r14 text-(--skools-text-primary) select-none">
+          {label}
+        </span>
+      )}
+    </label>
+  );
+}
