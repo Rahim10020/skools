@@ -54,10 +54,12 @@ export default function LoginPage() {
 
   return (
     <div className="flex flex-col gap-p5">
-      <div className="text-center">
-        <h1 className="text-sb20 text-(--skools-text-primary)">Connexion</h1>
+      <div className="text-center md:text-left">
+        <h1 className="text-dp20 sm:text-dp24 text-(--skools-text-primary)">
+          Bon retour parmi nous
+        </h1>
         <p className="mt-p1 text-r14 text-(--skools-text-muted)">
-          Connectez-vous à votre compte
+          Connectez-vous à votre compte Skools
         </p>
       </div>
 
@@ -101,7 +103,12 @@ export default function LoginPage() {
 
         <AuthRootError message={errors.root?.message} />
 
-        <Button type="submit" variant={isSubmitting ? "loading" : "primary"} disabled={isSubmitting}>
+        <Button
+          type="submit"
+          variant={isSubmitting ? "loading" : "primary"}
+          disabled={isSubmitting}
+          iconPushed={!isSubmitting}
+        >
           {isSubmitting ? "Connexion…" : "Se connecter"}
         </Button>
       </form>

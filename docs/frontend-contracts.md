@@ -2,7 +2,7 @@
 
 > Gelé le 2026-10-13. Source : `apps/api/src/**/*.controller.ts`, `dto/*.ts`, `main.ts`, `prisma/schema.prisma`.
 > Règle : le frontend s'adapte aux contrats ci-dessous. Modifications `apps/api` autorisées depuis la Phase 6 (matrice `docs/access-matrix.md`).
-> Base URL dev : `http://localhost:3000/api/v1` (CORS autorise uniquement `http://localhost:5173`).
+> Base URL dev : `http://localhost:3000/api/v1` (CORS autorise `FRONTEND_URL`, défaut `http://localhost:5173`).
 > Auth : `Authorization: Bearer <accessToken>`. Global : `ValidationPipe { whitelist, forbidNonWhitelisted, transform }`
 > → **tout champ non déclaré dans le DTO = 400**. `:id` = UUID (`ParseUUIDPipe` → 400 si non-UUID).
 > **Rôles (Phase 6) : `JwtAuthGuard + RolesGuard` sur tous les controllers sauf `auth`.**
@@ -75,7 +75,8 @@
 3. `PATCH /grades/:id` ignore `examId/studentId`.
 4. Inexistants → 404 Nest (pas métier) : `GET /grades/:id`, `PATCH /teacher-assignments/:id`, `PATCH /parent-students`, `PATCH|DELETE /attendances`, tout `POST|PATCH|DELETE /report-cards`, `GET /attendances?studentId=`.
 5. `GET /report-cards/student` : `periodId` invalide → 200 `[]`, pas 400 (incohérent avec `studentId/academicYearId` stricts).
-6. CORS : seul `http://localhost:5173` autorisé — prévoir mise à jour `main.ts` au déploiement (hors périmètre frontend, à signaler).
+6. CORS : origines via `FRONTEND_URL` (liste séparée par virgules) — mettre à jour au déploiement.
+7. `JWT_SECRET` obligatoire : le boot API refuse sans lui (fail-fast §8).
 7. `POST /establishments` accède à `authService['generateTokens']` (privé) — fragile, ne pas en dépendre au-delà du contrat de réponse.
 
 ## Diagnostic bug notes/présences (todo.txt) — verdict Phase 0 : bug UI, pas backend

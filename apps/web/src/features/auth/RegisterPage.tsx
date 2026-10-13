@@ -57,9 +57,13 @@ export default function RegisterPage() {
 
   return (
     <div className="flex flex-col gap-p5">
-      <div className="text-center">
-        <h1 className="text-sb20 text-(--skools-text-primary)">Inscription</h1>
-        <p className="mt-p1 text-r14 text-(--skools-text-muted)">Créer un compte</p>
+      <div className="text-center md:text-left">
+        <h1 className="text-dp20 sm:text-dp24 text-(--skools-text-primary)">
+          Créer votre compte
+        </h1>
+        <p className="mt-p1 text-r14 text-(--skools-text-muted)">
+          Rejoignez Skools en quelques secondes
+        </p>
       </div>
 
       <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-p4" noValidate>
@@ -140,7 +144,12 @@ export default function RegisterPage() {
 
         <AuthRootError message={errors.root?.message} />
 
-        <Button type="submit" variant={isSubmitting ? "loading" : "primary"} disabled={isSubmitting}>
+        <Button
+          type="submit"
+          variant={isSubmitting ? "loading" : "primary"}
+          disabled={isSubmitting}
+          iconPushed={!isSubmitting}
+        >
           {isSubmitting ? "Inscription…" : "S'inscrire"}
         </Button>
       </form>
