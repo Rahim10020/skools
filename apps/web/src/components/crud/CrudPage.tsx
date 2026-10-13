@@ -14,6 +14,7 @@ import {
   TableRow,
 } from "../ui/table";
 import { Input } from "../ui/input";
+import { INPUT_BASE, getBg } from "../ui/input-tokens";
 import { Select, type SelectOption } from "../ui/select";
 import { Textarea } from "../ui/textarea";
 import { Checkbox } from "../ui/checkbox";
@@ -23,7 +24,7 @@ import { EmptyState, ErrorState } from "../ui/empty-state";
 import { toast } from "../ui/toast";
 import PlusIcon from "../icons/PlusIcon";
 
-export type CrudFieldType = "text" | "number" | "date" | "select" | "textarea" | "checkbox";
+export type CrudFieldType = "text" | "number" | "date" | "time" | "select" | "textarea" | "checkbox";
 
 export interface CrudFieldDef {
   name: string;
@@ -60,11 +61,17 @@ export interface CrudPageProps<T> {
   emptyDescription?: string;
   queryKey: string[];
   endpoint: string;
+  /** URL de lecture (défaut : endpoint). Permet les query params de filtre (?classroomId=). */
+  listPath?: string;
+  /** Contenu additionnel entre l'en-tête et la liste (ex. filtre). */
+  toolbarExtra?: ReactNode;
   columns: CrudColumn<T>[];
   fields: CrudFieldDef[];
+  /** Champs du formulaire d'édition (défaut : fields). Ex. résolution disciplinaire (PATCH uniquement). */
+  editFields?: CrudFieldDef[];
   schema: CrudSchema;
   toDefaults: (item?: T) => Record<string, string>;
-  toSubmit: (values: Record<string, string>) => Record<string, unknown>;
+  toSubmit: (values: Record<string, string>, mode: "create" | "edit") => Record<string, unknown>;
   nameOf: (item: T) => string;
   idOf?: (item: T) => string;
 }
@@ -198,6 +205,18 @@ function CrudFormModal({
             />
           </FieldShell>
         );
+      case "time":
+        return (
+          <FieldShell label={field.label} required={field.required} error={error}>
+            <input
+              type="time"
+              aria-label={field.label}
+              value={value}
+              onChange={(e) => setValue(field.name, e.target.value)}
+              className={[INPUT_BASE, "px-(--spacing-p4)", getBg(!!error)].join(" ")}
+            />
+          </FieldShell>
+        );
       case "number":
         return (
           <FieldShell label={field.label} required={field.required} error={error}>
@@ -274,8 +293,11 @@ export function CrudPage<T>({
   emptyDescription,
   queryKey,
   endpoint,
+  listPath,
+  toolbarExtra,
   columns,
   fields,
+  editFields,
   schema,
   toDefaults,
   toSubmit,
@@ -286,18 +308,23 @@ export function CrudPage<T>({
   const [editing, setEditing] = useState<T | null | undefined>(undefined);
   const [deleteTarget, setDeleteTarget] = useState<T | null>(null);
 
-  const { list, createOne, updateOne, removeOne, invalidate } = useCrudResource<T>(endpoint, queryKey);
+  const { list, createOne, updateOne, removeOne, invalidate } = useCrudResource<T>(
+    endpoint,
+    queryKey,
+    listPath,
+  );
   const items = list.data ?? [];
+  const formFields = editing ? (editFields ?? fields) : fields;
 
   const handleCreate = (values: Record<string, string>) =>
-    createOne.mutateAsync(toSubmit(values)).then(() => {
+    createOne.mutateAsync(toSubmit(values, "create")).then(() => {
       invalidate();
       toast.success("Enregistré avec succès");
       setEditing(undefined);
     });
 
   const handleUpdate = (item: T) => (values: Record<string, string>) =>
-    updateOne.mutateAsync({ id: idOf(item), data: toSubmit(values) }).then(() => {
+    updateOne.mutateAsync({ id: idOf(item), data: toSubmit(values, "edit") }).then(() => {
       invalidate();
       toast.success("Modifications enregistrées");
       setEditing(undefined);
@@ -326,6 +353,8 @@ export function CrudPage<T>({
           </Button>
         }
       />
+
+      {toolbarExtra && <div className="mb-p6">{toolbarExtra}</div>}
 
       {list.isError ? (
         <ErrorState
@@ -424,7 +453,7 @@ export function CrudPage<T>({
               key={editing === null ? "new" : idOf(editing)}
               title={editing === null ? createLabel : `Modifier ${nameOf(editing)}`}
               submitLabel={editing === null ? "Créer" : "Enregistrer"}
-              fields={fields}
+              fields={formFields}
               schema={schema}
               defaults={toDefaults(editing ?? undefined)}
               pending={createOne.isPending || updateOne.isPending}
