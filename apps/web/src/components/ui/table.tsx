@@ -29,9 +29,10 @@ export function TableHeader({ className, ...rest }: ComponentProps<"thead">) {
   return <thead className={className} {...rest} />;
 }
 
-export function TableHeaderCell({ className, ...rest }: ThHTMLAttributes<HTMLTableCellElement>) {
+export function TableHeaderCell({ className, scope = "col", ...rest }: ThHTMLAttributes<HTMLTableCellElement>) {
   return (
     <th
+      scope={scope}
       className={[
         "px-p6 py-3 text-left text-r12 font-medium text-(--skools-text-muted)",
         className,

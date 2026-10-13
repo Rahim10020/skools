@@ -15,9 +15,13 @@ import { SchedulesService } from './schedules.service.js';
 import { CreateScheduleDto } from './dto/create-schedule.dto.js';
 import { UpdateScheduleDto } from './dto/update-schedule.dto.js';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard.js';
+import { RolesGuard } from '../../common/guards/roles.guard.js';
+import { Roles } from '../../common/decorators/roles.decorator.js';
+import { Role } from '@prisma/client';
 
 @Controller('schedules')
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard, RolesGuard)
+@Roles(Role.DIRECTOR, Role.ADMIN, Role.CENSEUR)
 export class SchedulesController {
   constructor(private readonly schedulesService: SchedulesService) {}
 
@@ -27,11 +31,29 @@ export class SchedulesController {
   }
 
   @Get()
+  @Roles(
+    Role.DIRECTOR,
+    Role.ADMIN,
+    Role.CENSEUR,
+    Role.SURVEILLANT,
+    Role.TEACHER,
+    Role.STUDENT,
+    Role.PARENT,
+  )
   findAll(@Request() req: any, @Query('classroomId') classroomId?: string) {
     return this.schedulesService.findAll(req.user.establishmentId, classroomId);
   }
 
   @Get(':id')
+  @Roles(
+    Role.DIRECTOR,
+    Role.ADMIN,
+    Role.CENSEUR,
+    Role.SURVEILLANT,
+    Role.TEACHER,
+    Role.STUDENT,
+    Role.PARENT,
+  )
   findOne(@Param('id', ParseUUIDPipe) id: string, @Request() req: any) {
     return this.schedulesService.findOne(id, req.user.establishmentId);
   }

@@ -14,9 +14,13 @@ import { SeriesService } from './series.service.js';
 import { CreateSeriesDto } from './dto/create-series.dto.js';
 import { UpdateSeriesDto } from './dto/update-series.dto.js';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard.js';
+import { RolesGuard } from '../../../common/guards/roles.guard.js';
+import { Roles } from '../../../common/decorators/roles.decorator.js';
+import { Role } from '@prisma/client';
 
 @Controller('series')
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard, RolesGuard)
+@Roles(Role.DIRECTOR, Role.ADMIN)
 export class SeriesController {
   constructor(private readonly seriesService: SeriesService) {}
 
@@ -26,11 +30,13 @@ export class SeriesController {
   }
 
   @Get()
+  @Roles(Role.DIRECTOR, Role.ADMIN, Role.CENSEUR)
   findAll(@Request() req: any) {
     return this.seriesService.findAll(req.user.establishmentId);
   }
 
   @Get(':id')
+  @Roles(Role.DIRECTOR, Role.ADMIN, Role.CENSEUR)
   findOne(@Param('id', ParseUUIDPipe) id: string, @Request() req: any) {
     return this.seriesService.findOne(id, req.user.establishmentId);
   }

@@ -14,9 +14,13 @@ import { TeachersService } from './teachers.service.js';
 import { CreateTeacherDto } from './dto/create-teacher.dto.js';
 import { UpdateTeacherDto } from './dto/update-teacher.dto.js';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard.js';
+import { RolesGuard } from '../../common/guards/roles.guard.js';
+import { Roles } from '../../common/decorators/roles.decorator.js';
+import { Role } from '@prisma/client';
 
 @Controller('teachers')
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard, RolesGuard)
+@Roles(Role.DIRECTOR, Role.ADMIN)
 export class TeachersController {
   constructor(private readonly teachersService: TeachersService) {}
 

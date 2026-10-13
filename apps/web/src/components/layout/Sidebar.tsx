@@ -1,20 +1,39 @@
 import { useEffect, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
 import { SIDEBAR_NAV, type SidebarNavItem } from "./sidebar-nav";
 import { useAuthStore } from "../../stores/auth-store";
 import { requestServerLogout } from "../../lib/api";
+import api from "../../lib/api";
+import { canAccess, roleLabel } from "../../lib/permissions";
 import { Avatar } from "../ui/avatar";
 import { Separator } from "../ui/separator";
 import { IconButton } from "../ui/icon-button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "../ui/tooltip";
 import { ThemeToggle } from "../ThemeToggle";
 import { Wordmark } from "../Wordmark";
+import { ActiveYearSelector } from "../ActiveYearSelector";
 import { Icon } from "../icons/Icon";
 import { ChevronBackIcon } from "../icons/ChevronBackIcon";
 import { LogOutIcon } from "../icons/LogOutIcon";
 import { XIcon } from "../icons/XIcon";
+import ProfilIcon from "../icons/ProfilIcon";
+import SettingsNavIcon from "../icons/SettingsNavIcon";
 
 const COLLAPSED_KEY = "skools-sidebar-collapsed";
+
+interface MeEstablishments {
+  establishments: Array<{
+    role: string;
+    establishment: { id: string; name: string };
+  }>;
+}
+
+/** Entrées de bas de sidebar (matrice : Profil partout, Paramètres restreint). */
+const BOTTOM_NAV: SidebarNavItem[] = [
+  { to: "/settings", label: "Paramètres", icon: SettingsNavIcon },
+  { to: "/profil", label: "Profil", icon: ProfilIcon },
+];
 
 /**
  * Le repli ne s'applique qu'au desktop (`lg:`) : sur mobile la sidebar
@@ -129,7 +148,22 @@ export function Sidebar({
 
   const fullName = [user?.firstName, user?.lastName].filter(Boolean).join(" ") || "Utilisateur";
   // Sans établissement (compte venant de s'inscrire) : navigation réduite.
-  const groups = establishmentId ? SIDEBAR_NAV : SIDEBAR_NAV.slice(0, 1);
+  // Matrice : on masque les entrées non autorisées, on ne grise jamais.
+  const groups = (establishmentId ? SIDEBAR_NAV : SIDEBAR_NAV.slice(0, 1))
+    .map((group) => ({
+      ...group,
+      items: group.items.filter((item) => canAccess(item.to, role)),
+    }))
+    .filter((group) => group.items.length > 0);
+  const bottomItems = BOTTOM_NAV.filter((item) => canAccess(item.to, role));
+
+  const meQuery = useQuery({
+    queryKey: ["me"],
+    queryFn: async () => (await api.get<MeEstablishments>("/auth/me")).data,
+  });
+  const establishmentName =
+    meQuery.data?.establishments.find((e) => e.establishment.id === establishmentId)
+      ?.establishment.name ?? null;
 
   return (
     <aside
@@ -143,28 +177,43 @@ export function Sidebar({
         collapsed ? "lg:w-(--size-s16)" : "lg:w-(--size-s58)",
       ].join(" ")}
     >
-      <div
-        className={[
-          "flex items-center h-14 px-p4 border-b border-(--skools-border-subtle) justify-between",
-          collapsed ? "lg:justify-center lg:px-0" : "",
-        ]
-          .filter(Boolean)
-          .join(" ")}
-      >
-        <span className={collapsed ? "lg:hidden" : ""}>
-          <Wordmark />
-        </span>
-        <span className={collapsed ? "hidden lg:block" : "hidden"}>
-          <Wordmark compact />
-        </span>
-        <span className="hidden lg:block">
-          <CollapseButton collapsed={collapsed} onToggle={() => setCollapsed((v) => !v)} />
-        </span>
-        <span className="lg:hidden">
-          <IconButton onClick={onCloseMobile} aria-label="Fermer le menu">
-            <XIcon className="size-4" />
-          </IconButton>
-        </span>
+      <div className="border-b border-(--skools-border-subtle)">
+        <div
+          className={[
+            "flex items-center h-14 px-p4 justify-between",
+            collapsed ? "lg:justify-center lg:px-0" : "",
+          ]
+            .filter(Boolean)
+            .join(" ")}
+        >
+          <span className={collapsed ? "lg:hidden" : ""}>
+            <Wordmark />
+          </span>
+          <span className={collapsed ? "hidden lg:block" : "hidden"}>
+            <Wordmark compact />
+          </span>
+          <span className="hidden lg:block">
+            <CollapseButton collapsed={collapsed} onToggle={() => setCollapsed((v) => !v)} />
+          </span>
+          <span className="lg:hidden">
+            <IconButton onClick={onCloseMobile} aria-label="Fermer le menu">
+              <XIcon className="size-4" />
+            </IconButton>
+          </span>
+        </div>
+        {establishmentName && (
+          <p
+            title={establishmentName}
+            className={[
+              "px-p4 pb-p3 -mt-p1 text-r11 text-(--skools-text-muted) truncate",
+              collapsed ? "lg:hidden" : "",
+            ]
+              .filter(Boolean)
+              .join(" ")}
+          >
+            {establishmentName}
+          </p>
+        )}
       </div>
 
       <nav aria-label="Sections" className="sidebar-scrollbar flex-1 overflow-y-auto px-p4 py-p4">
@@ -192,14 +241,26 @@ export function Sidebar({
             </div>
           </div>
         ))}
+        {bottomItems.length > 0 && (
+          <div className="mt-p4">
+            <Separator className="mb-p4" />
+            <div className="flex flex-col gap-p1">
+              {bottomItems.map((item) => (
+                <NavItemLink key={item.to} item={item} collapsed={collapsed} onNavigate={onCloseMobile} />
+              ))}
+            </div>
+          </div>
+        )}
       </nav>
+
+      <ActiveYearSelector collapsed={collapsed} />
 
       <div className="border-t border-(--skools-border-subtle) p-p4">
         <div className={["flex items-center gap-p2", collapsed ? "lg:flex-col lg:justify-center" : ""].join(" ")}>
           <Avatar alt={fullName} />
           <div className={["flex-1 min-w-0", collapsed ? "lg:hidden" : ""].filter(Boolean).join(" ")}>
             <p className="text-m12 text-(--skools-text-primary) truncate">{fullName}</p>
-            {role && <p className="text-r11 text-(--skools-text-muted) truncate">{role}</p>}
+              {role && <p className="text-r11 text-(--skools-text-muted) truncate">{roleLabel(role)}</p>}
           </div>
           <ThemeToggle />
         </div>

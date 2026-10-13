@@ -2,8 +2,10 @@ import {
   Injectable,
   NotFoundException,
   BadRequestException,
+  ForbiddenException,
 } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service.js';
+import type { RequestActor } from '../../common/types/request-actor.js';
 
 @Injectable()
 export class ReportCardsService {
@@ -17,12 +19,31 @@ export class ReportCardsService {
     studentId: string,
     academicYearId: string,
     periodId?: string,
+    actor?: RequestActor,
   ) {
     // Vérifie l'élève
     const student = await this.prisma.student.findFirst({
       where: { id: studentId, establishmentId, isActive: true },
     });
     if (!student) throw new NotFoundException('Élève introuvable');
+
+    // Périmètre : élève = lui-même, parent = ses enfants uniquement.
+    if (actor?.role === 'STUDENT' && student.userId !== actor.id) {
+      throw new ForbiddenException('Accès refusé');
+    }
+    if (actor?.role === 'PARENT') {
+      const parent = await this.prisma.parent.findFirst({
+        where: { userId: actor.id, establishmentId, isActive: true },
+      });
+      const link = parent
+        ? await this.prisma.parentStudent.findUnique({
+            where: {
+              parentId_studentId: { parentId: parent.id, studentId },
+            },
+          })
+        : null;
+      if (!link) throw new ForbiddenException('Accès refusé');
+    }
 
     // Récupère l'inscription de l'élève pour cette année
     const enrollment = await this.prisma.enrollment.findFirst({

@@ -30,6 +30,12 @@ export function AppShell() {
       data-slot="skools-root"
       className="min-h-screen flex bg-(--skools-app-bg) text-(--skools-text-primary)"
     >
+      <a
+        href="#contenu"
+        className="sr-only focus:not-sr-only focus:absolute focus:z-100 focus:m-p2 focus:rounded-r2 focus:bg-(--skools-sidebar-bg) focus:px-p4 focus:py-p2 focus:text-r14"
+      >
+        Aller au contenu
+      </a>
       {/* Barre mobile uniquement (EPL n'a pas de topbar desktop). */}
       <header className="lg:hidden fixed top-0 inset-x-0 z-30 flex items-center gap-p3 h-14 px-p4 bg-(--skools-sidebar-bg) border-b border-(--skools-border-subtle)">
         <button
@@ -58,7 +64,7 @@ export function AppShell() {
 
       <div className="flex-1 flex flex-col min-w-0 pt-14 lg:pt-0">
         <Toaster />
-        <main className="flex-1 w-full max-w-[1280px] mx-auto px-p4 sm:px-p10 pt-p13 pb-p10">
+        <main id="contenu" tabIndex={-1} className="flex-1 w-full max-w-[1280px] mx-auto px-p4 sm:px-p10 pt-p13 pb-p10 outline-none">
           <Outlet />
         </main>
       </div>

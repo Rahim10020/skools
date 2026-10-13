@@ -16,9 +16,13 @@ import { CreateGradeDto } from './dto/create-grade.dto.js';
 import { UpdateGradeDto } from './dto/update-grade.dto.js';
 import { BulkGradesDto } from './dto/bulk-grades.dto.js';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard.js';
+import { RolesGuard } from '../../common/guards/roles.guard.js';
+import { Roles } from '../../common/decorators/roles.decorator.js';
+import { Role } from '@prisma/client';
 
 @Controller('grades')
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard, RolesGuard)
+@Roles(Role.DIRECTOR, Role.TEACHER)
 export class GradesController {
   constructor(private readonly gradesService: GradesService) {}
 
@@ -33,6 +37,7 @@ export class GradesController {
   }
 
   @Get()
+  @Roles(Role.DIRECTOR, Role.CENSEUR, Role.TEACHER)
   findAll(@Request() req: any, @Query('examId') examId?: string) {
     if (examId) {
       return this.gradesService.findByExam(examId, req.user.establishmentId);

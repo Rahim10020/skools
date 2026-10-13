@@ -11,13 +11,17 @@ import {
   Request,
   ParseUUIDPipe,
 } from '@nestjs/common';
+import { Role } from '@prisma/client';
 import { DisciplineService } from './discipline.service.js';
 import { CreateDisciplineDto } from './dto/create-discipline.dto.js';
 import { UpdateDisciplineDto } from './dto/update-discipline.dto.js';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard.js';
+import { RolesGuard } from '../../common/guards/roles.guard.js';
+import { Roles } from '../../common/decorators/roles.decorator.js';
 
 @Controller('discipline')
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard, RolesGuard)
+@Roles(Role.DIRECTOR, Role.CENSEUR, Role.SURVEILLANT)
 export class DisciplineController {
   constructor(private readonly disciplineService: DisciplineService) {}
 
@@ -31,14 +35,18 @@ export class DisciplineController {
   }
 
   @Get()
+  @Roles(
+    Role.DIRECTOR,
+    Role.CENSEUR,
+    Role.SURVEILLANT,
+    Role.STUDENT,
+    Role.PARENT,
+  )
   findAll(@Request() req: any, @Query('studentId') studentId?: string) {
-    if (studentId) {
-      return this.disciplineService.findByStudent(
-        studentId,
-        req.user.establishmentId,
-      );
-    }
-    return this.disciplineService.findAll(req.user.establishmentId);
+    return this.disciplineService.findAll(req.user.establishmentId, studentId, {
+      id: req.user.id,
+      role: req.user.role,
+    });
   }
 
   @Get(':id')

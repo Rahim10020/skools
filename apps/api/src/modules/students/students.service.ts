@@ -61,6 +61,20 @@ export class StudentsService {
     return student;
   }
 
+  /** Dossier élève du compte connecté (rôle STUDENT). */
+  async findByUserId(userId: string, establishmentId: string) {
+    const student = await this.prisma.student.findFirst({
+      where: { userId, establishmentId },
+      select: { id: true, firstName: true, lastName: true, matricule: true },
+    });
+
+    if (!student) {
+      throw new NotFoundException('Dossier élève introuvable pour ce compte');
+    }
+
+    return student;
+  }
+
   async update(id: string, establishmentId: string, dto: UpdateStudentDto) {
     await this.findOne(id, establishmentId);
 

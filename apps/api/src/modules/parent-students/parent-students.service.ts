@@ -115,4 +115,24 @@ export class ParentStudentsService {
 
     return this.prisma.parentStudent.delete({ where: { id } });
   }
+
+  /** Enfants du compte connecté (rôle PARENT). */
+  async findMyChildren(userId: string, establishmentId: string) {
+    const parent = await this.prisma.parent.findFirst({
+      where: { userId, establishmentId, isActive: true },
+    });
+    if (!parent) {
+      throw new NotFoundException('Aucun dossier parent lié à ce compte');
+    }
+
+    return this.prisma.parentStudent.findMany({
+      where: { parentId: parent.id },
+      include: {
+        student: {
+          select: { id: true, firstName: true, lastName: true, matricule: true },
+        },
+      },
+      orderBy: { student: { lastName: 'asc' } },
+    });
+  }
 }

@@ -12,9 +12,13 @@ import {
 import { TeacherAssignmentsService } from './teacher-assignments.service.js';
 import { CreateTeacherAssignmentDto } from './dto/create-teacher-assignment.dto.js';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard.js';
+import { RolesGuard } from '../../common/guards/roles.guard.js';
+import { Roles } from '../../common/decorators/roles.decorator.js';
+import { Role } from '@prisma/client';
 
 @Controller('teacher-assignments')
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard, RolesGuard)
+@Roles(Role.DIRECTOR, Role.CENSEUR)
 export class TeacherAssignmentsController {
   constructor(
     private readonly teacherAssignmentsService: TeacherAssignmentsService,
@@ -26,6 +30,7 @@ export class TeacherAssignmentsController {
   }
 
   @Get()
+  @Roles(Role.DIRECTOR, Role.CENSEUR, Role.TEACHER)
   findAll(@Request() req: any) {
     return this.teacherAssignmentsService.findAll(req.user.establishmentId);
   }

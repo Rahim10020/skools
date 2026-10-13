@@ -14,9 +14,13 @@ import { LevelsService } from './levels.service.js';
 import { CreateLevelDto } from './dto/create-level.dto.js';
 import { UpdateLevelDto } from './dto/update-level.dto.js';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard.js';
+import { RolesGuard } from '../../../common/guards/roles.guard.js';
+import { Roles } from '../../../common/decorators/roles.decorator.js';
+import { Role } from '@prisma/client';
 
 @Controller('levels')
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard, RolesGuard)
+@Roles(Role.DIRECTOR, Role.ADMIN)
 export class LevelsController {
   constructor(private readonly levelsService: LevelsService) {}
 
@@ -26,11 +30,13 @@ export class LevelsController {
   }
 
   @Get()
+  @Roles(Role.DIRECTOR, Role.ADMIN, Role.CENSEUR)
   findAll(@Request() req: any) {
     return this.levelsService.findAll(req.user.establishmentId);
   }
 
   @Get(':id')
+  @Roles(Role.DIRECTOR, Role.ADMIN, Role.CENSEUR)
   findOne(@Param('id', ParseUUIDPipe) id: string, @Request() req: any) {
     return this.levelsService.findOne(id, req.user.establishmentId);
   }

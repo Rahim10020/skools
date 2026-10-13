@@ -14,10 +14,14 @@ import { EstablishmentsService } from './establishments.service.js';
 import { CreateEstablishmentDto } from './dto/create-establishment.dto.js';
 import { UpdateEstablishmentDto } from './dto/update-establishment.dto.js';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard.js';
+import { RolesGuard } from '../../common/guards/roles.guard.js';
+import { Roles } from '../../common/decorators/roles.decorator.js';
+import { Role } from '@prisma/client';
 import { AuthService } from '../auth/auth.service.js';
 
 @Controller('establishments')
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard, RolesGuard)
+@Roles(Role.DIRECTOR, Role.ADMIN)
 export class EstablishmentsController {
   constructor(
     private readonly establishmentsService: EstablishmentsService,
@@ -25,6 +29,7 @@ export class EstablishmentsController {
   ) {}
 
   @Post()
+  @Roles()
   async create(@Body() dto: CreateEstablishmentDto, @Request() req: any) {
     const establishment = await this.establishmentsService.createWithOwner(
       dto,
@@ -64,6 +69,7 @@ export class EstablishmentsController {
   }
 
   @Delete(':id')
+  @Roles(Role.DIRECTOR)
   remove(@Param('id', ParseUUIDPipe) id: string) {
     return this.establishmentsService.remove(id);
   }

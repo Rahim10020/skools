@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { setNavigator } from "../lib/navigation";
 import { AppShell } from "../layouts/AppShell";
 import { GuestLayout } from "../layouts/GuestLayout";
-import { RequireAuth, RequireEstablishment } from "./guards";
+import { RequireAuth, RequireEstablishment, RequireRole } from "./guards";
 import { NotFoundPage } from "./NotFoundPage";
 
 import LoginPage from "../features/auth/LoginPage";
@@ -30,6 +30,8 @@ import AttendancesPage from "../features/attendances/AttendancesPage";
 import SchedulesPage from "../features/schedules/SchedulesPage";
 import ReportCardsPage from "../features/report-cards/ReportCardsPage";
 import DisciplinePage from "../features/discipline/DisciplinePage";
+import ProfilPage from "../features/profil/ProfilPage";
+import SettingsPage from "../features/settings/SettingsPage";
 
 /** Enregistre la navigation impérative (intercepteur 401 → /login). */
 function AuthNavigator() {
@@ -57,26 +59,30 @@ export function AppRoutes() {
             <Route path="/dashboard" element={<DashboardPage />} />
             <Route path="/create-establishment" element={<CreateEstablishmentPage />} />
             <Route element={<RequireEstablishment />}>
-              <Route path="/academic-years" element={<AcademicYearsPage />} />
-              <Route path="/classrooms" element={<ClassroomsPage />} />
-              <Route path="/cycles" element={<CyclesPage />} />
-              <Route path="/levels" element={<LevelsPage />} />
-              <Route path="/series" element={<SeriesPage />} />
-              <Route path="/subjects" element={<SubjectsPage />} />
-              <Route path="/periods" element={<PeriodsPage />} />
-              <Route path="/students" element={<StudentsPage />} />
-              <Route path="/teachers" element={<TeachersPage />} />
-              <Route path="/parents" element={<ParentsPage />} />
-              <Route path="/enrollments" element={<EnrollmentsPage />} />
-              <Route path="/exams" element={<ExamsPage />} />
-              <Route path="/grades" element={<GradesPage />} />
-              <Route path="/link-parents" element={<LinkParentStudentPage />} />
-              <Route path="/teacher-assignments" element={<TeacherAssignmentsPage />} />
-              <Route path="/attendances" element={<AttendancesPage />} />
-              <Route path="/schedules" element={<SchedulesPage />} />
-              <Route path="/report-cards" element={<ReportCardsPage />} />
-              <Route path="/discipline" element={<DisciplinePage />} />
+              <Route element={<RequireRole />}>
+                <Route path="/academic-years" element={<AcademicYearsPage />} />
+                <Route path="/classrooms" element={<ClassroomsPage />} />
+                <Route path="/cycles" element={<CyclesPage />} />
+                <Route path="/levels" element={<LevelsPage />} />
+                <Route path="/series" element={<SeriesPage />} />
+                <Route path="/subjects" element={<SubjectsPage />} />
+                <Route path="/periods" element={<PeriodsPage />} />
+                <Route path="/students" element={<StudentsPage />} />
+                <Route path="/teachers" element={<TeachersPage />} />
+                <Route path="/parents" element={<ParentsPage />} />
+                <Route path="/enrollments" element={<EnrollmentsPage />} />
+                <Route path="/exams" element={<ExamsPage />} />
+                <Route path="/grades" element={<GradesPage />} />
+                <Route path="/link-parents" element={<LinkParentStudentPage />} />
+                <Route path="/teacher-assignments" element={<TeacherAssignmentsPage />} />
+                <Route path="/attendances" element={<AttendancesPage />} />
+                <Route path="/schedules" element={<SchedulesPage />} />
+                <Route path="/report-cards" element={<ReportCardsPage />} />
+                <Route path="/discipline" element={<DisciplinePage />} />
+                <Route path="/settings" element={<SettingsPage />} />
+              </Route>
             </Route>
+            <Route path="/profil" element={<ProfilPage />} />
           </Route>
         </Route>
 

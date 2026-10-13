@@ -1,11 +1,14 @@
-# Contrats frontend ↔ API — état de référence (Phase 0)
+# Contrats frontend ↔ API — état de référence (Phase 0, amendé Phase 6)
 
 > Gelé le 2026-10-13. Source : `apps/api/src/**/*.controller.ts`, `dto/*.ts`, `main.ts`, `prisma/schema.prisma`.
-> Règle : le frontend s'adapte aux contrats ci-dessous. Aucune modification de `apps/api` sans demande séparée.
+> Règle : le frontend s'adapte aux contrats ci-dessous. Modifications `apps/api` autorisées depuis la Phase 6 (matrice `docs/access-matrix.md`).
 > Base URL dev : `http://localhost:3000/api/v1` (CORS autorise uniquement `http://localhost:5173`).
 > Auth : `Authorization: Bearer <accessToken>`. Global : `ValidationPipe { whitelist, forbidNonWhitelisted, transform }`
 > → **tout champ non déclaré dans le DTO = 400**. `:id` = UUID (`ParseUUIDPipe` → 400 si non-UUID).
-> **Aucun guard de rôle** : seul `JwtAuthGuard` existe. Le frontend ne recevra jamais de 403 — ne pas s'appuyer dessus.
+> **Rôles (Phase 6) : `JwtAuthGuard + RolesGuard` sur tous les controllers sauf `auth`.**
+> Rôle absent ou non listé → **403** (plus jamais de 403 "impossible" : mapper vers "Action non autorisée pour votre rôle").
+> `SUPER_ADMIN` exclu de tous les controllers d'établissement. Voir `docs/access-matrix.md` pour la matrice complète,
+> `GET /user-establishments` (DIRECTOR), `GET /parent-students/my-children` (PARENT), `GET /students/me` (STUDENT).
 
 ## Auth — `auth`
 

@@ -2,11 +2,13 @@ import {
   Injectable,
   NotFoundException,
   BadRequestException,
+  ForbiddenException,
 } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service.js';
 import { CreateDisciplineDto } from './dto/create-discipline.dto.js';
 import { UpdateDisciplineDto } from './dto/update-discipline.dto.js';
 import { DisciplineStatus } from '@prisma/client';
+import type { RequestActor } from '../../common/types/request-actor.js';
 
 @Injectable()
 export class DisciplineService {
@@ -49,7 +51,20 @@ export class DisciplineService {
     });
   }
 
-  async findAll(establishmentId: string) {
+  async findAll(establishmentId: string, studentId?: string, actor?: RequestActor) {
+    if (actor?.role === 'STUDENT' || actor?.role === 'PARENT') {
+      // Périmètre restreint : un élève filtré est obligatoire.
+      if (!studentId) {
+        throw new ForbiddenException('Précisez un élève');
+      }
+      await this.assertStudentVisible(actor, studentId, establishmentId);
+      return this.findByStudent(studentId, establishmentId);
+    }
+
+    if (studentId) {
+      return this.findByStudent(studentId, establishmentId);
+    }
+
     return this.prisma.disciplineRecord.findMany({
       where: { establishmentId, isActive: true },
       include: {
@@ -74,6 +89,40 @@ export class DisciplineService {
       where: { studentId, establishmentId, isActive: true },
       orderBy: { incidentDate: 'desc' },
     });
+  }
+
+  /**
+   * Périmètre élève/parent : lui-même / ses enfants uniquement.
+   * Le studentId est vérifié appartenir à l'établissement par l'appelant.
+   */
+  private async assertStudentVisible(
+    actor: RequestActor,
+    studentId: string,
+    establishmentId: string,
+  ) {
+    if (actor.role === 'STUDENT') {
+      const student = await this.prisma.student.findFirst({
+        where: { id: studentId, establishmentId },
+      });
+      if (!student || student.userId !== actor.id) {
+        throw new ForbiddenException('Accès refusé');
+      }
+      return;
+    }
+
+    const parent = await this.prisma.parent.findFirst({
+      where: { userId: actor.id, establishmentId, isActive: true },
+    });
+    const link = parent
+      ? await this.prisma.parentStudent.findUnique({
+          where: {
+            parentId_studentId: { parentId: parent.id, studentId },
+          },
+        })
+      : null;
+    if (!link) {
+      throw new ForbiddenException('Accès refusé');
+    }
   }
 
   async findOne(id: string, establishmentId: string) {

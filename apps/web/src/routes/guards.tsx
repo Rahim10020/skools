@@ -1,5 +1,6 @@
 import { Navigate, Outlet, useLocation } from "react-router-dom";
 import { useAuthStore } from "../stores/auth-store";
+import { canAccess } from "../lib/permissions";
 import { LoadingDots } from "../components/ui/button";
 
 export function RequireAuth() {
@@ -21,7 +22,7 @@ export function RequireAuth() {
   return <Outlet />;
 }
 
-const SETUP_FREE_PATHS = ["/dashboard", "/create-establishment"];
+const SETUP_FREE_PATHS = ["/dashboard", "/create-establishment", "/profil"];
 
 /**
  * Les pages métier exigent un établissement courant.
@@ -33,6 +34,21 @@ export function RequireEstablishment() {
 
   if (!establishmentId && !SETUP_FREE_PATHS.includes(pathname)) {
     return <Navigate to="/create-establishment" replace />;
+  }
+
+  return <Outlet />;
+}
+
+/**
+ * Matrice d'accès (docs/access-matrix.md) : route non autorisée pour le rôle
+ * → "Vue d'ensemble" (/dashboard). Le backend applique la même matrice (403).
+ */
+export function RequireRole() {
+  const role = useAuthStore((s) => s.role);
+  const { pathname } = useLocation();
+
+  if (!canAccess(pathname, role)) {
+    return <Navigate to="/dashboard" replace />;
   }
 
   return <Outlet />;

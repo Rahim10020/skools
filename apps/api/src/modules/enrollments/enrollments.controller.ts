@@ -14,9 +14,13 @@ import { EnrollmentsService } from './enrollments.service.js';
 import { CreateEnrollmentDto } from './dto/create-enrollment.dto.js';
 import { UpdateEnrollmentDto } from './dto/update-enrollment.dto.js';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard.js';
+import { RolesGuard } from '../../common/guards/roles.guard.js';
+import { Roles } from '../../common/decorators/roles.decorator.js';
+import { Role } from '@prisma/client';
 
 @Controller('enrollments')
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard, RolesGuard)
+@Roles(Role.DIRECTOR, Role.ADMIN)
 export class EnrollmentsController {
   constructor(private readonly enrollmentsService: EnrollmentsService) {}
 
@@ -26,11 +30,13 @@ export class EnrollmentsController {
   }
 
   @Get()
+  @Roles(Role.DIRECTOR, Role.ADMIN, Role.CENSEUR)
   findAll(@Request() req: any) {
     return this.enrollmentsService.findAll(req.user.establishmentId);
   }
 
   @Get(':id')
+  @Roles(Role.DIRECTOR, Role.ADMIN, Role.CENSEUR)
   findOne(@Param('id', ParseUUIDPipe) id: string, @Request() req: any) {
     return this.enrollmentsService.findOne(id, req.user.establishmentId);
   }

@@ -2,11 +2,13 @@ import {
   Injectable,
   NotFoundException,
   BadRequestException,
+  ForbiddenException,
 } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service.js';
 import { CreateAttendanceDto } from './dto/create-attendance.dto.js';
 import { BulkAttendanceDto } from './dto/bulk-attendance.dto.js';
 import { AttendanceStatus } from '@prisma/client';
+import type { RequestActor } from '../../common/types/request-actor.js';
 
 @Injectable()
 export class AttendancesService {
@@ -101,7 +103,27 @@ export class AttendancesService {
     establishmentId: string,
     classroomId: string,
     date: string,
+    actor?: RequestActor,
   ) {
+    // Périmètre élève/parent : inscrit (ou enfant inscrit) dans la classe.
+    if (actor?.role === 'STUDENT' || actor?.role === 'PARENT') {
+      const studentIds = await this.resolveVisibleStudentIds(
+        actor,
+        establishmentId,
+      );
+      const enrolled = await this.prisma.enrollment.findFirst({
+        where: {
+          studentId: { in: studentIds },
+          classroomId,
+          establishmentId,
+          isActive: true,
+        },
+      });
+      if (studentIds.length === 0 || !enrolled) {
+        throw new ForbiddenException('Accès refusé');
+      }
+    }
+
     return this.prisma.attendance.findMany({
       where: {
         establishmentId,
@@ -130,5 +152,28 @@ export class AttendancesService {
       where: { studentId, establishmentId },
       orderBy: { date: 'desc' },
     });
+  }
+
+  /** IDs d'élèves visibles : lui-même (STUDENT) ou ses enfants (PARENT). */
+  private async resolveVisibleStudentIds(
+    actor: RequestActor,
+    establishmentId: string,
+  ): Promise<string[]> {
+    if (actor.role === 'STUDENT') {
+      const student = await this.prisma.student.findFirst({
+        where: { userId: actor.id, establishmentId },
+      });
+      return student ? [student.id] : [];
+    }
+
+    const parent = await this.prisma.parent.findFirst({
+      where: { userId: actor.id, establishmentId, isActive: true },
+    });
+    if (!parent) return [];
+    const links = await this.prisma.parentStudent.findMany({
+      where: { parentId: parent.id },
+      select: { studentId: true },
+    });
+    return links.map((link) => link.studentId);
   }
 }
