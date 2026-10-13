@@ -1,265 +1,293 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import api from "../../lib/api";
+import api, { getErrorMessage } from "../../lib/api";
+import { PageHeader } from "../../layouts/PageHeader";
+import { Button } from "../../components/ui/button";
+import { Card } from "../../components/ui/card";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableCellPrimary,
+  TableContainer,
+  TableHeader,
+  TableHeaderCell,
+  TableRow,
+} from "../../components/ui/table";
+import { Select } from "../../components/ui/select";
+import { EmptyState, ErrorState } from "../../components/ui/empty-state";
+import { Skeleton } from "../../components/ui/skeleton";
+
+interface IdName {
+  id: string;
+  name: string;
+  isCurrent?: boolean;
+}
+
+interface StudentOption extends IdName {
+  firstName: string;
+  lastName: string;
+  matricule: string | null;
+}
+
+interface SubjectAverage {
+  subjectId: string;
+  subjectName: string;
+  subjectCode: string | null;
+  average: number | null;
+  gradesCount: number;
+}
+
+interface StudentReport {
+  student: { id: string; firstName: string; lastName: string; matricule: string | null };
+  classroom: { id: string; name: string } | null;
+  academicYear: { id: string; name: string } | null;
+  subjects: SubjectAverage[];
+  generalAverage: number | null;
+}
+
+interface ClassroomOverviewItem {
+  student: { id: string; firstName: string; lastName: string; matricule: string | null };
+  generalAverage: number | null;
+  subjectsCount: number;
+}
+
+function formatAverage(value: number | null): string {
+  return value === null ? "—" : `${value}/20`;
+}
 
 export default function ReportCardsPage() {
+  const [viewMode, setViewMode] = useState<"student" | "classroom">("student");
   const [selectedStudentId, setSelectedStudentId] = useState("");
   const [selectedYearId, setSelectedYearId] = useState("");
   const [selectedClassroomId, setSelectedClassroomId] = useState("");
-  const [viewMode, setViewMode] = useState<"student" | "classroom">("student");
 
-  const { data: students = [] } = useQuery({
+  const studentsQuery = useQuery({
     queryKey: ["students"],
-    queryFn: async () => (await api.get("/students")).data,
+    queryFn: async () => (await api.get<StudentOption[]>("/students")).data,
   });
-
-  const { data: academicYears = [] } = useQuery({
+  const yearsQuery = useQuery({
     queryKey: ["academic-years"],
-    queryFn: async () => (await api.get("/academic-years")).data,
+    queryFn: async () => (await api.get<IdName[]>("/academic-years")).data,
   });
-
-  const { data: classrooms = [] } = useQuery({
+  const classroomsQuery = useQuery({
     queryKey: ["classrooms"],
-    queryFn: async () => (await api.get("/classrooms")).data,
+    queryFn: async () => (await api.get<IdName[]>("/classrooms")).data,
   });
 
-  const { data: studentReport, isLoading: loadingStudent } = useQuery({
+  const studentReportQuery = useQuery({
     queryKey: ["report-card", selectedStudentId, selectedYearId],
-    queryFn: async () => {
-      const res = await api.get(
-        `/report-cards/student?studentId=${selectedStudentId}&academicYearId=${selectedYearId}`,
-      );
-      return res.data;
-    },
+    queryFn: async () =>
+      (
+        await api.get<StudentReport>("/report-cards/student", {
+          params: { studentId: selectedStudentId, academicYearId: selectedYearId },
+        })
+      ).data,
     enabled: viewMode === "student" && !!selectedStudentId && !!selectedYearId,
   });
 
-  const { data: classroomOverview = [], isLoading: loadingClassroom } =
-    useQuery({
-      queryKey: ["classroom-overview", selectedClassroomId, selectedYearId],
-      queryFn: async () => {
-        const res = await api.get(
-          `/report-cards/classroom?classroomId=${selectedClassroomId}&academicYearId=${selectedYearId}`,
-        );
-        return res.data;
-      },
-      enabled:
-        viewMode === "classroom" && !!selectedClassroomId && !!selectedYearId,
-    });
+  const classroomQuery = useQuery({
+    queryKey: ["classroom-overview", selectedClassroomId, selectedYearId],
+    queryFn: async () =>
+      (
+        await api.get<ClassroomOverviewItem[]>("/report-cards/classroom", {
+          params: { classroomId: selectedClassroomId, academicYearId: selectedYearId },
+        })
+      ).data,
+    enabled: viewMode === "classroom" && !!selectedClassroomId && !!selectedYearId,
+  });
+
+  const studentReport = studentReportQuery.data ?? null;
+  const overview = classroomQuery.data ?? [];
 
   return (
     <div>
-      <h1 className="text-2xl font-bold text-gray-900 mb-6">
-        Bulletins & Moyennes
-      </h1>
+      <PageHeader
+        title="Bulletins et moyennes"
+        description="Bulletins calculés à la volée depuis les notes (lecture seule)."
+        actions={
+          <div className="flex gap-p2" role="group" aria-label="Mode de vue">
+            <Button
+              fullWidth={false}
+              variant={viewMode === "student" ? "primary" : "outline"}
+              onClick={() => setViewMode("student")}
+            >
+              Bulletin élève
+            </Button>
+            <Button
+              fullWidth={false}
+              variant={viewMode === "classroom" ? "primary" : "outline"}
+              onClick={() => setViewMode("classroom")}
+            >
+              Vue classe
+            </Button>
+          </div>
+        }
+      />
 
-      {/* Mode de vue */}
-      <div className="flex gap-2 mb-6">
-        <button
-          onClick={() => setViewMode("student")}
-          className={`px-4 py-2 text-sm font-medium rounded-md ${
-            viewMode === "student"
-              ? "bg-blue-600 text-white"
-              : "bg-white text-gray-700 border border-gray-300"
-          }`}
-        >
-          Bulletin élève
-        </button>
-        <button
-          onClick={() => setViewMode("classroom")}
-          className={`px-4 py-2 text-sm font-medium rounded-md ${
-            viewMode === "classroom"
-              ? "bg-blue-600 text-white"
-              : "bg-white text-gray-700 border border-gray-300"
-          }`}
-        >
-          Vue classe
-        </button>
-      </div>
-
-      {/* Filtres */}
-      <div className="bg-white p-4 rounded-lg border border-gray-200 mb-6 grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Année scolaire
-          </label>
-          <select
-            value={selectedYearId}
-            onChange={(e) => setSelectedYearId(e.target.value)}
-            className="block w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
-          >
-            <option value="">Sélectionner</option>
-            {academicYears.map((year: any) => (
-              <option key={year.id} value={year.id}>
-                {year.name} {year.isCurrent ? "(Courante)" : ""}
-              </option>
-            ))}
-          </select>
+      <Card className="p-p4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-p4">
+          <div className="flex flex-col gap-p1">
+            <span className="text-m12 text-(--skools-text-primary)">Année scolaire</span>
+            <Select
+              label="Choisir…"
+              value={selectedYearId}
+              onChange={setSelectedYearId}
+              options={(yearsQuery.data ?? []).map((year) => ({
+                label: `${year.name}${year.isCurrent ? " (En cours)" : ""}`,
+                value: year.id,
+              }))}
+            />
+          </div>
+          {viewMode === "student" ? (
+            <div className="flex flex-col gap-p1">
+              <span className="text-m12 text-(--skools-text-primary)">Élève</span>
+              <Select
+                label="Choisir un élève…"
+                value={selectedStudentId}
+                onChange={setSelectedStudentId}
+                options={(studentsQuery.data ?? []).map((student) => ({
+                  label: `${student.lastName} ${student.firstName}`,
+                  value: student.id,
+                }))}
+              />
+            </div>
+          ) : (
+            <div className="flex flex-col gap-p1">
+              <span className="text-m12 text-(--skools-text-primary)">Classe</span>
+              <Select
+                label="Choisir une classe…"
+                value={selectedClassroomId}
+                onChange={setSelectedClassroomId}
+                options={(classroomsQuery.data ?? []).map((classroom) => ({
+                  label: classroom.name,
+                  value: classroom.id,
+                }))}
+              />
+            </div>
+          )}
         </div>
+      </Card>
 
-        {viewMode === "student" ? (
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Élève
-            </label>
-            <select
-              value={selectedStudentId}
-              onChange={(e) => setSelectedStudentId(e.target.value)}
-              className="block w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
-            >
-              <option value="">Sélectionner un élève</option>
-              {students.map((student: any) => (
-                <option key={student.id} value={student.id}>
-                  {student.lastName} {student.firstName}
-                </option>
-              ))}
-            </select>
-          </div>
-        ) : (
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Classe
-            </label>
-            <select
-              value={selectedClassroomId}
-              onChange={(e) => setSelectedClassroomId(e.target.value)}
-              className="block w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
-            >
-              <option value="">Sélectionner une classe</option>
-              {classrooms.map((classroom: any) => (
-                <option key={classroom.id} value={classroom.id}>
-                  {classroom.name}
-                </option>
-              ))}
-            </select>
-          </div>
+      <div className="mt-p6">
+        {viewMode === "student" && selectedStudentId && selectedYearId && (
+          <>
+            {studentReportQuery.isError ? (
+              <ErrorState
+                message={getErrorMessage(studentReportQuery.error)}
+                onRetry={() => {
+                  void studentReportQuery.refetch();
+                }}
+              />
+            ) : studentReportQuery.isPending ? (
+              <Skeleton className="h-[280px] rounded-r2" />
+            ) : !studentReport ? (
+              <EmptyState
+                title="Aucune donnée disponible"
+                description="Aucune note saisie pour cet élève sur cette année."
+              />
+            ) : (
+              <div className="flex flex-col gap-p6">
+                <Card className="p-p6">
+                  <h2 className="text-sb20 text-(--skools-text-primary)">
+                    {studentReport.student.lastName} {studentReport.student.firstName}
+                  </h2>
+                  <p className="text-r14 text-(--skools-text-muted) mt-p1">
+                    Matricule : {studentReport.student.matricule || "—"} · Classe :{" "}
+                    {studentReport.classroom?.name || "—"} · Année :{" "}
+                    {studentReport.academicYear?.name || "—"}
+                  </p>
+                  <p className="mt-p3 text-sb24 text-(--skools-text-primary)">
+                    Moyenne générale : {formatAverage(studentReport.generalAverage)}
+                  </p>
+                </Card>
+
+                {studentReport.subjects.length === 0 ? (
+                  <EmptyState
+                    title="Aucune matière évaluée"
+                    description="Aucune note saisie pour cet élève sur cette année."
+                  />
+                ) : (
+                  <TableContainer>
+                    <Table>
+                      <TableHeader>
+                        <tr>
+                          <TableHeaderCell>Matière</TableHeaderCell>
+                          <TableHeaderCell>Moyenne</TableHeaderCell>
+                          <TableHeaderCell>Nb notes</TableHeaderCell>
+                        </tr>
+                      </TableHeader>
+                      <TableBody>
+                        {studentReport.subjects.map((subject) => (
+                          <TableRow key={subject.subjectId}>
+                            <TableCellPrimary>
+                              {subject.subjectName}
+                              {subject.subjectCode && (
+                                <span className="text-(--skools-text-muted) ml-1">
+                                  ({subject.subjectCode})
+                                </span>
+                              )}
+                            </TableCellPrimary>
+                            <TableCell>{formatAverage(subject.average)}</TableCell>
+                            <TableCell>{subject.gradesCount}</TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </TableContainer>
+                )}
+              </div>
+            )}
+          </>
+        )}
+
+        {viewMode === "classroom" && selectedClassroomId && selectedYearId && (
+          <>
+            {classroomQuery.isError ? (
+              <ErrorState
+                message={getErrorMessage(classroomQuery.error)}
+                onRetry={() => {
+                  void classroomQuery.refetch();
+                }}
+              />
+            ) : classroomQuery.isPending ? (
+              <Skeleton className="h-[280px] rounded-r2" />
+            ) : overview.length === 0 ? (
+              <EmptyState
+                title="Aucun élève dans cette classe"
+                description="Vérifiez les inscriptions pour cette classe et cette année."
+              />
+            ) : (
+              <TableContainer>
+                <Table>
+                  <TableHeader>
+                    <tr>
+                      <TableHeaderCell>Rang</TableHeaderCell>
+                      <TableHeaderCell>Élève</TableHeaderCell>
+                      <TableHeaderCell>Matricule</TableHeaderCell>
+                      <TableHeaderCell>Matières</TableHeaderCell>
+                      <TableHeaderCell>Moyenne générale</TableHeaderCell>
+                    </tr>
+                  </TableHeader>
+                  <TableBody>
+                    {overview.map((item, index) => (
+                      <TableRow key={item.student.id}>
+                        <TableCellPrimary>{index + 1}</TableCellPrimary>
+                        <TableCell>
+                          {item.student.lastName} {item.student.firstName}
+                        </TableCell>
+                        <TableCell>{item.student.matricule || "—"}</TableCell>
+                        <TableCell>{item.subjectsCount}</TableCell>
+                        <TableCell>{formatAverage(item.generalAverage)}</TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </TableContainer>
+            )}
+          </>
         )}
       </div>
-
-      {/* Bulletin élève */}
-      {viewMode === "student" && selectedStudentId && selectedYearId && (
-        <>
-          {loadingStudent ? (
-            <p className="text-gray-500">Chargement du bulletin...</p>
-          ) : studentReport ? (
-            <div className="space-y-6">
-              {/* En-tête */}
-              <div className="bg-white p-6 rounded-lg border border-gray-200">
-                <h2 className="text-lg font-semibold text-gray-900">
-                  {studentReport.student.lastName}{" "}
-                  {studentReport.student.firstName}
-                </h2>
-                <p className="text-sm text-gray-600 mt-1">
-                  Matricule : {studentReport.student.matricule || "—"} | Classe
-                  : {studentReport.classroom?.name || "—"} | Année :{" "}
-                  {studentReport.academicYear?.name || "—"}
-                </p>
-                <p className="mt-3 text-xl font-bold text-blue-600">
-                  Moyenne générale :{" "}
-                  {studentReport.generalAverage !== null
-                    ? `${studentReport.generalAverage}/20`
-                    : "—"}
-                </p>
-              </div>
-
-              {/* Détail par matière */}
-              <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
-                <table className="min-w-full divide-y divide-gray-200">
-                  <thead className="bg-gray-50">
-                    <tr>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                        Matière
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                        Moyenne
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                        Nb notes
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-gray-200">
-                    {studentReport.subjects.map((subject: any) => (
-                      <tr key={subject.subjectId}>
-                        <td className="px-6 py-4 text-sm font-medium text-gray-900">
-                          {subject.subjectName}
-                          {subject.subjectCode && (
-                            <span className="text-gray-400 ml-1">
-                              ({subject.subjectCode})
-                            </span>
-                          )}
-                        </td>
-                        <td className="px-6 py-4 text-sm text-gray-900 font-semibold">
-                          {subject.average !== null
-                            ? `${subject.average}/20`
-                            : "—"}
-                        </td>
-                        <td className="px-6 py-4 text-sm text-gray-600">
-                          {subject.gradesCount}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          ) : (
-            <p className="text-gray-500">Aucune donnée disponible.</p>
-          )}
-        </>
-      )}
-
-      {/* Vue classe */}
-      {viewMode === "classroom" && selectedClassroomId && selectedYearId && (
-        <>
-          {loadingClassroom ? (
-            <p className="text-gray-500">Chargement...</p>
-          ) : classroomOverview.length === 0 ? (
-            <p className="text-gray-500">Aucun élève dans cette classe.</p>
-          ) : (
-            <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                      Rang
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                      Élève
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                      Matricule
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                      Moyenne générale
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-200">
-                  {classroomOverview.map((item: any, index: number) => (
-                    <tr key={item.student.id}>
-                      <td className="px-6 py-4 text-sm font-medium text-gray-900">
-                        {index + 1}
-                      </td>
-                      <td className="px-6 py-4 text-sm font-medium text-gray-900">
-                        {item.student.lastName} {item.student.firstName}
-                      </td>
-                      <td className="px-6 py-4 text-sm text-gray-600">
-                        {item.student.matricule || "—"}
-                      </td>
-                      <td className="px-6 py-4 text-sm font-semibold text-gray-900">
-                        {item.generalAverage !== null
-                          ? `${item.generalAverage}/20`
-                          : "—"}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </>
-      )}
     </div>
   );
 }
