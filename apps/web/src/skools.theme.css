@@ -1,0 +1,121 @@
+@layer theme {
+  :root {
+    --skools-app-bg: var(--common-bg-light);
+    --skools-surface: var(--common-bg-light);
+    --skools-sidebar-bg: var(--common-white);
+    --skools-elevated-bg: var(--black-5);
+
+    --skools-text-primary: var(--black);
+    --skools-text-muted: var(--black-70);
+    --skools-text-white: var(--common-white);
+
+    --skools-icon-primary: var(--black);
+    --skools-icon-muted: var(--black-70);
+
+    --skools-border-subtle: var(--black-5);
+    --skools-interactive-hover-bg: var(--black-5);
+    --skools-interactive-active-bg: var(--black-5);
+
+    --skools-bg-primary: var(--primary);
+    --popup-bg: var(--black-50);
+  }
+
+  .dark {
+    --skools-app-bg: #1e1e1e;
+    --skools-surface: var(--black-80);
+    --skools-sidebar-bg: var(--black-50);
+    --skools-elevated-bg: rgb(255 255 255 / 0.05);
+
+    --skools-text-primary: var(--common-white);
+    --skools-text-muted: rgb(255 255 255 / 0.6);
+    --skools-text-white: var(--common-white);
+
+    --skools-icon-primary: var(--common-white);
+    --skools-icon-muted: rgb(255 255 255 / 0.6);
+
+    --skools-border-subtle: rgb(255 255 255 / 0.1);
+    --skools-interactive-hover-bg: rgb(255 255 255 / 0.1);
+    --skools-interactive-active-bg: rgb(255 255 255 / 0.1);
+
+    --skools-bg-primary: var(--primary);
+    --popup-bg: rgb(255 255 255 / 0.05);
+  }
+}
+
+/* Input dark mode overrides */
+.dark input[type="text"],
+.dark input[type="datetime-local"],
+.dark input[type="password"],
+.dark textarea {
+  color: var(--common-white) !important;
+}
+
+.dark input::placeholder,
+.dark textarea::placeholder {
+  color: rgb(255 255 255 / 0.6) !important;
+}
+
+.dark input:focus::placeholder,
+.dark textarea:focus::placeholder {
+  color: transparent !important;
+}
+
+.dark input[type="file"] {
+  color: var(--common-white) !important;
+}
+
+/* Ensure input wrapper has proper dark mode background */
+.dark [class*="bg-(--skools-elevated-bg)"] {
+  background-color: rgb(255 255 255 / 0.05) !important;
+  border-color: rgb(255 255 255 / 0.1) !important;
+}
+
+/* Date input icon color in dark mode */
+.dark input[type="date"],
+.dark input[type="datetime-local"] {
+  color-scheme: dark;
+}
+
+/* CheckBox dark mode styles */
+.dark input[type="checkbox"] {
+  accent-color: var(--common-blue);
+}
+
+.dark input[type="checkbox"]:checked + span {
+  background-color: var(--common-white) !important;
+}
+
+.dark input[type="checkbox"]:checked + span svg {
+  color: var(--black) !important;
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.skeleton-shimmer {
+  background: linear-gradient(90deg, rgb(0, 0, 0, 0.1) 0%, rgba(255, 255, 255, 0.1) 50%, rgb(0, 0, 0, 0.1) 100%);
+  background-size: 200% 100%;
+  animation: shimmer 2s infinite;
+}
+
+.dark .skeleton-shimmer {
+  background: linear-gradient(90deg, rgb(255 255 255 / 0.1) 0%, rgba(255, 255, 255, 0.2) 50%, rgb(255 255 255 / 0.1) 100%);
+  background-size: 200% 100%;
+  animation: shimmer 2s infinite;
+}
+
+/* Hide iframe scrollbar */
+iframe {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+iframe::-webkit-scrollbar {
+  display: none;
+}

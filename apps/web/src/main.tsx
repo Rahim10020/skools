@@ -3,6 +3,7 @@ import { createRoot } from "react-dom/client";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import "./index.css";
+import { initTheme } from "./stores/theme-store";
 
 import LoginPage from "./features/auth/LoginPage";
 import RegisterPage from "./features/auth/RegisterPage";
@@ -29,6 +30,9 @@ import AttendancesPage from "./features/attendances/AttendancesPage";
 import SchedulesPage from "./features/schedules/SchedulesPage";
 import ReportCardsPage from "./features/report-cards/ReportCardsPage";
 import DisciplinePage from "./features/discipline/DisciplinePage";
+import FoundationPreviewPage from "./features/foundation/FoundationPreviewPage";
+
+initTheme();
 
 const queryClient = new QueryClient();
 
@@ -40,6 +44,11 @@ createRoot(document.getElementById("root")!).render(
           {/* Routes publiques */}
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
+          {/* Démo fondation visuelle Phase 1 — temporaire, supprimée en Phase 3 */}
+          <Route
+            path="/foundation-preview"
+            element={<FoundationPreviewPage />}
+          />
 
           {/* Routes protégées */}
           <Route element={<ProtectedRoute />}>
