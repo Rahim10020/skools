@@ -3,6 +3,7 @@ import { Routes, Route } from "react-router-dom";
 import { useNavigate } from "react-router-dom";
 import { setNavigator } from "../lib/navigation";
 import { AppShell } from "../layouts/AppShell";
+import { GuestLayout } from "../layouts/GuestLayout";
 import { RequireAuth, RequireEstablishment } from "./guards";
 import { NotFoundPage } from "./NotFoundPage";
 
@@ -44,9 +45,11 @@ export function AppRoutes() {
     <>
       <AuthNavigator />
       <Routes>
-        {/* Routes publiques (GuestLayout câblé en Phase 4) */}
-        <Route path="/login" element={<LoginPage />} />
-        <Route path="/register" element={<RegisterPage />} />
+        {/* Routes publiques */}
+        <Route element={<GuestLayout />}>
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/register" element={<RegisterPage />} />
+        </Route>
 
         {/* Routes protégées */}
         <Route element={<RequireAuth />}>

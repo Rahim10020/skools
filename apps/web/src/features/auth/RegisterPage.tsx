@@ -1,9 +1,14 @@
-import { useForm } from "react-hook-form";
+import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { useNavigate, Link } from "react-router-dom";
-import api from "../../lib/api";
+import { useNavigate, Link, Navigate } from "react-router-dom";
+import { useQueryClient } from "@tanstack/react-query";
+import api, { getErrorMessage } from "../../lib/api";
 import { useAuthStore } from "../../stores/auth-store";
+import type { RegisterResponse } from "../../types/api";
+import { Button } from "../../components/ui/button";
+import { Input } from "../../components/ui/input";
+import { AuthField, AuthRootError } from "./components/AuthField";
 
 const registerSchema = z.object({
   firstName: z.string().min(2, "Minimum 2 caractères"),
@@ -16,135 +21,136 @@ type RegisterForm = z.infer<typeof registerSchema>;
 
 export default function RegisterPage() {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const setAuth = useAuthStore((state) => state.setAuth);
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
 
   const {
-    register,
+    control,
     handleSubmit,
     formState: { errors, isSubmitting },
     setError,
   } = useForm<RegisterForm>({
     resolver: zodResolver(registerSchema),
+    defaultValues: { firstName: "", lastName: "", email: "", password: "" },
   });
+
+  if (isAuthenticated()) {
+    return <Navigate to="/dashboard" replace />;
+  }
 
   const onSubmit = async (data: RegisterForm) => {
     try {
-      const response = await api.post("/auth/register", data);
+      const response = await api.post<RegisterResponse>("/auth/register", data);
       const { user, accessToken, refreshToken } = response.data;
 
-      setAuth({
-        user,
-        accessToken,
-        refreshToken,
-      });
+      // Contrat : register ne renvoie ni establishmentId ni role.
+      queryClient.clear();
+      setAuth({ user, accessToken, refreshToken, establishmentId: null, role: null });
 
+      // Sans établissement : RequireEstablishment + Dashboard redirigent vers la création.
       navigate("/dashboard");
-    } catch (error: any) {
-      setError("root", {
-        message:
-          error.response?.data?.message || "Erreur lors de l'inscription",
-      });
+    } catch (error) {
+      setError("root", { message: getErrorMessage(error) });
     }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50">
-      <div className="max-w-md w-full space-y-8 p-8 bg-white rounded-xl shadow-md">
-        <div className="text-center">
-          <h1 className="text-3xl font-bold text-gray-900">Skools</h1>
-          <p className="mt-2 text-gray-600">Créer un compte</p>
+    <div className="flex flex-col gap-p5">
+      <div className="text-center">
+        <h1 className="text-sb20 text-(--skools-text-primary)">Inscription</h1>
+        <p className="mt-p1 text-r14 text-(--skools-text-muted)">Créer un compte</p>
+      </div>
+
+      <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-p4" noValidate>
+        <div className="grid grid-cols-2 gap-p4">
+          <Controller
+            name="firstName"
+            control={control}
+            render={({ field: { value, onChange, onBlur, name }, fieldState }) => (
+              <AuthField label="Prénom" error={fieldState.error?.message}>
+                <Input
+                  label="Awa"
+                  name={name}
+                  value={value}
+                  onChange={onChange}
+                  onBlur={onBlur}
+                  error={!!fieldState.error}
+                  autoComplete="given-name"
+                />
+              </AuthField>
+            )}
+          />
+
+          <Controller
+            name="lastName"
+            control={control}
+            render={({ field: { value, onChange, onBlur, name }, fieldState }) => (
+              <AuthField label="Nom" error={fieldState.error?.message}>
+                <Input
+                  label="Diallo"
+                  name={name}
+                  value={value}
+                  onChange={onChange}
+                  onBlur={onBlur}
+                  error={!!fieldState.error}
+                  autoComplete="family-name"
+                />
+              </AuthField>
+            )}
+          />
         </div>
 
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700">
-                Prénom
-              </label>
-              <input
-                {...register("firstName")}
-                className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+        <Controller
+          name="email"
+          control={control}
+          render={({ field: { value, onChange, onBlur, name }, fieldState }) => (
+            <AuthField label="Email" error={fieldState.error?.message}>
+              <Input
+                label="adresse@exemple.com"
+                name={name}
+                value={value}
+                onChange={onChange}
+                onBlur={onBlur}
+                error={!!fieldState.error}
+                autoComplete="email"
               />
-              {errors.firstName && (
-                <p className="mt-1 text-sm text-red-600">
-                  {errors.firstName.message}
-                </p>
-              )}
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700">
-                Nom
-              </label>
-              <input
-                {...register("lastName")}
-                className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-              />
-              {errors.lastName && (
-                <p className="mt-1 text-sm text-red-600">
-                  {errors.lastName.message}
-                </p>
-              )}
-            </div>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700">
-              Email
-            </label>
-            <input
-              type="email"
-              {...register("email")}
-              className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-            />
-            {errors.email && (
-              <p className="mt-1 text-sm text-red-600">
-                {errors.email.message}
-              </p>
-            )}
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700">
-              Mot de passe
-            </label>
-            <input
-              type="password"
-              {...register("password")}
-              className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-            />
-            {errors.password && (
-              <p className="mt-1 text-sm text-red-600">
-                {errors.password.message}
-              </p>
-            )}
-          </div>
-
-          {errors.root && (
-            <p className="text-sm text-red-600 text-center">
-              {errors.root.message}
-            </p>
+            </AuthField>
           )}
+        />
 
-          <button
-            type="submit"
-            disabled={isSubmitting}
-            className="w-full flex justify-center py-2.5 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
-          >
-            {isSubmitting ? "Inscription..." : "S'inscrire"}
-          </button>
-        </form>
+        <Controller
+          name="password"
+          control={control}
+          render={({ field: { value, onChange, onBlur, name }, fieldState }) => (
+            <AuthField label="Mot de passe" error={fieldState.error?.message}>
+              <Input
+                variant="password"
+                label="8 caractères minimum"
+                name={name}
+                value={value}
+                onChange={onChange}
+                onBlur={onBlur}
+                error={!!fieldState.error}
+                autoComplete="new-password"
+              />
+            </AuthField>
+          )}
+        />
 
-        <p className="text-center text-sm text-gray-600">
-          Déjà un compte ?{" "}
-          <Link
-            to="/login"
-            className="font-medium text-blue-600 hover:text-blue-500"
-          >
-            Se connecter
-          </Link>
-        </p>
-      </div>
+        <AuthRootError message={errors.root?.message} />
+
+        <Button type="submit" variant={isSubmitting ? "loading" : "primary"} disabled={isSubmitting}>
+          {isSubmitting ? "Inscription…" : "S'inscrire"}
+        </Button>
+      </form>
+
+      <p className="text-center text-r14 text-(--skools-text-muted)">
+        Déjà un compte ?{" "}
+        <Link to="/login" className="font-medium text-(--common-blue) hover:underline">
+          Se connecter
+        </Link>
+      </p>
     </div>
   );
 }

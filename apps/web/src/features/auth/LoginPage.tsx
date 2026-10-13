@@ -1,9 +1,14 @@
-import { useForm } from "react-hook-form";
+import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { useNavigate, Link } from "react-router-dom";
-import api from "../../lib/api";
+import { useNavigate, Link, Navigate } from "react-router-dom";
+import { useQueryClient } from "@tanstack/react-query";
+import api, { getErrorMessage } from "../../lib/api";
 import { useAuthStore } from "../../stores/auth-store";
+import type { LoginResponse } from "../../types/api";
+import { Button } from "../../components/ui/button";
+import { Input } from "../../components/ui/input";
+import { AuthField, AuthRootError } from "./components/AuthField";
 
 const loginSchema = z.object({
   email: z.string().email("Email invalide"),
@@ -14,105 +19,102 @@ type LoginForm = z.infer<typeof loginSchema>;
 
 export default function LoginPage() {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const setAuth = useAuthStore((state) => state.setAuth);
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
 
   const {
-    register,
+    control,
     handleSubmit,
     formState: { errors, isSubmitting },
     setError,
   } = useForm<LoginForm>({
     resolver: zodResolver(loginSchema),
+    defaultValues: { email: "", password: "" },
   });
+
+  if (isAuthenticated()) {
+    return <Navigate to="/dashboard" replace />;
+  }
 
   const onSubmit = async (data: LoginForm) => {
     try {
-      const response = await api.post("/auth/login", data);
-      const { user, accessToken, refreshToken, establishmentId, role } =
-        response.data;
+      const response = await api.post<LoginResponse>("/auth/login", data);
+      const { user, accessToken, refreshToken, establishmentId, role } = response.data;
 
-      setAuth({
-        user,
-        accessToken,
-        refreshToken,
-        establishmentId,
-        role,
-      });
+      // Changement de session : purger le cache (données d'un autre compte/établissement).
+      queryClient.clear();
+      setAuth({ user, accessToken, refreshToken, establishmentId, role });
 
       navigate("/dashboard");
-    } catch (error: any) {
-      setError("root", {
-        message: error.response?.data?.message || "Erreur de connexion",
-      });
+    } catch (error) {
+      setError("root", { message: getErrorMessage(error) });
     }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50">
-      <div className="max-w-md w-full space-y-8 p-8 bg-white rounded-xl shadow-md">
-        <div className="text-center">
-          <h1 className="text-3xl font-bold text-gray-900">Skools</h1>
-          <p className="mt-2 text-gray-600">Connectez-vous à votre compte</p>
-        </div>
-
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-          <div>
-            <label className="block text-sm font-medium text-gray-700">
-              Email
-            </label>
-            <input
-              type="email"
-              {...register("email")}
-              className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-            />
-            {errors.email && (
-              <p className="mt-1 text-sm text-red-600">
-                {errors.email.message}
-              </p>
-            )}
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700">
-              Mot de passe
-            </label>
-            <input
-              type="password"
-              {...register("password")}
-              className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-            />
-            {errors.password && (
-              <p className="mt-1 text-sm text-red-600">
-                {errors.password.message}
-              </p>
-            )}
-          </div>
-
-          {errors.root && (
-            <p className="text-sm text-red-600 text-center">
-              {errors.root.message}
-            </p>
-          )}
-
-          <button
-            type="submit"
-            disabled={isSubmitting}
-            className="w-full flex justify-center py-2.5 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
-          >
-            {isSubmitting ? "Connexion..." : "Se connecter"}
-          </button>
-        </form>
-
-        <p className="text-center text-sm text-gray-600">
-          Pas encore de compte ?{" "}
-          <Link
-            to="/register"
-            className="font-medium text-blue-600 hover:text-blue-500"
-          >
-            S'inscrire
-          </Link>
+    <div className="flex flex-col gap-p5">
+      <div className="text-center">
+        <h1 className="text-sb20 text-(--skools-text-primary)">Connexion</h1>
+        <p className="mt-p1 text-r14 text-(--skools-text-muted)">
+          Connectez-vous à votre compte
         </p>
       </div>
+
+      <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-p4" noValidate>
+        <Controller
+          name="email"
+          control={control}
+          render={({ field: { value, onChange, onBlur, name }, fieldState }) => (
+            <AuthField label="Email" error={fieldState.error?.message}>
+              <Input
+                label="adresse@exemple.com"
+                name={name}
+                value={value}
+                onChange={onChange}
+                onBlur={onBlur}
+                error={!!fieldState.error}
+                autoComplete="email"
+              />
+            </AuthField>
+          )}
+        />
+
+        <Controller
+          name="password"
+          control={control}
+          render={({ field: { value, onChange, onBlur, name }, fieldState }) => (
+            <AuthField label="Mot de passe" error={fieldState.error?.message}>
+              <Input
+                variant="password"
+                label="8 caractères minimum"
+                name={name}
+                value={value}
+                onChange={onChange}
+                onBlur={onBlur}
+                error={!!fieldState.error}
+                autoComplete="current-password"
+              />
+            </AuthField>
+          )}
+        />
+
+        <AuthRootError message={errors.root?.message} />
+
+        <Button type="submit" variant={isSubmitting ? "loading" : "primary"} disabled={isSubmitting}>
+          {isSubmitting ? "Connexion…" : "Se connecter"}
+        </Button>
+      </form>
+
+      <p className="text-center text-r14 text-(--skools-text-muted)">
+        Pas encore de compte ?{" "}
+        <Link
+          to="/register"
+          className="font-medium text-(--common-blue) hover:underline"
+        >
+          S&apos;inscrire
+        </Link>
+      </p>
     </div>
   );
 }
