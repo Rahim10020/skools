@@ -14,6 +14,7 @@ import { Card } from "../../components/ui/card";
 import { Input } from "../../components/ui/input";
 import { Select } from "../../components/ui/select";
 import { AuthField, AuthRootError } from "../auth/components/AuthField";
+import { ESTABLISHMENT_TYPE_OPTIONS } from "./establishment-types";
 
 const schema = z.object({
   name: z.string().min(2, "Minimum 2 caractères"),
@@ -36,13 +37,6 @@ interface CreateEstablishmentResponse {
   accessToken: string;
   refreshToken: string;
 }
-
-const TYPE_OPTIONS = [
-  { label: "Primaire", value: "PRIMARY" },
-  { label: "Collège", value: "COLLEGE" },
-  { label: "Lycée", value: "LYCEE" },
-  { label: "Mixte", value: "MIXED" },
-];
 
 function slugify(value: string) {
   return value
@@ -189,7 +183,7 @@ export default function CreateEstablishmentPage() {
                 >
                   <Select
                     label="Non précisé"
-                    options={TYPE_OPTIONS}
+                    options={ESTABLISHMENT_TYPE_OPTIONS}
                     value={value ?? ""}
                     onChange={(v) =>
                       onChange(v === "" ? undefined : (v as FormData["type"]))

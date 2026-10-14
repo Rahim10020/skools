@@ -16,29 +16,18 @@ import {
   TableHeaderCell,
   TableRow,
 } from "../../components/ui/table";
-import { Select, type SelectOption } from "../../components/ui/select";
+import { Select } from "../../components/ui/select";
+import {
+  RELATION_LABELS,
+  RELATION_OPTIONS,
+  type ParentRelation,
+} from "./relations";
 import { Checkbox } from "../../components/ui/checkbox";
 import { Badge } from "../../components/ui/badge";
 import { Modal } from "../../components/ui/use-modal";
 import { EmptyState, ErrorState } from "../../components/ui/empty-state";
 import { Skeleton } from "../../components/ui/skeleton";
 import { toast } from "../../components/ui/toast";
-
-type Relation = "FATHER" | "MOTHER" | "GUARDIAN" | "OTHER";
-
-const RELATION_LABELS: Record<Relation, string> = {
-  FATHER: "Père",
-  MOTHER: "Mère",
-  GUARDIAN: "Tuteur",
-  OTHER: "Autre",
-};
-
-const RELATION_OPTIONS: SelectOption[] = [
-  { label: "Père", value: "FATHER" },
-  { label: "Mère", value: "MOTHER" },
-  { label: "Tuteur", value: "GUARDIAN" },
-  { label: "Autre", value: "OTHER" },
-];
 
 interface PersonOption {
   id: string;
@@ -52,9 +41,14 @@ interface ParentLink {
   id: string;
   parentId: string;
   studentId: string;
-  relation: Relation;
+  relation: ParentRelation;
   isPrimary: boolean;
-  parent: { id: string; firstName: string; lastName: string; phone: string | null };
+  parent: {
+    id: string;
+    firstName: string;
+    lastName: string;
+    phone: string | null;
+  };
 }
 
 export default function LinkParentStudentPage() {
@@ -78,16 +72,26 @@ export default function LinkParentStudentPage() {
     queryKey: KEYS.parentStudentsOfStudent(selectedStudentId),
     queryFn: async () => {
       if (!selectedStudentId) return [];
-      return (await api.get<ParentLink[]>(apiPath.parentStudentsOfStudent(selectedStudentId))).data;
+      return (
+        await api.get<ParentLink[]>(
+          apiPath.parentStudentsOfStudent(selectedStudentId),
+        )
+      ).data;
     },
     enabled: !!selectedStudentId,
   });
 
   const linkMutation = useMutation({
-    mutationFn: async (data: { parentId: string; studentId: string; relation: Relation; isPrimary: boolean }) =>
-      (await api.post(API.parentStudents, data)).data,
+    mutationFn: async (data: {
+      parentId: string;
+      studentId: string;
+      relation: ParentRelation;
+      isPrimary: boolean;
+    }) => (await api.post(API.parentStudents, data)).data,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: KEYS.parentStudentsOfStudent(selectedStudentId) });
+      queryClient.invalidateQueries({
+        queryKey: KEYS.parentStudentsOfStudent(selectedStudentId),
+      });
       toast.success("Parent lié avec succès");
       setParentId("");
       setRelation("");
@@ -98,9 +102,12 @@ export default function LinkParentStudentPage() {
   });
 
   const unlinkMutation = useMutation({
-    mutationFn: async (id: string) => (await api.delete(apiPath.withId(API.parentStudents, id))).data,
+    mutationFn: async (id: string) =>
+      (await api.delete(apiPath.withId(API.parentStudents, id))).data,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: KEYS.parentStudentsOfStudent(selectedStudentId) });
+      queryClient.invalidateQueries({
+        queryKey: KEYS.parentStudentsOfStudent(selectedStudentId),
+      });
       toast.success("Lien supprimé avec succès");
       setUnlinkTarget(null);
     },
@@ -117,13 +124,15 @@ export default function LinkParentStudentPage() {
     linkMutation.mutate({
       parentId,
       studentId: selectedStudentId,
-      relation: relation as Relation,
+      relation: relation as ParentRelation,
       isPrimary,
     });
   };
 
   const links = linksQuery.data ?? [];
-  const selectedStudent = (studentsQuery.data ?? []).find((s) => s.id === selectedStudentId);
+  const selectedStudent = (studentsQuery.data ?? []).find(
+    (s) => s.id === selectedStudentId,
+  );
 
   return (
     <div>
@@ -151,7 +160,8 @@ export default function LinkParentStudentPage() {
         {selectedStudentId && (
           <Card className="p-p4">
             <h2 className="text-sb16 text-(--skools-text-primary)">
-              Parents de {selectedStudent?.firstName} {selectedStudent?.lastName}
+              Parents de {selectedStudent?.firstName}{" "}
+              {selectedStudent?.lastName}
             </h2>
             <div className="mt-p4">
               {linksQuery.isError ? (
@@ -189,12 +199,16 @@ export default function LinkParentStudentPage() {
                             {link.parent.lastName} {link.parent.firstName}
                           </TableCellPrimary>
                           <TableCell>{link.parent.phone || "—"}</TableCell>
-                          <TableCell>{RELATION_LABELS[link.relation] ?? link.relation}</TableCell>
+                          <TableCell>
+                            {RELATION_LABELS[link.relation] ?? link.relation}
+                          </TableCell>
                           <TableCell>
                             {link.isPrimary ? (
                               <Badge variant="success">Principal</Badge>
                             ) : (
-                              <span className="text-(--skools-text-muted)">—</span>
+                              <span className="text-(--skools-text-muted)">
+                                —
+                              </span>
                             )}
                           </TableCell>
                           <TableCell>
@@ -221,10 +235,18 @@ export default function LinkParentStudentPage() {
 
         {selectedStudentId && (
           <Card className="p-p4">
-            <h2 className="text-sb16 text-(--skools-text-primary)">Lier un parent</h2>
-            <form onSubmit={handleLink} className="mt-p4 flex flex-col gap-p4" noValidate>
+            <h2 className="text-sb16 text-(--skools-text-primary)">
+              Lier un parent
+            </h2>
+            <form
+              onSubmit={handleLink}
+              className="mt-p4 flex flex-col gap-p4"
+              noValidate
+            >
               <div className="flex flex-col gap-p1">
-                <span className="text-m12 text-(--skools-text-primary)">Parent</span>
+                <span className="text-m12 text-(--skools-text-primary)">
+                  Parent
+                </span>
                 <Select
                   label="Choisir un parent…"
                   value={parentId}
@@ -236,7 +258,9 @@ export default function LinkParentStudentPage() {
                 />
               </div>
               <div className="flex flex-col gap-p1">
-                <span className="text-m12 text-(--skools-text-primary)">Lien de parenté</span>
+                <span className="text-m12 text-(--skools-text-primary)">
+                  Lien de parenté
+                </span>
                 <Select
                   label="Choisir…"
                   value={relation}
@@ -282,8 +306,8 @@ export default function LinkParentStudentPage() {
             <Modal.Header>
               <Modal.Title id="unlink-title">Dissocier ce parent ?</Modal.Title>
               <Modal.Description>
-                {unlinkTarget.parent.firstName} {unlinkTarget.parent.lastName} ne sera plus lié à
-                cet élève. Le dossier du parent est conservé.
+                {unlinkTarget.parent.firstName} {unlinkTarget.parent.lastName}{" "}
+                ne sera plus lié à cet élève. Le dossier du parent est conservé.
               </Modal.Description>
             </Modal.Header>
             <Modal.Footer>

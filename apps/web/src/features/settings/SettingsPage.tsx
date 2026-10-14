@@ -13,21 +13,18 @@ import { Select } from "../../components/ui/select";
 import { EmptyState, ErrorState } from "../../components/ui/empty-state";
 import { Skeleton } from "../../components/ui/skeleton";
 import { toast } from "../../components/ui/toast";
+import {
+  ESTABLISHMENT_TYPE_OPTIONS,
+  type EstablishmentType,
+} from "../establishments/establishment-types";
 
 interface Establishment {
   id: string;
   name: string;
   slug: string;
-  type: "PRIMARY" | "COLLEGE" | "LYCEE" | "MIXED" | null;
+  type: EstablishmentType | null;
   logoUrl: string | null;
 }
-
-const TYPE_OPTIONS = [
-  { label: "Primaire", value: "PRIMARY" },
-  { label: "Collège", value: "COLLEGE" },
-  { label: "Lycée", value: "LYCEE" },
-  { label: "Mixte", value: "MIXED" },
-];
 
 const SLUG_PATTERN = /^[a-z0-9-]+$/;
 
@@ -126,7 +123,7 @@ function SettingsForm({ establishment }: { establishment: Establishment }) {
             onChange={setType}
             disableSearch
             disabled={!canWrite}
-            options={TYPE_OPTIONS}
+            options={ESTABLISHMENT_TYPE_OPTIONS}
           />
         </div>
         <div className="flex flex-col gap-p1">

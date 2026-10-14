@@ -1,5 +1,6 @@
 import { ROLES } from "../../lib/roles";
 import type { StudentRow } from "../../types/api";
+import { RELATION_LABELS, type ParentRelation } from "../parents/relations";
 import { API } from "../../lib/api-endpoints";
 import { KEYS } from "../../lib/query-keys";
 import { ROUTES } from "../../lib/routes";
@@ -31,17 +32,10 @@ interface MeResponse {
 
 interface MyChild {
   id: string;
-  relation: "FATHER" | "MOTHER" | "GUARDIAN" | "OTHER";
+  relation: ParentRelation;
   isPrimary: boolean;
   student: StudentRow;
 }
-
-const RELATION_LABELS: Record<MyChild["relation"], string> = {
-  FATHER: "Père",
-  MOTHER: "Mère",
-  GUARDIAN: "Tuteur",
-  OTHER: "Autre",
-};
 
 function memberSince(iso: string): string {
   const date = new Date(iso);

@@ -40,23 +40,8 @@ interface DisciplineRecord {
   incidentDate: string;
   resolution: string | null;
   resolvedAt: string | null;
-  student: {
-    id: string;
-    firstName: string;
-    lastName: string;
-    matricule: string | null;
-  };
+  student: StudentRow;
 }
-
-const TYPE_OPTIONS: Array<{ label: string; value: DisciplineType }> = [
-  { label: "Observation", value: "OBSERVATION" },
-  { label: "Avertissement", value: "WARNING" },
-  { label: "Blâme", value: "REPRIMAND" },
-  { label: "Retenue", value: "DETENTION" },
-  { label: "Exclusion temporaire", value: "SUSPENSION" },
-  { label: "Exclusion définitive", value: "EXPULSION" },
-  { label: "Autre", value: "OTHER" },
-];
 
 const TYPE_LABELS: Record<DisciplineType, string> = {
   OBSERVATION: "Observation",
@@ -67,6 +52,10 @@ const TYPE_LABELS: Record<DisciplineType, string> = {
   EXPULSION: "Exclusion définitive",
   OTHER: "Autre",
 };
+
+const TYPE_OPTIONS: Array<{ label: string; value: DisciplineType }> = (
+  Object.entries(TYPE_LABELS) as Array<[DisciplineType, string]>
+).map(([value, label]) => ({ label, value }));
 
 const STATUS_META: Record<
   DisciplineStatus,
