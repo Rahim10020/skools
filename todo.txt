@@ -4,14 +4,8 @@ pnpm --filter api dev
 # Terminal 2
 pnpm --filter web dev
 
-# Notes / présences — RESOLU (Lots 1-4)
-Le bug "note enregistrée puis invisible au retour" venait de l'UI :
-`useState(() => …)` au lieu de resynchro depuis le refetch (+ `0` écrasé,
-`alert()`). Corrigé dans GradesPage et AttendancesPage : resynchro pendant
-le rendu, `0` préservé, toasts. Persistance backend vérifiée (upsert).
 
 # Restant (voir docs/roadmap.md)
-- Notifications (cloche) : backend + UI.
 - Espace plateforme SUPER_ADMIN.
 - Module bibliothèque.
 - Badges sidebar (ex. Discipline (3)).
