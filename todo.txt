@@ -65,7 +65,7 @@ je ne veux pas recopier integralement
 tout ce qui est fais sur gmail. ce qui m'interesse, c'est leur design et 
 le fait qu'ils simplifent la tache a l'utilisateur. Dis moi si c'est possible 
 et si c'est bon de le faire et ensuite on va preparer un plan pour mettre tout ca 
-en place correctement.
+en place correctement. ne pas oublier de mettre a jour les skeletons s'il le faut.
 
 - j'aimerais que le systeme soi capable de detecter l'annee-scolaire en cours sans 
 que les utilisateurs n'aient pas a le faire tout le temps. analyse moi ca et propose moi des 
@@ -86,3 +86,10 @@ idees et ensuite on va mettre en place un plan pour tout coder proprement.
 mobile. actuellement aussi sur desktop, j'aimerais que ca s'affiche exactement a droite de la sidebar 
 sinon ca cache une partie de la sidebar et l'icone de notification et celle pour basculer entre le light 
 et le dark mode ne sont plus visibles
+
+- les modals, trouver une meilleure gestions de ces modals. et puis il ya un truc. supposons qu'il y ait 
+500 eleves dans l'etablissement. est ce un seule personne qui va les enregistrer via le formulaire du modal ? 
+est ce une bonne pratique ? comment simplifier le travail aux utilisateurs et aussi identifie les autres 
+endroits ou on pourrais avoir ce genere de soucis. et aussi au niveau du genre , on a un champ texte au 
+lieu d'un select. ne serait il pas mieux de mieux gerer ca ? ou bien c'est bon comme ca ? trouver les 
+autres soucis de ce genre et on va les corriger.
