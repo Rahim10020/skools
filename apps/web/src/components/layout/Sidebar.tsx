@@ -21,7 +21,7 @@ import { NavSearch } from "../NavSearch";
 import { normalizeText } from "../../lib/text";
 import { NotificationsBell } from "../../features/notifications/NotificationsBell";
 import { Icon } from "../icons/Icon";
-import { ChevronBackIcon } from "../icons/ChevronBackIcon";
+import { DoubleCaretIcon } from "../icons/DoubleCaretIcon";
 import { ChevronDownwardIcon } from "../icons/ChevronDownwardIcon";
 import { LogOutIcon } from "../icons/LogOutIcon";
 import { XIcon } from "../icons/XIcon";
@@ -120,7 +120,7 @@ function CollapseButton({
       }
       title={collapsed ? "Déplier (Ctrl+B)" : "Replier (Ctrl+B)"}
     >
-      <ChevronBackIcon
+      <DoubleCaretIcon
         className={[
           "size-4 transition-transform",
           collapsed ? "rotate-180" : "",
@@ -327,6 +327,19 @@ export function Sidebar({
         ) : (
           visibleGroups.map((group, gi) => {
             const open = collapsed ? true : isGroupOpen(group);
+            // Groupe à un seul item visible : entrée directe, sans accordéon.
+            if (group.items.length === 1) {
+              const [only] = group.items;
+              return (
+                <div key={group.title} className={gi > 0 ? "mt-p4" : ""}>
+                  <NavItemLink
+                    item={only}
+                    collapsed={collapsed}
+                    onNavigate={onCloseMobile}
+                  />
+                </div>
+              );
+            }
             return (
               <div key={group.title} className={gi > 0 ? "mt-p4" : ""}>
                 {collapsed ? (
