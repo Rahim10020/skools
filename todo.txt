@@ -79,3 +79,10 @@ idees et ensuite on va mettre en place un plan pour tout coder proprement.
     s'il faut le faire, tu vas me donner un plan pour le mettre en place correctement.
 
 - voir s'il faut gerer le menu mobile comme c'est fais sur ecom.saas.
+
+- voir si ce serait une bonne idee de gerer la pagination des listes comme c'est fais dans epl.
+
+- bien gerer l'ouverture des notifications quand on clique sur l'icone de notification et qu'on est sur 
+mobile. actuellement aussi sur desktop, j'aimerais que ca s'affiche exactement a droite de la sidebar 
+sinon ca cache une partie de la sidebar et l'icone de notification et celle pour basculer entre le light 
+et le dark mode ne sont plus visibles
