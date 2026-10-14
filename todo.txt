@@ -15,3 +15,67 @@ pnpm --filter web dev
 Reste roadmap : espace SUPER_ADMIN, bibliothèque, 
 paramètres pédagogiques/système, badge sidebar, rate limiting, 
 tests, a11y. Dis go + le lot (ex. go bibliothèque).
+
+
+- Qui peut attribuer un role a un utilisateur ? 
+on dit que l'utilisateur dois exister avant qu'on ne lui donne un role. 
+comment cet utilisateur doit il exister d'abord ? il devrais creer un 
+compte d'abord ? et en creant ce compte, il a quel role par defaut ?
+
+- create establishment : revoir le design
+
+- je veux comprendre, supposons que je finisse le developpement de l'application 
+web (je compte coder une landing page qui va presenter les services de skools 
+mais on va laisser ca a plus tard. ce n'est pas sur ca qu'on bosse pour le moment)
+quand une personne viendra creer un compte (en ce moment, il n'y a pas encore 
+d'etablissement, il aura quel role dans ce cas ?)
+
+- Qui va creer un etablissement ? maintenant apres l'etablissement cree, q
+ui va mettre les autres utilisateurs (surveillant ,censeur, professeurs, elves, 
+parents etc...)
+
+- Moi mon objectif en creeant une telle plateforme, c'est de pouvoir vendre 
+ce système a plusieurs etablissements tout en ayant une base de code commune 
+(je ne veux pas coder ce systeme pour chaque etablissement tu vois ?) 
+est ce que tu penses que je suis sur la bonne voie ?
+
+- je veux qu'on code l'affichage des emplois du temps des professeurs et des eleves 
+en adaptant exactement le meme design de Calendar/Events qui est dans epl. 
+dis moi si c'est possible et on va preparer un plan pour mettre tout en place.
+
+- il ya aussi un emploi du temps general auquel a souvent acce le censeur , cet 
+emploi du temps montrent tout les horraires de cours des differents professeurs et 
+les classes dans lesquelles ils ont cours. je veux qu'on prepare ca aussi.
+
+- comme c'est fait dans epl, chaque etablissement va avoir une partie ou on va publier 
+les informations importantes (a faire exactement comme c'est fait au niveau 
+de epl, je parle bien sur de l'affichage)
+
+- la sidebar pour le role director contient beaucoup d'elements. j
+e veux que tu me propose une bonne organisation afin de ne pas tout 
+saturer visuellement
+
+- je veux coder les affichages des listes (listes des utilisateurs, des eleves, 
+des classes, des cycles, des niveux etc..) comme c'est fais dans gmail 
+(un checkbox a gauche, les options supprimer et modfier qui ne sont visibles 
+qu'au hover sur une ligne, quand on selectionne un checkbox, on a des options 
+supplementaires qui viennent en haut. On a aussi un checkbox qui permet de tout selectionner 
+en meme temps et de faire certains actions ce checkbox a meme des options de filtres.) 
+je ne veux pas recopier integralement 
+tout ce qui est fais sur gmail. ce qui m'interesse, c'est leur design et 
+le fait qu'ils simplifent la tache a l'utilisateur. Dis moi si c'est possible 
+et si c'est bon de le faire et ensuite on va preparer un plan pour mettre tout ca 
+en place correctement.
+
+- j'aimerais que le systeme soi capable de detecter l'annee-scolaire en cours sans 
+que les utilisateurs n'aient pas a le faire tout le temps. analyse moi ca et propose moi des 
+idees et ensuite on va mettre en place un plan pour tout coder proprement.
+
+- dans la sidebar de l'epl, tu vois que quand on fais le hover sur une sidebar item (
+    un item de navigation), on a le tooltip ou bien (je ne sais pas comment on l'appelle) 
+    qui viens a droite de la sidebar et contient le nom de l'item dont on fais le hover 
+    ou bien les differents options qu'il fournit. dis moi si tu vois et comprends ce que 
+    je veux dire et dis moi si c'est bon de faire la meme chose dans skools et ensuite 
+    s'il faut le faire, tu vas me donner un plan pour le mettre en place correctement.
+
+- voir s'il faut gerer le menu mobile comme c'est fais sur ecom.saas.
