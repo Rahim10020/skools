@@ -40,6 +40,9 @@ export const NAV_BY_ROLE: Record<string, string[]> = {
   DIRECTOR: [
     ROUTES.dashboard,
     ...ACADEMIC_ROUTES,
+    ROUTES.structures,
+    ROUTES.matieresPeriodes,
+    ROUTES.examensNotes,
     ROUTES.students,
     ROUTES.teachers,
     ROUTES.parents,
@@ -59,6 +62,8 @@ export const NAV_BY_ROLE: Record<string, string[]> = {
   ADMIN: [
     ROUTES.dashboard,
     ...ACADEMIC_ROUTES,
+    ROUTES.structures,
+    ROUTES.matieresPeriodes,
     ROUTES.students,
     ROUTES.teachers,
     ROUTES.parents,
@@ -72,6 +77,9 @@ export const NAV_BY_ROLE: Record<string, string[]> = {
   CENSEUR: [
     ROUTES.dashboard,
     ...ACADEMIC_ROUTES,
+    ROUTES.structures,
+    ROUTES.matieresPeriodes,
+    ROUTES.examensNotes,
     ROUTES.students,
     ROUTES.exams,
     ROUTES.grades,
@@ -95,6 +103,7 @@ export const NAV_BY_ROLE: Record<string, string[]> = {
   TEACHER: [
     ROUTES.dashboard,
     ROUTES.exams,
+    ROUTES.examensNotes,
     ROUTES.grades,
     ROUTES.attendances,
     ROUTES.schedules,

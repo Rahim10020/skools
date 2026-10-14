@@ -59,7 +59,10 @@ function NavItemLink({
   onNavigate?: () => void;
 }) {
   const { pathname } = useLocation();
-  const active = pathname === item.to || pathname.startsWith(`${item.to}/`);
+  const active =
+    pathname === item.to ||
+    pathname.startsWith(`${item.to}/`) ||
+    item.activePaths?.includes(pathname);
 
   const link = (
     <Link
@@ -212,8 +215,12 @@ export function Sidebar({
     ? groups
         .map((group) => ({
           ...group,
-          items: group.items.filter((item) =>
-            normalizeText(item.label).includes(normalizedQuery),
+          items: group.items.filter(
+            (item) =>
+              normalizeText(item.label).includes(normalizedQuery) ||
+              item.keywords?.some((keyword) =>
+                normalizeText(keyword).includes(normalizedQuery),
+              ),
           ),
         }))
         .filter((group) => group.items.length > 0)
@@ -227,9 +234,12 @@ export function Sidebar({
     if (searching) return true;
     if (openGroups[group.title] !== undefined) return openGroups[group.title];
     if (group.defaultOpen) return true;
-    // Le groupe de la route active est déplié par défaut.
+    // Le groupe de la route active est déplié par défaut (hubs inclus).
     return group.items.some(
-      (item) => pathname === item.to || pathname.startsWith(`${item.to}/`),
+      (item) =>
+        pathname === item.to ||
+        pathname.startsWith(`${item.to}/`) ||
+        item.activePaths?.includes(pathname),
     );
   };
 

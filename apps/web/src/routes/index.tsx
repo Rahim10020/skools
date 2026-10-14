@@ -62,6 +62,15 @@ const MyGradesPage = lazy(() => import("../features/grades/MyGradesPage"));
 const MyAbsencesPage = lazy(
   () => import("../features/attendances/MyAbsencesPage"),
 );
+const StructuresPage = lazy(
+  () => import("../features/structures/StructuresPage"),
+);
+const MatieresPeriodesPage = lazy(
+  () => import("../features/academic/MatieresPeriodesPage"),
+);
+const ExamensNotesPage = lazy(
+  () => import("../features/grades/ExamensNotesPage"),
+);
 
 /** Enregistre la navigation impérative (intercepteur 401 → /login). */
 function AuthNavigator() {
@@ -118,10 +127,15 @@ export function AppRoutes() {
                     element={<ClassroomsPage />}
                   />
                   <Route path={ROUTES.cycles} element={<CyclesPage />} />
+                  <Route path={ROUTES.structures} element={<StructuresPage />} />
                   <Route path={ROUTES.levels} element={<LevelsPage />} />
                   <Route path={ROUTES.series} element={<SeriesPage />} />
                   <Route path={ROUTES.subjects} element={<SubjectsPage />} />
                   <Route path={ROUTES.periods} element={<PeriodsPage />} />
+                  <Route
+                    path={ROUTES.matieresPeriodes}
+                    element={<MatieresPeriodesPage />}
+                  />
                   <Route path={ROUTES.students} element={<StudentsPage />} />
                   <Route path={ROUTES.teachers} element={<TeachersPage />} />
                   <Route path={ROUTES.parents} element={<ParentsPage />} />
@@ -131,6 +145,10 @@ export function AppRoutes() {
                   />
                   <Route path={ROUTES.exams} element={<ExamsPage />} />
                   <Route path={ROUTES.grades} element={<GradesPage />} />
+                  <Route
+                    path={ROUTES.examensNotes}
+                    element={<ExamensNotesPage />}
+                  />
                   <Route
                     path={ROUTES.linkParents}
                     element={<LinkParentStudentPage />}
