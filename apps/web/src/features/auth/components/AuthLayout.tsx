@@ -3,7 +3,7 @@ import { BrandLogo } from "../../../components/BrandLogo";
 import { Wordmark } from "../../../components/Wordmark";
 
 /**
- * Layout auth Skools, adapté de la référence EPL (lecture seule) :
+ * Layout auth Skools
  * colonne formulaire 360px + panneau de marque desktop, sans i18n ni illustration externe.
  * Source unique des logos : BrandLogo 64 (mobile + panneau) / 32 (topbar droite).
  */
@@ -25,8 +25,14 @@ export function AuthLayout({ children }: { children: ReactNode }) {
           <footer className="absolute bottom-6 left-5 right-5 text-center md:static md:mt-auto md:pt-6 md:left-auto md:right-auto">
             <p className="text-r12 text-(--skools-text-muted) leading-relaxed">
               En continuant, vous acceptez nos{" "}
-              <span className="underline cursor-pointer">conditions d'utilisation</span>{" "}
-              et notre <span className="underline cursor-pointer">politique de confidentialité</span>.
+              <span className="underline cursor-pointer">
+                conditions d'utilisation
+              </span>{" "}
+              et notre{" "}
+              <span className="underline cursor-pointer">
+                politique de confidentialité
+              </span>
+              .
             </p>
           </footer>
         </div>
