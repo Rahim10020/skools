@@ -17,15 +17,20 @@ import { ThemeToggle } from "../ThemeToggle";
 import { Wordmark } from "../Wordmark";
 import { ActiveYearSelector } from "../ActiveYearSelector";
 import { ChildSelector } from "../ChildSelector";
+import { NavSearch } from "../NavSearch";
+import { normalizeText } from "../../lib/text";
 import { NotificationsBell } from "../../features/notifications/NotificationsBell";
 import { Icon } from "../icons/Icon";
 import { ChevronBackIcon } from "../icons/ChevronBackIcon";
+import { ChevronDownwardIcon } from "../icons/ChevronDownwardIcon";
 import { LogOutIcon } from "../icons/LogOutIcon";
 import { XIcon } from "../icons/XIcon";
 import ProfilIcon from "../icons/ProfilIcon";
 import SettingsNavIcon from "../icons/SettingsNavIcon";
+import { BrandLogo } from "../BrandLogo";
 
 const COLLAPSED_KEY = "skools-sidebar-collapsed";
+const OPEN_GROUPS_KEY = "skools-sidebar-open";
 
 interface MeEstablishments {
   establishments: Array<{
@@ -138,6 +143,17 @@ export function Sidebar({
   });
   const { user, role, establishmentId, refreshToken, logout } = useAuthStore();
   const navigate = useNavigate();
+  const { pathname } = useLocation();
+  const [query, setQuery] = useState("");
+  const [openGroups, setOpenGroups] = useState<Record<string, boolean>>(() => {
+    try {
+      return JSON.parse(
+        localStorage.getItem(OPEN_GROUPS_KEY) ?? "{}",
+      ) as Record<string, boolean>;
+    } catch {
+      return {};
+    }
+  });
 
   useEffect(() => {
     try {
@@ -147,7 +163,15 @@ export function Sidebar({
     }
   }, [collapsed]);
 
-  // Repli au clavier façon EPL (desktop uniquement).
+  useEffect(() => {
+    try {
+      localStorage.setItem(OPEN_GROUPS_KEY, JSON.stringify(openGroups));
+    } catch {
+      // Stockage indisponible : l'accordéon reste en mémoire de session.
+    }
+  }, [openGroups]);
+
+  // Repli au clavier (desktop uniquement).
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "b") {
@@ -181,6 +205,37 @@ export function Sidebar({
     .filter((group) => group.items.length > 0);
   const bottomItems = BOTTOM_NAV.filter((item) => canAccess(item.to, role));
 
+  // Recherche : filtre insensible aux accents sur les libellés.
+  const normalizedQuery = normalizeText(query.trim());
+  const searching = normalizedQuery.length > 0;
+  const visibleGroups = searching
+    ? groups
+        .map((group) => ({
+          ...group,
+          items: group.items.filter((item) =>
+            normalizeText(item.label).includes(normalizedQuery),
+          ),
+        }))
+        .filter((group) => group.items.length > 0)
+    : groups;
+
+  const isGroupOpen = (group: {
+    title: string;
+    defaultOpen?: boolean;
+    items: SidebarNavItem[];
+  }) => {
+    if (searching) return true;
+    if (openGroups[group.title] !== undefined) return openGroups[group.title];
+    if (group.defaultOpen) return true;
+    // Le groupe de la route active est déplié par défaut.
+    return group.items.some(
+      (item) => pathname === item.to || pathname.startsWith(`${item.to}/`),
+    );
+  };
+
+  const toggleGroup = (title: string, currentlyOpen: boolean) =>
+    setOpenGroups((prev) => ({ ...prev, [title]: !currentlyOpen }));
+
   const meQuery = useQuery({
     queryKey: ["me"],
     queryFn: async () => (await api.get<MeEstablishments>(API.authMe)).data,
@@ -205,7 +260,7 @@ export function Sidebar({
       <div className="border-b border-(--skools-border-subtle)">
         <div
           className={[
-            "flex items-center h-14 px-p4 justify-between",
+            "flex items-center h-12 px-p4 justify-between",
             collapsed ? "lg:justify-center lg:px-0" : "",
           ]
             .filter(Boolean)
@@ -215,7 +270,7 @@ export function Sidebar({
             <Wordmark />
           </span>
           <span className={collapsed ? "hidden lg:block" : "hidden"}>
-            <Wordmark compact />
+            <BrandLogo />
           </span>
           <span className="hidden lg:block">
             <CollapseButton
@@ -233,7 +288,7 @@ export function Sidebar({
           <p
             title={establishmentName}
             className={[
-              "px-p4 pb-p3 -mt-p1 text-r11 text-(--skools-text-muted) truncate",
+              "px-p4 pb-p3 -mt-p1 text-r12 text-(--skools-text-muted) truncate",
               collapsed ? "lg:hidden" : "",
             ]
               .filter(Boolean)
@@ -248,35 +303,66 @@ export function Sidebar({
         aria-label="Sections"
         className="sidebar-scrollbar flex-1 overflow-y-auto px-p4 py-p4"
       >
-        {groups.map((group, gi) => (
-          <div key={group.title} className={gi > 0 ? "mt-p4" : ""}>
-            <p
-              className={[
-                "px-p2 mb-p2 text-[11px] font-medium uppercase tracking-wide text-(--skools-text-muted)",
-                collapsed ? "lg:hidden" : "",
-              ]
-                .filter(Boolean)
-                .join(" ")}
-            >
-              {group.title}
-            </p>
-            {collapsed && gi > 0 && (
-              <span className="hidden lg:block">
-                <Separator className="mb-p4" />
-              </span>
-            )}
-            <div className="flex flex-col gap-p1">
-              {group.items.map((item) => (
-                <NavItemLink
-                  key={item.to}
-                  item={item}
-                  collapsed={collapsed}
-                  onNavigate={onCloseMobile}
-                />
-              ))}
-            </div>
-          </div>
-        ))}
+        <div
+          className={["mb-p3", collapsed ? "lg:hidden" : ""]
+            .filter(Boolean)
+            .join(" ")}
+        >
+          <NavSearch value={query} onChange={setQuery} />
+        </div>
+        {searching && visibleGroups.length === 0 ? (
+          <p className="px-p2 py-p4 text-center text-r12 text-(--skools-text-muted)">
+            Aucune page pour « {query.trim()} »
+          </p>
+        ) : (
+          visibleGroups.map((group, gi) => {
+            const open = collapsed ? true : isGroupOpen(group);
+            return (
+              <div key={group.title} className={gi > 0 ? "mt-p4" : ""}>
+                {collapsed ? (
+                  <>
+                    <p className="px-p2 mb-p2 text-[11px] font-medium uppercase tracking-wide text-(--skools-text-muted) lg:hidden">
+                      {group.title}
+                    </p>
+                    {gi > 0 && (
+                      <span className="hidden lg:block">
+                        <Separator className="mb-p4" />
+                      </span>
+                    )}
+                  </>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => toggleGroup(group.title, open)}
+                    aria-expanded={open}
+                    aria-label={`${open ? "Replier" : "Déplier"} ${group.title}`}
+                    className="mb-p2 flex w-full items-center justify-between rounded-r2 px-p2 py-p1 text-[11px] font-medium uppercase tracking-wide text-(--skools-text-muted) transition-colors hover:bg-(--skools-interactive-hover-bg) hover:text-(--skools-text-primary)"
+                  >
+                    <span className="truncate">{group.title}</span>
+                    <ChevronDownwardIcon
+                      className={[
+                        "size-4 shrink-0 transition-transform duration-200",
+                        open ? "" : "-rotate-90",
+                      ].join(" ")}
+                    />
+                  </button>
+                )}
+                {open && (
+                  <div className="flex flex-col gap-p1">
+                    {group.items.map((item) => (
+                      <NavItemLink
+                        key={item.to}
+                        item={item}
+                        collapsed={collapsed}
+                        onNavigate={onCloseMobile}
+                      />
+                    ))}
+                  </div>
+                )}
+              </div>
+            );
+          })
+        )}
         {bottomItems.length > 0 && (
           <div className="mt-p4">
             <Separator className="mb-p4" />

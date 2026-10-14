@@ -29,6 +29,8 @@ export interface SidebarNavItem {
 
 export interface SidebarNavGroup {
   title: string;
+  /** Ouvert par défaut (préférence persistée + route active priment). */
+  defaultOpen?: boolean;
   items: SidebarNavItem[];
 }
 
@@ -40,6 +42,7 @@ export interface SidebarNavGroup {
 export const SIDEBAR_NAV: SidebarNavGroup[] = [
   {
     title: "Pilotage",
+    defaultOpen: true,
     items: [
       { to: ROUTES.dashboard, label: "Tableau de bord", icon: DashboardIcon },
     ],
