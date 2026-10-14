@@ -17,27 +17,7 @@ paramètres pédagogiques/système, badge sidebar, rate limiting,
 tests, a11y. Dis go + le lot (ex. go bibliothèque).
 
 
-- Qui peut attribuer un role a un utilisateur ? 
-on dit que l'utilisateur dois exister avant qu'on ne lui donne un role. 
-comment cet utilisateur doit il exister d'abord ? il devrais creer un 
-compte d'abord ? et en creant ce compte, il a quel role par defaut ?
-
 - create establishment : revoir le design
-
-- je veux comprendre, supposons que je finisse le developpement de l'application 
-web (je compte coder une landing page qui va presenter les services de skools 
-mais on va laisser ca a plus tard. ce n'est pas sur ca qu'on bosse pour le moment)
-quand une personne viendra creer un compte (en ce moment, il n'y a pas encore 
-d'etablissement, il aura quel role dans ce cas ?)
-
-- Qui va creer un etablissement ? maintenant apres l'etablissement cree, q
-ui va mettre les autres utilisateurs (surveillant ,censeur, professeurs, elves, 
-parents etc...)
-
-- Moi mon objectif en creeant une telle plateforme, c'est de pouvoir vendre 
-ce système a plusieurs etablissements tout en ayant une base de code commune 
-(je ne veux pas coder ce systeme pour chaque etablissement tu vois ?) 
-est ce que tu penses que je suis sur la bonne voie ?
 
 - je veux qu'on code l'affichage des emplois du temps des professeurs et des eleves 
 en adaptant exactement le meme design de Calendar/Events qui est dans epl. 
