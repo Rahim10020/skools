@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { CrudPage } from "../../components/crud/CrudPage";
+import { useAuthStore } from "../../stores/auth-store";
 import { omitEmptyStrings } from "../../components/crud/crud-helpers";
 
 interface Subject {
@@ -16,8 +17,11 @@ const schema = z.object({
 });
 
 export default function SubjectsPage() {
+  const role = useAuthStore((state) => state.role);
+  // CENSEUR : supervision en lecture seule (matrice), écritures refusées 403.
   return (
     <CrudPage<Subject>
+      readOnly={role === "CENSEUR"}
       title="Matières"
       description="Les matières enseignées dans l'établissement."
       itemLabel="matière"

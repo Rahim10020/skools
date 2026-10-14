@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { CrudPage } from "../../components/crud/CrudPage";
+import { useAuthStore } from "../../stores/auth-store";
 import { Badge } from "../../components/ui/badge";
 import {
   formatDateFr,
@@ -23,8 +24,11 @@ const schema = z.object({
 });
 
 export default function AcademicYearsPage() {
+  const role = useAuthStore((state) => state.role);
+  // CENSEUR : supervision en lecture seule (matrice), écritures refusées 403.
   return (
     <CrudPage<AcademicYear>
+      readOnly={role === "CENSEUR"}
       title="Années scolaires"
       description="Définissez les années scolaires et désignez l'année en cours."
       itemLabel="année scolaire"

@@ -4,10 +4,15 @@ pnpm --filter api dev
 # Terminal 2
 pnpm --filter web dev
 
--- post mdp
--- saisie des notes: quand j'enregistre une note, j'ai un alert dialog qui vient et qui dis que la note a ete enregistre 
-    avec succes et ensuite que je quitte la page et que je reviens, je ne vois pas la note. est ce un probleme ? 
-    comment corriger ca proprement ? Meme chose pour presences.
-    les valeurs ont bien ete enregistres dans la bd je crois.
+# Notes / présences — RESOLU (Lots 1-4)
+Le bug "note enregistrée puis invisible au retour" venait de l'UI :
+`useState(() => …)` au lieu de resynchro depuis le refetch (+ `0` écrasé,
+`alert()`). Corrigé dans GradesPage et AttendancesPage : resynchro pendant
+le rendu, `0` préservé, toasts. Persistance backend vérifiée (upsert).
 
--- prochainement, continuer avec la conception du design.
+# Restant (voir docs/roadmap.md)
+- Notifications (cloche) : backend + UI.
+- Espace plateforme SUPER_ADMIN.
+- Module bibliothèque.
+- Badges sidebar (ex. Discipline (3)).
+- Accessibilité / responsive fin.

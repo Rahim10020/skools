@@ -70,6 +70,8 @@ interface MyAssignment {
 export default function AttendancesPage() {
   const queryClient = useQueryClient();
   const role = useAuthStore((state) => state.role);
+  // ADMIN et CENSEUR consultent (matrice) ; appel réservé à DIRECTOR/TEACHER/SURVEILLANT.
+  const readOnly = role === "ADMIN" || role === "CENSEUR";
   const isTeacher = role === "TEACHER";
   const [selectedClassroomId, setSelectedClassroomId] = useState("");
   const [selectedDate, setSelectedDate] = useState(todayLocal);
@@ -254,7 +256,7 @@ export default function AttendancesPage() {
                                   [student.id]: e.target.value as AttendanceStatus,
                                 }))
                               }
-                              disabled={saveMutation.isPending}
+                              disabled={readOnly || saveMutation.isPending}
                               className={[
                                 "rounded-(--radius-r1) border border-(--skools-border-subtle) px-2 py-1 text-r14 outline-none disabled:opacity-50",
                                 STATUS_META[status].selectClass,
@@ -274,19 +276,27 @@ export default function AttendancesPage() {
                 </Table>
 
                 <div className="px-p6 py-4 border-t border-(--skools-border-subtle)">
-                  {submitError && (
-                    <p role="alert" className="text-r14 text-(--common-red) mb-p3">
-                      {submitError}
+                  {readOnly ? (
+                    <p className="text-r14 text-(--skools-text-muted)">
+                      Lecture seule : l'appel est réservé à la direction, aux enseignants et aux surveillants.
                     </p>
+                  ) : (
+                    <>
+                      {submitError && (
+                        <p role="alert" className="text-r14 text-(--common-red) mb-p3">
+                          {submitError}
+                        </p>
+                      )}
+                      <Button
+                        fullWidth={false}
+                        variant={saveMutation.isPending ? "loading" : "primary"}
+                        disabled={saveMutation.isPending}
+                        onClick={() => saveMutation.mutate()}
+                      >
+                        {saveMutation.isPending ? "Enregistrement…" : "Enregistrer les présences"}
+                      </Button>
+                    </>
                   )}
-                  <Button
-                    fullWidth={false}
-                    variant={saveMutation.isPending ? "loading" : "primary"}
-                    disabled={saveMutation.isPending}
-                    onClick={() => saveMutation.mutate()}
-                  >
-                    {saveMutation.isPending ? "Enregistrement…" : "Enregistrer les présences"}
-                  </Button>
                 </div>
               </TableContainer>
             </div>

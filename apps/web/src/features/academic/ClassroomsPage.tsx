@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { useQuery } from "@tanstack/react-query";
 import { CrudPage } from "../../components/crud/CrudPage";
+import { useAuthStore } from "../../stores/auth-store";
 import api from "../../lib/api";
 import {
   optionalNumberString,
@@ -33,6 +34,8 @@ const schema = z.object({
 });
 
 export default function ClassroomsPage() {
+  const role = useAuthStore((state) => state.role);
+  // CENSEUR : supervision en lecture seule (matrice), écritures refusées 403.
   const yearsQuery = useQuery({
     queryKey: ["academic-years"],
     queryFn: async () => (await api.get<IdName[]>("/academic-years")).data,
@@ -51,6 +54,7 @@ export default function ClassroomsPage() {
 
   return (
     <CrudPage<Classroom>
+      readOnly={role === "CENSEUR"}
       title="Classes"
       description="Les classes de l'établissement, par année, niveau et série."
       itemLabel="classe"

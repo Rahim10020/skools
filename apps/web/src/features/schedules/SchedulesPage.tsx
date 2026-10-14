@@ -74,8 +74,8 @@ export default function SchedulesPage() {
   const [filterClassroomId, setFilterClassroomId] = useState("");
   const role = useAuthStore((state) => state.role);
   const isTeacher = role === "TEACHER";
-  // Consultation seule : enseignant (ses classes), élève et parent (inscriptions).
-  const isReadOnly = isTeacher || role === "STUDENT" || role === "PARENT";
+  // Consultation seule : enseignant (ses classes), surveillant, élève et parent.
+  const isReadOnly = isTeacher || role === "SURVEILLANT" || role === "STUDENT" || role === "PARENT";
 
   const classroomsQuery = useQuery({
     queryKey: ["classrooms"],

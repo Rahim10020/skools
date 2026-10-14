@@ -60,18 +60,23 @@ export default function TeacherAssignmentsPage() {
   const teachersQuery = useQuery({
     queryKey: ["teachers"],
     queryFn: async () => (await api.get<TeacherOption[]>("/teachers")).data,
+    // Enseignant : vue « Mes classes » en lecture seule (pas d'accès aux référentiels).
+    enabled: !isTeacher,
   });
   const subjectsQuery = useQuery({
     queryKey: ["subjects"],
     queryFn: async () => (await api.get<IdName[]>("/subjects")).data,
+    enabled: !isTeacher,
   });
   const classroomsQuery = useQuery({
     queryKey: ["classrooms"],
     queryFn: async () => (await api.get<IdName[]>("/classrooms")).data,
+    enabled: !isTeacher,
   });
   const yearsQuery = useQuery({
     queryKey: ["academic-years"],
     queryFn: async () => (await api.get<IdName[]>("/academic-years")).data,
+    enabled: !isTeacher,
   });
 
   const createMutation = useMutation({

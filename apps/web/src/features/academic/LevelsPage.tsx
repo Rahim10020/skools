@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { useQuery } from "@tanstack/react-query";
 import { CrudPage } from "../../components/crud/CrudPage";
+import { useAuthStore } from "../../stores/auth-store";
 import api from "../../lib/api";
 import {
   optionalNumberString,
@@ -27,6 +28,8 @@ const schema = z.object({
 });
 
 export default function LevelsPage() {
+  const role = useAuthStore((state) => state.role);
+  // CENSEUR : supervision en lecture seule (matrice), écritures refusées 403.
   const cyclesQuery = useQuery({
     queryKey: ["cycles"],
     queryFn: async () => (await api.get<CycleOption[]>("/cycles")).data,
@@ -34,6 +37,7 @@ export default function LevelsPage() {
 
   return (
     <CrudPage<Level>
+      readOnly={role === "CENSEUR"}
       title="Niveaux"
       description="Les niveaux rattachés à chaque cycle (6ème, 5ème, Seconde…)."
       itemLabel="niveau"

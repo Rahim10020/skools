@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { useQuery } from "@tanstack/react-query";
 import { CrudPage } from "../../components/crud/CrudPage";
+import { useAuthStore } from "../../stores/auth-store";
 import { Badge } from "../../components/ui/badge";
 import api from "../../lib/api";
 import {
@@ -34,6 +35,8 @@ const schema = z.object({
 });
 
 export default function PeriodsPage() {
+  const role = useAuthStore((state) => state.role);
+  // CENSEUR : supervision en lecture seule (matrice), écritures refusées 403.
   const yearsQuery = useQuery({
     queryKey: ["academic-years"],
     queryFn: async () => (await api.get<AcademicYearOption[]>("/academic-years")).data,
@@ -41,6 +44,7 @@ export default function PeriodsPage() {
 
   return (
     <CrudPage<Period>
+      readOnly={role === "CENSEUR"}
       title="Périodes"
       description="Les périodes d'évaluation de chaque année (trimestres, semestres)."
       itemLabel="période"

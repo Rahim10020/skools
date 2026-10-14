@@ -30,13 +30,31 @@ export class PeriodsController {
   }
 
   @Get()
-  @Roles(Role.DIRECTOR, Role.ADMIN, Role.CENSEUR)
+  @Roles(
+    Role.DIRECTOR,
+    Role.ADMIN,
+    Role.CENSEUR,
+    Role.BIBLIOTECAIRE,
+    Role.SURVEILLANT,
+    Role.TEACHER,
+    Role.STUDENT,
+    Role.PARENT,
+  )
   findAll(@Request() req: any) {
     return this.periodsService.findAll(req.user.establishmentId);
   }
 
   @Get(':id')
-  @Roles(Role.DIRECTOR, Role.ADMIN, Role.CENSEUR)
+  @Roles(
+    Role.DIRECTOR,
+    Role.ADMIN,
+    Role.CENSEUR,
+    Role.BIBLIOTECAIRE,
+    Role.SURVEILLANT,
+    Role.TEACHER,
+    Role.STUDENT,
+    Role.PARENT,
+  )
   findOne(@Param('id', ParseUUIDPipe) id: string, @Request() req: any) {
     return this.periodsService.findOne(id, req.user.establishmentId);
   }

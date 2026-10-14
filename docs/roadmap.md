@@ -6,23 +6,21 @@
 
 ## 0. Vérifications post-merge (court terme, avant d'annoncer `dev` stable)
 
-- [ ] `pnpm exec turbo build` sur `dev` (contenu identique au fast-forward, à confirmer).
+- [x] `pnpm exec turbo build` sur `dev` (api + web verts, lots 1–5).
 - [ ] Tour manuel au clic dans le navigateur : login → dashboard → une page référentiel → saisie de notes → déconnexion/reconnexion (jamais testé au clic : tout a été validé en curl + build + smoke HTTP).
 - [ ] Décider du sort des données dev : compte `phase4-test@skools.test` + « École Test Phase 4 » (nettoyer ou garder comme fixtures).
 
-## 1. Vues filtrées par rôle (« Mes X ») — le plus gros morceau restant
+## 1. Vues filtrées par rôle (« Mes X ») — FAIT (lots 2–4)
 
-Contexte : le backend refuse le hors-périmètre (403), mais les vues dédiées n'existent pas encore. Les rôles concernés voient une nav réduite ou des 403 là où la matrice promet du filtré.
+- [x] **TEACHER** : Mes classes (`GET /teacher-assignments/me`), Saisie et Appel restreints à ses classes/matières (scope serveur `teacher-scope.ts`), Mon EDT filtré, dashboard sans listes globales.
+- [x] **PARENT** : sélecteur d'enfant (sidebar + persistance `skools-selected-child`), Mes enfants, Notes & bulletins / Absences / Discipline / EDT filtrés par enfant.
+- [x] **STUDENT** : Mon EDT, Mes notes (`GET /grades?studentId=`), Mes absences (`GET /attendances/student`), Mon bulletin, Ma discipline.
+- [x] Périmètre fin enseignant côté backend : lectures/écritures `grades`, `exams`, `attendances`, `schedules`, `enrollments` filtrées par assignation (403 hors périmètre).
 
-- [ ] **TEACHER** : Mes classes (liste dynamique depuis `GET /teacher-assignments`), Saisie de notes et Appel restreints à ses classes/matières (filtrage par assignation dans les services `grades`, `attendances`, `students` — backend), Mon emploi du temps filtré.
-- [ ] **PARENT** : sélecteur d'enfant dans la sidebar (règle header matrice ; `GET /parent-students/my-children` existe déjà), puis Notes & bulletins / Absences / Discipline / Emploi du temps filtrés par enfant.
-- [ ] **STUDENT** : Mon emploi du temps, Mes notes, Mes absences, Mon bulletin, Ma discipline (lecture de son dossier via `GET /students/me` qui existe déjà).
-- [ ] Périmètre fin enseignant côté backend : filtrer les lectures par assignation (aujourd'hui lecture globale documentée comme écart).
+## 2. Pages manquantes de la matrice — FAIT (lots 1–2)
 
-## 2. Pages manquantes de la matrice
-
-- [ ] **Utilisateurs & rôles** (DIRECTOR) : lister, ajouter, changer le rôle, retirer — backend prêt (`GET/POST/PATCH/DELETE /user-establishments`, testé live).
-- [ ] **Onboarding compte → dossier** : aucun endpoint ne lie un `userId` à un dossier parent/élève/enseignant à la création (contourné en SQL pendant les tests). Prévoir `userId` optionnel dans les DTOs de création + garde-fous.
+- [x] **Utilisateurs & rôles** (DIRECTOR) : lister, ajouter, changer le rôle, retirer — page `/users`.
+- [x] **Onboarding compte → dossier** : `userId` optionnel dans les DTOs élèves/enseignants/parents + garde-fous (`family-scope`/`dossier-user-link`), `GET /teachers/me` + `GET /parents/me`.
 - [ ] **Paramètres** : page existante ; il manque les paramètres pédagogiques (périodes, barèmes) et système.
 
 ## 3. Espace plateforme SUPER_ADMIN (parqué)
@@ -42,33 +40,34 @@ Contexte : le backend refuse le hors-périmètre (403), mais les vues dédiées 
 - [ ] Backend : modèle + endpoints (notifications par événement : note publiée, incident, inscription…).
 - [ ] Frontend : cloche dans la sidebar/header avec compteur + panneau.
 
-## 6. Rôles : finitions
+## 6. Rôles : finitions — FAIT sauf badge (lot 5)
 
-- [ ] Modes lecture seule dans les pages mixtes : masquer/désactiver les boutons d'écriture pour CENSEUR (structure), ADMIN (présences), TEACHER (affectations) au lieu de laisser le backend répondre 403.
-- [ ] Décision topbar desktop : la matrice décrit un header complet (logo + établissement + année + cloche + avatar) ; l'idiome EPL sidebar est conservé (nom + année dans la sidebar). Trancher avant d'empiler d'autres éléments de header.
+- [x] Modes lecture seule dans les pages mixtes : `CrudPage.readOnly` + pages custom (CENSEUR structure/examens/notes/présences, ADMIN présences, TEACHER affectations, SURVEILLANT EDT, famille discipline/EDT).
+- [x] Décision topbar desktop : tranché — idiome EPL sidebar conservé (nom + année + enfant dans la sidebar).
 - [ ] Badge numérique sur entrée sidebar (ex. Discipline (3)) — prévu par la matrice, règle 8.
 
-## 7. Fonctionnel mineur (contrats supportés, UI incomplète)
+## 7. Fonctionnel mineur — FAIT (lot 5)
 
-- [ ] Saisie de l'**appréciation** dans la page Notes (`CreateGradeDto.appreciation` ignoré).
-- [ ] Filtre **période** dans les bulletins (`periodId` optionnel côté API, non exposé).
-- [ ] Édition du **statut d'inscription** : présent via CrudPage (rappel : doublon élève+année = 409).
+- [x] Saisie de l'**appréciation** dans la page Notes (colonne + envoi bulk).
+- [x] Filtre **période** dans les bulletins (`periodId` exposé, `GET /periods` ouvert aux rôles établissement).
+- [x] Édition du **statut d'inscription** : présent via CrudPage (rappel : doublon élève+année = 409).
 
-## 8. Sécurité & déploiement (bloquant avant exposition)
+## 8. Sécurité & déploiement — FAIT sauf rate limiting (lots 1+5)
 
-- [ ] `JWT_SECRET` : valeur par défaut en dur (`skools-super-secret-change-me` dans `jwt.strategy.ts` et `auth.service.ts`) — passer par variable d'environnement obligatoire, refuser le démarrage sans elle.
-- [ ] CORS : limité à `http://localhost:5173` (`main.ts`) — configurer par environnement.
-- [ ] Revoir `POST /establishments` ouvert à tout authentifié (voulu pour l'onboarding, à confirmer).
+- [x] `JWT_SECRET` : fail-fast au démarrage sans la variable (`auth.module`, `jwt.strategy`, `auth.service`).
+- [x] CORS : `FRONTEND_URL` par environnement (liste séparée par virgules).
+- [x] `GET /establishments` restreint au sien ; `GET/PATCH/DELETE /:id` 403 hors établissement ; `GET /:id` ouvert à CENSEUR (lecture Paramètres).
+- [x] `POST /establishments` ouvert à tout authentifié (voulu pour l'onboarding, confirmé).
 - [ ] Rate limiting auth (login/register) : absent.
 
 ## 9. Dette technique & qualité
 
-- [ ] Chunk JS ~648 kB : code-splitting (`React.lazy` par route).
+- [x] Chunk JS ~648 kB → 298 kB : code-splitting (`React.lazy` par route, lot 5).
 - [ ] Accessibilité : nom accessible de la case « Absent » (appel), contraste des liens `common-blue` (~4.0, limite), audit clavier complet des modales/selects.
 - [ ] Responsive : cellules `px-p6` lourdes sur 360 px (scroll-x en place, à alléger si besoin).
 - [ ] Tests : 1 test api, 0 test web. Ajouter au minimum : permissions matrix (unitaires backend `RolesGuard` + `canAccess`), parcours auth, calcul bulletin.
-- [ ] Icône material `SettingsIcon` retirée du barrel (inutilisée, remplacée par `SettingsNavIcon` ; source EPL intacte).
-- [ ] `todo.txt` à la racine mentionne encore le bug notes/présences (corrigé Phases 5c/5d) — à mettre à jour ou archiver.
+- [x] Icône material `SettingsIcon` retirée du barrel (déjà absent de `icons/index.ts`).
+- [x] `todo.txt` mis à jour (bug notes/présences marqué résolu, lots 1–4).
 
 ## Ordre suggéré
 

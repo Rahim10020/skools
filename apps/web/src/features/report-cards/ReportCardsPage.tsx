@@ -74,6 +74,7 @@ export default function ReportCardsPage() {
   const [selectedStudentId, setSelectedStudentId] = useState("");
   const [selectedYearId, setSelectedYearId] = useState("");
   const [selectedClassroomId, setSelectedClassroomId] = useState("");
+  const [selectedPeriodId, setSelectedPeriodId] = useState("");
 
   const studentsQuery = useQuery({
     queryKey: ["students"],
@@ -84,6 +85,10 @@ export default function ReportCardsPage() {
   const yearsQuery = useQuery({
     queryKey: ["academic-years"],
     queryFn: async () => (await api.get<IdName[]>("/academic-years")).data,
+  });
+  const periodsQuery = useQuery({
+    queryKey: ["periods"],
+    queryFn: async () => (await api.get<IdName[]>("/periods")).data,
   });
   const classroomsQuery = useQuery({
     queryKey: ["classrooms"],
@@ -103,11 +108,15 @@ export default function ReportCardsPage() {
   const effectiveViewMode = isFamily ? "student" : viewMode;
 
   const studentReportQuery = useQuery({
-    queryKey: ["report-card", effectiveStudentId, selectedYearId],
+    queryKey: ["report-card", effectiveStudentId, selectedYearId, selectedPeriodId],
     queryFn: async () =>
       (
         await api.get<StudentReport>("/report-cards/student", {
-          params: { studentId: effectiveStudentId, academicYearId: selectedYearId },
+          params: {
+            studentId: effectiveStudentId,
+            academicYearId: selectedYearId,
+            ...(selectedPeriodId ? { periodId: selectedPeriodId } : {}),
+          },
         })
       ).data,
     enabled: effectiveViewMode === "student" && !!effectiveStudentId && !!selectedYearId,
@@ -191,6 +200,18 @@ export default function ReportCardsPage() {
               options={(yearsQuery.data ?? []).map((year) => ({
                 label: `${year.name}${year.isCurrent ? " (En cours)" : ""}`,
                 value: year.id,
+              }))}
+            />
+          </div>
+          <div className="flex flex-col gap-p1">
+            <span className="text-m12 text-(--skools-text-primary)">Période (optionnel)</span>
+            <Select
+              label="Toutes périodes"
+              value={selectedPeriodId}
+              onChange={setSelectedPeriodId}
+              options={(periodsQuery.data ?? []).map((period) => ({
+                label: period.name,
+                value: period.id,
               }))}
             />
           </div>

@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { useQuery } from "@tanstack/react-query";
 import { CrudPage } from "../../components/crud/CrudPage";
+import { useAuthStore } from "../../stores/auth-store";
 import api from "../../lib/api";
 
 interface Series {
@@ -21,6 +22,8 @@ const schema = z.object({
 });
 
 export default function SeriesPage() {
+  const role = useAuthStore((state) => state.role);
+  // CENSEUR : supervision en lecture seule (matrice), écritures refusées 403.
   const levelsQuery = useQuery({
     queryKey: ["levels"],
     queryFn: async () => (await api.get<LevelOption[]>("/levels")).data,
@@ -28,6 +31,7 @@ export default function SeriesPage() {
 
   return (
     <CrudPage<Series>
+      readOnly={role === "CENSEUR"}
       title="Séries"
       description="Les séries rattachées aux niveaux (A, C, D, S, L…)."
       itemLabel="série"

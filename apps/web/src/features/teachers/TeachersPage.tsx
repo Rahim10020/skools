@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { CrudPage } from "../../components/crud/CrudPage";
+import { useAuthStore } from "../../stores/auth-store";
 import { omitEmptyStrings, optionalUuidString } from "../../components/crud/crud-helpers";
 
 interface Teacher {
@@ -30,8 +31,11 @@ const schema = z.object({
 const fullName = (teacher: Teacher) => `${teacher.lastName} ${teacher.firstName}`;
 
 export default function TeachersPage() {
+  const role = useAuthStore((state) => state.role);
+  // Lecture seule hors DIRECTOR/ADMIN (matrice : CENSEUR, SURVEILLANT consultent).
   return (
     <CrudPage<Teacher>
+      readOnly={role !== "DIRECTOR" && role !== "ADMIN"}
       title="Enseignants"
       description="Les enseignants de l'établissement et leurs spécialités."
       itemLabel="enseignant"

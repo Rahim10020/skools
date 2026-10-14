@@ -43,6 +43,7 @@ interface ExistingGrade {
   examId: string;
   studentId: string;
   score: number | null;
+  appreciation: string | null;
   isAbsent: boolean;
 }
 
@@ -66,9 +67,12 @@ export default function GradesPage() {
   const queryClient = useQueryClient();
   const role = useAuthStore((state) => state.role);
   const isTeacher = role === "TEACHER";
+  // CENSEUR supervise en lecture seule (matrice) ; saisie réservée à DIRECTOR/TEACHER.
+  const readOnly = role === "CENSEUR";
   const [selectedExamId, setSelectedExamId] = useState("");
   const [scores, setScores] = useState<Record<string, string>>({});
   const [absents, setAbsents] = useState<Record<string, boolean>>({});
+  const [appreciations, setAppreciations] = useState<Record<string, string>>({});
   const [submitError, setSubmitError] = useState<string | null>(null);
 
   const examsQuery = useQuery({
@@ -126,14 +130,17 @@ export default function GradesPage() {
     if (serverGrades && serverGrades.length > 0) {
       const nextScores: Record<string, string> = {};
       const nextAbsents: Record<string, boolean> = {};
+      const nextAppreciations: Record<string, string> = {};
       for (const grade of serverGrades) {
         // CORRECTIF n°2 : score 0 préservé (toString() explicite, pas de ||).
         nextScores[grade.studentId] =
           grade.score === null || grade.score === undefined ? "" : String(grade.score);
         nextAbsents[grade.studentId] = grade.isAbsent;
+        nextAppreciations[grade.studentId] = grade.appreciation ?? "";
       }
       setScores(nextScores);
       setAbsents(nextAbsents);
+      setAppreciations(nextAppreciations);
     }
   }
 
@@ -142,11 +149,13 @@ export default function GradesPage() {
       const grades = studentsInScope.map((student) => {
         const raw = scores[student.id] ?? "";
         const isAbsent = absents[student.id] || false;
+        const appreciation = (appreciations[student.id] ?? "").trim();
         return {
           examId: selectedExamId,
           studentId: student.id,
           // CORRECTIF n°2 (envoi) : "" → undefined, "0" → 0.
           score: isAbsent || raw === "" ? undefined : Number(raw),
+          appreciation: appreciation === "" ? undefined : appreciation,
           isAbsent,
         };
       });
@@ -166,6 +175,7 @@ export default function GradesPage() {
     setSelectedExamId(examId);
     setScores({});
     setAbsents({});
+    setAppreciations({});
     setSubmitError(null);
   };
 
@@ -261,6 +271,7 @@ export default function GradesPage() {
                     <TableHeaderCell>Matricule</TableHeaderCell>
                     <TableHeaderCell>Note / {maxScore}</TableHeaderCell>
                     <TableHeaderCell>Absent</TableHeaderCell>
+                    <TableHeaderCell>Appréciation</TableHeaderCell>
                   </tr>
                 </TableHeader>
                 <TableBody>
@@ -279,7 +290,7 @@ export default function GradesPage() {
                           aria-label={`Note de ${student.firstName} ${student.lastName}`}
                           value={scores[student.id] ?? ""}
                           onChange={(e) => handleScoreChange(student.id, e.target.value)}
-                          disabled={absents[student.id] || saveMutation.isPending}
+                          disabled={readOnly || absents[student.id] || saveMutation.isPending}
                           className="w-24 rounded-(--radius-r1) border border-(--skools-border-subtle) bg-(--skools-elevated-bg) px-2 py-1 text-r14 text-(--skools-text-primary) outline-none disabled:opacity-50"
                         />
                       </TableCell>
@@ -288,6 +299,21 @@ export default function GradesPage() {
                           checked={absents[student.id] || false}
                           onChange={(checked) => handleAbsentChange(student.id, checked)}
                           id={`absent-${student.id}`}
+                          disabled={readOnly || saveMutation.isPending}
+                        />
+                      </TableCell>
+                      <TableCell>
+                        <input
+                          type="text"
+                          maxLength={280}
+                          aria-label={`Appréciation pour ${student.firstName} ${student.lastName}`}
+                          placeholder="—"
+                          value={appreciations[student.id] ?? ""}
+                          onChange={(e) =>
+                            setAppreciations((prev) => ({ ...prev, [student.id]: e.target.value }))
+                          }
+                          disabled={readOnly || saveMutation.isPending}
+                          className="w-40 rounded-(--radius-r1) border border-(--skools-border-subtle) bg-(--skools-elevated-bg) px-2 py-1 text-r14 text-(--skools-text-primary) outline-none disabled:opacity-50"
                         />
                       </TableCell>
                     </TableRow>
@@ -296,19 +322,27 @@ export default function GradesPage() {
               </Table>
 
               <div className="px-p6 py-4 border-t border-(--skools-border-subtle)">
-                {submitError && (
-                  <p role="alert" className="text-r14 text-(--common-red) mb-p3">
-                    {submitError}
+                {readOnly ? (
+                  <p className="text-r14 text-(--skools-text-muted)">
+                    Lecture seule : la saisie est réservée à la direction et aux enseignants.
                   </p>
+                ) : (
+                  <>
+                    {submitError && (
+                      <p role="alert" className="text-r14 text-(--common-red) mb-p3">
+                        {submitError}
+                      </p>
+                    )}
+                    <Button
+                      fullWidth={false}
+                      variant={saveMutation.isPending ? "loading" : "primary"}
+                      disabled={saveMutation.isPending}
+                      onClick={handleSave}
+                    >
+                      {saveMutation.isPending ? "Enregistrement…" : "Enregistrer les notes"}
+                    </Button>
+                  </>
                 )}
-                <Button
-                  fullWidth={false}
-                  variant={saveMutation.isPending ? "loading" : "primary"}
-                  disabled={saveMutation.isPending}
-                  onClick={handleSave}
-                >
-                  {saveMutation.isPending ? "Enregistrement…" : "Enregistrer les notes"}
-                </Button>
               </div>
             </TableContainer>
           )}

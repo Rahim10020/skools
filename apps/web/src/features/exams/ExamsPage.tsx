@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { useQuery } from "@tanstack/react-query";
 import { CrudPage } from "../../components/crud/CrudPage";
+import { useAuthStore } from "../../stores/auth-store";
 import { Badge } from "../../components/ui/badge";
 import api from "../../lib/api";
 import {
@@ -56,6 +57,9 @@ const schema = z.object({
 });
 
 export default function ExamsPage() {
+  const role = useAuthStore((state) => state.role);
+  // Seul DIRECTOR crée des examens ; CENSEUR supervise, TEACHER consulte (matrice).
+  const canWrite = role === "DIRECTOR";
   const yearsQuery = useQuery({
     queryKey: ["academic-years"],
     queryFn: async () => (await api.get<IdName[]>("/academic-years")).data,
@@ -63,14 +67,18 @@ export default function ExamsPage() {
   const subjectsQuery = useQuery({
     queryKey: ["subjects"],
     queryFn: async () => (await api.get<IdName[]>("/subjects")).data,
+    // Référentiels inaccessibles à TEACHER (formulaire masqué en lecture seule).
+    enabled: role !== "TEACHER",
   });
   const periodsQuery = useQuery({
     queryKey: ["periods"],
     queryFn: async () => (await api.get<IdName[]>("/periods")).data,
+    enabled: role !== "TEACHER",
   });
   const classroomsQuery = useQuery({
     queryKey: ["classrooms"],
     queryFn: async () => (await api.get<IdName[]>("/classrooms")).data,
+    enabled: role !== "TEACHER",
   });
 
   const toOptions = (data: IdName[] | undefined) =>
@@ -80,6 +88,7 @@ export default function ExamsPage() {
     <CrudPage<Exam>
       title="Examens"
       description="Les évaluations : interrogations, devoirs, compositions et examens."
+      readOnly={!canWrite}
       itemLabel="examen"
       createLabel="Nouvel examen"
       queryKey={["exams"]}

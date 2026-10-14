@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { CrudPage } from "../../components/crud/CrudPage";
+import { useAuthStore } from "../../stores/auth-store";
 import { omitEmptyStrings, optionalUuidString } from "../../components/crud/crud-helpers";
 
 interface Parent {
@@ -26,8 +27,11 @@ const schema = z.object({
 const fullName = (parent: Parent) => `${parent.lastName} ${parent.firstName}`;
 
 export default function ParentsPage() {
+  const role = useAuthStore((state) => state.role);
+  // Lecture seule hors DIRECTOR/ADMIN (matrice : CENSEUR, SURVEILLANT consultent).
   return (
     <CrudPage<Parent>
+      readOnly={role !== "DIRECTOR" && role !== "ADMIN"}
       title="Parents"
       description="Les parents et tuteurs, à lier aux élèves depuis la page dédiée."
       itemLabel="parent"

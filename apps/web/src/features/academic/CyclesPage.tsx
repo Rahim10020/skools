@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { CrudPage } from "../../components/crud/CrudPage";
+import { useAuthStore } from "../../stores/auth-store";
 import {
   optionalNumberString,
   toOptionalNumber,
@@ -17,8 +18,11 @@ const schema = z.object({
 });
 
 export default function CyclesPage() {
+  const role = useAuthStore((state) => state.role);
+  // CENSEUR : supervision en lecture seule (matrice), écritures refusées 403.
   return (
     <CrudPage<Cycle>
+      readOnly={role === "CENSEUR"}
       title="Cycles"
       description="Les grands cycles d'enseignement (Primaire, Collège, Lycée)."
       itemLabel="cycle"

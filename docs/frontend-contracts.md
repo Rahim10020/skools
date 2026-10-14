@@ -25,7 +25,10 @@
 | Route | Body | Notes | Erreurs |
 |---|---|---|---|
 | `POST /establishments` | `name (≥2), slug (≥2), type?: PRIMARY\|COLLEGE\|LYCEE\|MIXED, logoUrl?` | Retourne `{ ...establishment, accessToken, refreshToken }` (rôle forcé DIRECTOR) → **remplacer les tokens du store** | 409 slug pris, 400, 401 |
-| `GET /establishments` / `GET /:id` / `PATCH /:id` (Partial) / `DELETE /:id` | — | `findAll` non filtré | 400/404/401 |
+| `GET /establishments` | — | **Restreint au sien** (isolement matrice) | 401 |
+| `GET /:id` | — | DIRECTOR/ADMIN/CENSEUR (lecture, CENSEUR = page Paramètres) ; **403 si autre établissement** | 400/404/403/401 |
+| `PATCH /:id` (Partial) | — | DIRECTOR/ADMIN ; **403 si autre établissement** | 400/404/403/401 |
+| `DELETE /:id` | — | DIRECTOR, son établissement | 400/404/403/401 |
 
 ## Référentiels académiques (JWT, scopés `establishmentId`, CRUD `POST / GET / GET :id / PATCH :id(Partial) / DELETE :id`)
 
@@ -38,6 +41,8 @@
 | `subjects` | `name (≥2), code?, description?` |
 | `classrooms` | `academicYearId UUID, levelId UUID, seriesId?: UUID, name (≥1), capacity?: int ≥1` |
 | `periods` | `academicYearId UUID, name (≥2), startDate ISO, endDate ISO, order?` |
+
+> `periods` : `GET /` et `GET /:id` ouverts à tous les rôles d'établissement (filtre période des bulletins). Écritures DIRECTOR/ADMIN.
 
 ## Personnes (JWT)
 

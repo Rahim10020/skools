@@ -51,26 +51,32 @@ export class EstablishmentsController {
   }
 
   @Get()
-  findAll() {
-    return this.establishmentsService.findAll();
+  findAll(@Request() req: any) {
+    return this.establishmentsService.findAll(req.user.establishmentId);
   }
 
   @Get(':id')
-  findOne(@Param('id', ParseUUIDPipe) id: string) {
-    return this.establishmentsService.findOne(id);
+  @Roles(Role.DIRECTOR, Role.ADMIN, Role.CENSEUR)
+  findOne(@Param('id', ParseUUIDPipe) id: string, @Request() req: any) {
+    return this.establishmentsService.findOne(id, req.user.establishmentId);
   }
 
   @Patch(':id')
   update(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() updateEstablishmentDto: UpdateEstablishmentDto,
+    @Request() req: any,
   ) {
-    return this.establishmentsService.update(id, updateEstablishmentDto);
+    return this.establishmentsService.update(
+      id,
+      req.user.establishmentId,
+      updateEstablishmentDto,
+    );
   }
 
   @Delete(':id')
   @Roles(Role.DIRECTOR)
-  remove(@Param('id', ParseUUIDPipe) id: string) {
-    return this.establishmentsService.remove(id);
+  remove(@Param('id', ParseUUIDPipe) id: string, @Request() req: any) {
+    return this.establishmentsService.remove(id, req.user.establishmentId);
   }
 }
