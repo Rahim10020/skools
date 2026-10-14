@@ -33,6 +33,9 @@ import DisciplinePage from "../features/discipline/DisciplinePage";
 import ProfilPage from "../features/profil/ProfilPage";
 import SettingsPage from "../features/settings/SettingsPage";
 import UsersPage from "../features/users/UsersPage";
+import MyChildrenPage from "../features/children/MyChildrenPage";
+import MyGradesPage from "../features/grades/MyGradesPage";
+import MyAbsencesPage from "../features/attendances/MyAbsencesPage";
 
 /** Enregistre la navigation impérative (intercepteur 401 → /login). */
 function AuthNavigator() {
@@ -80,6 +83,9 @@ export function AppRoutes() {
                 <Route path="/schedules" element={<SchedulesPage />} />
                 <Route path="/report-cards" element={<ReportCardsPage />} />
                 <Route path="/discipline" element={<DisciplinePage />} />
+                <Route path="/my-children" element={<MyChildrenPage />} />
+                <Route path="/my-grades" element={<MyGradesPage />} />
+                <Route path="/my-absences" element={<MyAbsencesPage />} />
                 <Route path="/users" element={<UsersPage />} />
                 <Route path="/settings" element={<SettingsPage />} />
               </Route>

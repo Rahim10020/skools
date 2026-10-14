@@ -13,6 +13,10 @@ import {
   assertClassroomAssigned,
   resolveTeacherScope,
 } from '../../common/helpers/teacher-scope.js';
+import {
+  assertStudentVisible,
+  resolveVisibleStudentIds,
+} from '../../common/helpers/family-scope.js';
 import type { RequestActor } from '../../common/types/request-actor.js';
 
 @Injectable()
@@ -84,11 +88,22 @@ export class EnrollmentsService {
     const scope = await resolveTeacherScope(this.prisma, establishmentId, actor);
     if (scope) classroomIds = [...assignedClassroomIds(scope)];
 
+    // Périmètre famille : ses inscriptions (lui-même / ses enfants).
+    let studentIds: string[] | undefined;
+    if (actor?.role === 'STUDENT' || actor?.role === 'PARENT') {
+      studentIds = await resolveVisibleStudentIds(
+        this.prisma,
+        actor,
+        establishmentId,
+      );
+    }
+
     return this.prisma.enrollment.findMany({
       where: {
         establishmentId,
         isActive: true,
         ...(classroomIds ? { classroomId: { in: classroomIds } } : {}),
+        ...(studentIds ? { studentId: { in: studentIds } } : {}),
       },
       include: {
         student: {
@@ -122,6 +137,15 @@ export class EnrollmentsService {
 
     const scope = await resolveTeacherScope(this.prisma, establishmentId, actor);
     if (scope) assertClassroomAssigned(scope, enrollment.classroomId);
+
+    if (actor?.role === 'STUDENT' || actor?.role === 'PARENT') {
+      await assertStudentVisible(
+        this.prisma,
+        actor,
+        enrollment.studentId,
+        establishmentId,
+      );
+    }
 
     return enrollment;
   }

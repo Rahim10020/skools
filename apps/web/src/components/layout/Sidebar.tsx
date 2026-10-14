@@ -13,6 +13,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "../ui/tooltip";
 import { ThemeToggle } from "../ThemeToggle";
 import { Wordmark } from "../Wordmark";
 import { ActiveYearSelector } from "../ActiveYearSelector";
+import { ChildSelector } from "../ChildSelector";
 import { Icon } from "../icons/Icon";
 import { ChevronBackIcon } from "../icons/ChevronBackIcon";
 import { LogOutIcon } from "../icons/LogOutIcon";
@@ -253,6 +254,7 @@ export function Sidebar({
         )}
       </nav>
 
+      {role === "PARENT" && !collapsed && <ChildSelector />}
       <ActiveYearSelector collapsed={collapsed} />
 
       <div className="border-t border-(--skools-border-subtle) p-p4">

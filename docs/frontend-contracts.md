@@ -46,6 +46,8 @@
 - `parents` CRUD : `firstName (≥2), lastName (≥2), phone?, email?, address?, profession?, userId? UUID` (+ `GET /parents/me` rôle PARENT, mêmes garde-fous, rôle attendu PARENT).
 - `user-establishments` (DIRECTOR) : `GET /` (membres actifs), `POST /` (`email, role` sauf SUPER_ADMIN ; 404 compte inconnu, 409 déjà dans un établissement), `PATCH /:id` (`role`, sauf soi-même), `DELETE /:id` (sauf soi-même).
 - `POST /parent-students` : `parentId UUID, studentId UUID, relation?: FATHER\|MOTHER\|GUARDIAN\|OTHER, isPrimary?`. `GET /parent-students/student/:studentId`, `GET /parent-students/parent/:parentId`, `DELETE /:id` (id de la **liaison**). 409 si déjà liés. Pas de PATCH (unlink + re-link).
+- `GET /parent-students/my-children` (PARENT) → `[{ id (liaison), student{id,firstName,lastName,matricule}, classroom{id,name}|null (année en cours) }]` (404 si pas de dossier parent lié).
+- `GET /grades?studentId=<uuid>` : STUDENT/PARENT (élève imposé : lui-même / ses enfants, 403 sinon ; `studentId` requis, 403 si absent), TEACHER (restreint à ses examens), staff (filtre libre). Inclut `exam{subject{name}}` pour l'affichage.
 - `POST /teacher-assignments` : `teacherId, subjectId, classroomId, academicYearId` (tous UUID requis). `GET /` (TEACHER → ses affectations uniquement), `GET /teacher-assignments/me` (TEACHER, « Mes classes », 404 si pas de dossier lié), `DELETE /:id`. 409 si doublon, 400 si FK hors établissement. Pas de PATCH/GET :id.
 - `POST /enrollments` : `studentId, classroomId, academicYearId (UUID), status?: PENDING\|APPROVED\|REJECTED\|WITHDRAWN, notes?`. CRUD complet. `GET /` et `GET /:id` ouverts à TEACHER filtrés à ses classes assignées (registre d'appel/notes). 409 doublon (student+year). Pas de filtre query — filtrer côté client.
 
@@ -66,7 +68,10 @@
   - `POST /attendances` : `studentId, classroomId, date ISO, status? (défaut PRESENT), notes?` — upsert sur `(studentId, date)`.
   - `POST /attendances/bulk` : `{ classroomId, date ISO, attendances: [{ studentId, status (requis), notes? }] }` — upsert en boucle, élèves non vérifiés, `[]` → 200 `[]`.
   - `GET /attendances?classroomId=&date=` — **les deux requis, sans validation : sans `date` → 500**. Toujours envoyer les deux. TEACHER : 403 si classe non assignée. **Pas de `?studentId=`, pas de PATCH/DELETE.**
-- `schedules` CRUD : `classroomId, subjectId, academicYearId, dayOfWeek: MONDAY..SUNDAY, startTime/endTime `HH:mm` (regex stricte), teacherId?, room?`. `GET /schedules?classroomId=` optionnel. TEACHER : `GET /` et `GET /:id` restreints aux classes assignées (« Mon emploi du temps »).
+  - `GET /attendances/student?studentId=` (« Mes absences ») : STUDENT/PARENT (lui-même / ses enfants, 403 sinon), TEACHER (élève inscrit dans ses classes), staff. Inclut `classroom{name}`, tri date desc.
+- `academic-years` : `GET /` et `GET /:id` ouverts à tous les rôles d'établissement (matrice règle 6 : sélecteur d'année visible sauf SUPER_ADMIN). Écritures DIRECTOR/ADMIN, lecture CENSEUR comme avant.
+- `schedules` CRUD : `classroomId, subjectId, academicYearId, dayOfWeek: MONDAY..SUNDAY, startTime/endTime `HH:mm` (regex stricte), teacherId?, room?`. `GET /schedules?classroomId=` optionnel. TEACHER : `GET /` et `GET /:id` restreints aux classes assignées (« Mon emploi du temps »). STUDENT/PARENT : restreints aux classes d'inscription (lui-même / ses enfants, 403 si `classroomId` hors périmètre).
+- `enrollments` : `GET /` et `GET /:id` ouverts à TEACHER (ses classes), STUDENT (siennes), PARENT (ses enfants). Écritures DIRECTOR/ADMIN.
 - `discipline` CRUD + `GET /discipline?studentId=` optionnel : `studentId, type: WARNING\|REPRIMAND\|DETENTION\|SUSPENSION\|EXPULSION\|OBSERVATION\|OTHER, title (≥3), incidentDate ISO, description?, status?: PENDING\|ACTIVE\|RESOLVED\|CANCELLED`. PATCH accepte en plus `resolution?, resolvedAt?`. `reportedById` injecté serveur.
 
 ## Incohérences connues (ne pas contourner silencieusement)

@@ -2,7 +2,16 @@ import { z } from "zod";
 import { useQuery } from "@tanstack/react-query";
 import { CrudPage } from "../../components/crud/CrudPage";
 import { Badge, type BadgeVariant } from "../../components/ui/badge";
+import { PageHeader } from "../../layouts/PageHeader";
+import { EmptyState } from "../../components/ui/empty-state";
+import { Skeleton } from "../../components/ui/skeleton";
 import api from "../../lib/api";
+import { useAuthStore } from "../../stores/auth-store";
+import { ChildSelector } from "../../components/ChildSelector";
+import {
+  useEffectiveChildId,
+  useMyChildren,
+} from "../../lib/my-children";
 import {
   formatDateFr,
   omitEmptyStrings,
@@ -83,10 +92,57 @@ const schema = z.object({
 });
 
 export default function DisciplinePage() {
+  const role = useAuthStore((state) => state.role);
+  const isParent = role === "PARENT";
+  const isStudent = role === "STUDENT";
+  const isFamily = isParent || isStudent;
+  const childId = useEffectiveChildId(isParent);
+  const childrenQuery = useMyChildren(isParent);
+
   const studentsQuery = useQuery({
     queryKey: ["students"],
     queryFn: async () => (await api.get<StudentOption[]>("/students")).data,
+    // Famille : pas d'accès à la liste globale (matrice).
+    enabled: !isFamily,
   });
+
+  const meQuery = useQuery({
+    queryKey: ["students", "me"],
+    queryFn: async () =>
+      (await api.get<{ id: string }>("/students/me")).data,
+    enabled: isStudent,
+  });
+
+  const familyStudentId = isParent ? childId : (meQuery.data?.id ?? "");
+  const familyLoading = isParent ? childrenQuery.isPending : meQuery.isPending;
+
+  if (isFamily && familyLoading) {
+    return (
+      <div>
+        <PageHeader
+          title={isStudent ? "Ma discipline" : "Discipline"}
+          description="Les fiches disciplinaires : signalements et suivi."
+        />
+        <Skeleton className="h-[200px] rounded-r2" />
+      </div>
+    );
+  }
+
+  if (isFamily && !familyLoading && !familyStudentId) {
+    return (
+      <div>
+        <PageHeader
+          title={isStudent ? "Ma discipline" : "Discipline"}
+          description="Les fiches disciplinaires : signalements et suivi."
+        />
+        {isParent && <ChildSelector />}
+        <EmptyState
+          title={isParent ? "Aucun enfant lié" : "Aucun dossier élève"}
+          description="Contactez la direction de l'établissement."
+        />
+      </div>
+    );
+  }
 
   const baseFields = [
     {
@@ -114,12 +170,19 @@ export default function DisciplinePage() {
 
   return (
     <CrudPage<DisciplineRecord>
-      title="Discipline"
-      description="Les fiches disciplinaires : signalement, suivi et résolution."
+      title={isStudent ? "Ma discipline" : "Discipline"}
+      description={
+        isFamily
+          ? "Les fiches disciplinaires : signalements et suivi."
+          : "Les fiches disciplinaires : signalement, suivi et résolution."
+      }
+      readOnly={isFamily}
       itemLabel="fiche disciplinaire"
       createLabel="Nouvelle fiche"
-      queryKey={["discipline"]}
+      queryKey={isFamily ? ["discipline", familyStudentId] : ["discipline"]}
       endpoint="/discipline"
+      listPath={isFamily ? `/discipline?studentId=${familyStudentId}` : undefined}
+      toolbarExtra={isParent ? <ChildSelector /> : undefined}
       columns={[
         {
           header: "Élève",

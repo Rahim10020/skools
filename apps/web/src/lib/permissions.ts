@@ -98,8 +98,8 @@ export const NAV_BY_ROLE: Record<string, string[]> = {
     "/teacher-assignments",
     "/profil",
   ],
-  STUDENT: ["/dashboard", "/report-cards", "/schedules", "/profil"],
-  PARENT: ["/dashboard", "/report-cards", "/schedules", "/profil"],
+  STUDENT: ["/dashboard", "/schedules", "/my-grades", "/my-absences", "/report-cards", "/discipline", "/profil"],
+  PARENT: ["/dashboard", "/my-children", "/report-cards", "/my-absences", "/discipline", "/schedules", "/profil"],
 };
 
 /** Accessibles à tout utilisateur authentifié, quel que soit le rôle. */

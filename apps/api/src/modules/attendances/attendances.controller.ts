@@ -6,6 +6,7 @@ import {
   Query,
   UseGuards,
   Request,
+  ParseUUIDPipe,
 } from '@nestjs/common';
 import { AttendancesService } from './attendances.service.js';
 import { CreateAttendanceDto } from './dto/create-attendance.dto.js';
@@ -38,6 +39,27 @@ export class AttendancesController {
       req.user.establishmentId,
       req.user.id,
       dto,
+      { id: req.user.id, role: req.user.role },
+    );
+  }
+
+  @Get('student')
+  @Roles(
+    Role.DIRECTOR,
+    Role.ADMIN,
+    Role.CENSEUR,
+    Role.TEACHER,
+    Role.SURVEILLANT,
+    Role.STUDENT,
+    Role.PARENT,
+  )
+  findByStudent(
+    @Query('studentId', ParseUUIDPipe) studentId: string,
+    @Request() req: any,
+  ) {
+    return this.attendancesService.findByStudent(
+      studentId,
+      req.user.establishmentId,
       { id: req.user.id, role: req.user.role },
     );
   }

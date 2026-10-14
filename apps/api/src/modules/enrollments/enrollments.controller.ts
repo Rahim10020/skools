@@ -30,7 +30,7 @@ export class EnrollmentsController {
   }
 
   @Get()
-  @Roles(Role.DIRECTOR, Role.ADMIN, Role.CENSEUR, Role.TEACHER)
+  @Roles(Role.DIRECTOR, Role.ADMIN, Role.CENSEUR, Role.TEACHER, Role.STUDENT, Role.PARENT)
   findAll(@Request() req: any) {
     return this.enrollmentsService.findAll(req.user.establishmentId, {
       id: req.user.id,
@@ -39,7 +39,7 @@ export class EnrollmentsController {
   }
 
   @Get(':id')
-  @Roles(Role.DIRECTOR, Role.ADMIN, Role.CENSEUR, Role.TEACHER)
+  @Roles(Role.DIRECTOR, Role.ADMIN, Role.CENSEUR, Role.TEACHER, Role.STUDENT, Role.PARENT)
   findOne(@Param('id', ParseUUIDPipe) id: string, @Request() req: any) {
     return this.enrollmentsService.findOne(id, req.user.establishmentId, {
       id: req.user.id,

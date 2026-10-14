@@ -74,27 +74,29 @@ export default function SchedulesPage() {
   const [filterClassroomId, setFilterClassroomId] = useState("");
   const role = useAuthStore((state) => state.role);
   const isTeacher = role === "TEACHER";
+  // Consultation seule : enseignant (ses classes), élève et parent (inscriptions).
+  const isReadOnly = isTeacher || role === "STUDENT" || role === "PARENT";
 
   const classroomsQuery = useQuery({
     queryKey: ["classrooms"],
     queryFn: async () => (await api.get<IdName[]>("/classrooms")).data,
-    // Enseignant : créneaux déjà filtrés serveur ; noms inclus dans la réponse.
-    enabled: !isTeacher,
+    // Lecture seule : créneaux déjà filtrés serveur ; noms inclus dans la réponse.
+    enabled: !isReadOnly,
   });
   const subjectsQuery = useQuery({
     queryKey: ["subjects"],
     queryFn: async () => (await api.get<IdName[]>("/subjects")).data,
-    enabled: !isTeacher,
+    enabled: !isReadOnly,
   });
   const teachersQuery = useQuery({
     queryKey: ["teachers"],
     queryFn: async () => (await api.get<TeacherOption[]>("/teachers")).data,
-    enabled: !isTeacher,
+    enabled: !isReadOnly,
   });
   const yearsQuery = useQuery({
     queryKey: ["academic-years"],
     queryFn: async () => (await api.get<IdName[]>("/academic-years")).data,
-    enabled: !isTeacher,
+    enabled: !isReadOnly,
   });
 
   const toOptions = (data: IdName[] | undefined) =>
@@ -102,20 +104,26 @@ export default function SchedulesPage() {
 
   return (
     <CrudPage<Schedule>
-      title={isTeacher ? "Mon emploi du temps" : "Emplois du temps"}
+      title={
+        role === "STUDENT" || isTeacher
+          ? "Mon emploi du temps"
+          : role === "PARENT"
+            ? "Emploi du temps"
+            : "Emplois du temps"
+      }
       description={
-        isTeacher
-          ? "Vos créneaux de cours : jour, horaires, matière, classe, salle."
+        isReadOnly
+          ? "Les créneaux de cours : jour, horaires, matière, classe, salle."
           : "Les créneaux de cours par classe : jour, horaires, matière, enseignant, salle."
       }
-      readOnly={isTeacher}
+      readOnly={isReadOnly}
       itemLabel="créneau"
       createLabel="Nouveau créneau"
       queryKey={["schedules", filterClassroomId]}
       endpoint="/schedules"
       listPath={filterClassroomId ? `/schedules?classroomId=${filterClassroomId}` : "/schedules"}
       toolbarExtra={
-        isTeacher ? undefined : (
+        isReadOnly ? undefined : (
           <div className="max-w-md">
             <Select
               label="Filtrer par classe : Toutes"

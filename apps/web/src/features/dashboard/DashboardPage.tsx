@@ -3,6 +3,8 @@ import { Link, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import api from "../../lib/api";
 import { useAuthStore } from "../../stores/auth-store";
+import { useMyChildren } from "../../lib/my-children";
+import { useAcademicYearStore } from "../../stores/academic-year-store";
 import { Card, CardTitle } from "../../components/ui/card";
 import { Badge } from "../../components/ui/badge";
 import { Skeleton } from "../../components/ui/skeleton";
@@ -57,6 +59,20 @@ const STAFF_SHORTCUTS: Shortcut[] = [
   { to: "/report-cards", label: "Bulletins", description: "Éditer les bulletins" },
 ];
 
+const STUDENT_SHORTCUTS: Shortcut[] = [
+  { to: "/report-cards", label: "Mon bulletin", description: "Moyennes et résultats" },
+  { to: "/my-grades", label: "Mes notes", description: "Notes par examen" },
+  { to: "/my-absences", label: "Mes absences", description: "Historique des présences" },
+  { to: "/schedules", label: "Mon emploi du temps", description: "Consulter les créneaux" },
+];
+
+const PARENT_SHORTCUTS: Shortcut[] = [
+  { to: "/my-children", label: "Mes enfants", description: "Dossiers de vos enfants" },
+  { to: "/report-cards", label: "Notes & bulletins", description: "Résultats par enfant" },
+  { to: "/my-absences", label: "Absences", description: "Historique des présences" },
+  { to: "/schedules", label: "Emploi du temps", description: "Consulter les créneaux" },
+];
+
 export default function DashboardPage() {
   const { user, role, establishmentId } = useAuthStore();
   const navigate = useNavigate();
@@ -69,28 +85,45 @@ export default function DashboardPage() {
 
   const enabled = !!establishmentId;
   const isTeacher = role === "TEACHER";
+  const isStudent = role === "STUDENT";
+  const isParent = role === "PARENT";
+  const isFamily = isStudent || isParent;
+  const activeYearId = useAcademicYearStore((s) => s.activeYearId);
+  const storedYearEstablishment = useAcademicYearStore((s) => s.establishmentId);
   const studentsQuery = useQuery({
     queryKey: ["students"],
     queryFn: async () => (await api.get<unknown[]>("/students")).data,
-    // Enseignant : pas d'accès aux listes globales (matrice) — stats via ses assignations.
-    enabled: enabled && !isTeacher,
+    // Enseignant et famille : pas d'accès aux listes globales (matrice).
+    enabled: enabled && !isTeacher && !isFamily,
   });
   const teachersQuery = useQuery({
     queryKey: ["teachers"],
     queryFn: async () => (await api.get<unknown[]>("/teachers")).data,
-    enabled: enabled && !isTeacher,
+    enabled: enabled && !isTeacher && !isFamily,
   });
   const classroomsQuery = useQuery({
     queryKey: ["classrooms"],
     queryFn: async () => (await api.get<unknown[]>("/classrooms")).data,
-    enabled: enabled && !isTeacher,
+    enabled: enabled && !isTeacher && !isFamily,
   });
   const examsQuery = useQuery({
     queryKey: ["exams"],
     queryFn: async () => (await api.get<unknown[]>("/exams")).data,
-    // /exams est filtré serveur par assignation pour TEACHER.
-    enabled,
+    // /exams est filtré serveur par assignation pour TEACHER ; fermé à la famille.
+    enabled: enabled && !isFamily,
   });
+  const yearsQuery = useQuery({
+    queryKey: ["academic-years"],
+    queryFn: async () =>
+      (await api.get<Array<{ id: string; name: string; isCurrent: boolean }>>("/academic-years")).data,
+    enabled: enabled && isFamily,
+  });
+  const meStudentQuery = useQuery({
+    queryKey: ["students", "me"],
+    queryFn: async () => (await api.get<{ id: string }>("/students/me")).data,
+    enabled: enabled && isStudent,
+  });
+  const childrenQuery = useMyChildren(enabled && isParent);
   const myAssignmentsQuery = useQuery({
     queryKey: ["teacher-assignments", "me"],
     queryFn: async () => (await api.get<MyAssignment[]>("/teacher-assignments/me")).data,
@@ -101,17 +134,47 @@ export default function DashboardPage() {
     queryFn: async () => (await api.get<MeResponse>("/auth/me")).data,
   });
 
+  const dashboardYearId =
+    storedYearEstablishment === establishmentId && activeYearId
+      ? activeYearId
+      : (yearsQuery.data?.find((y) => y.isCurrent)?.id ?? yearsQuery.data?.[0]?.id ?? "");
+
+  const bulletinQuery = useQuery({
+    queryKey: ["report-card", meStudentQuery.data?.id, dashboardYearId],
+    queryFn: async () =>
+      (
+        await api.get<{ generalAverage: number | null }>("/report-cards/student", {
+          params: { studentId: meStudentQuery.data!.id, academicYearId: dashboardYearId },
+        })
+      ).data,
+    enabled: enabled && isStudent && !!meStudentQuery.data?.id && !!dashboardYearId,
+  });
+
+  // Requête désactivée reste en `pending` : ne tester que les requêtes actives.
+  const bulletinPending = meStudentQuery.data?.id && dashboardYearId ? bulletinQuery.isPending : false;
   const isLoading = isTeacher
     ? myAssignmentsQuery.isPending || examsQuery.isPending
-    : studentsQuery.isPending || teachersQuery.isPending || classroomsQuery.isPending || examsQuery.isPending;
+    : isFamily
+      ? yearsQuery.isPending ||
+        (isStudent ? meStudentQuery.isPending || bulletinPending : childrenQuery.isPending)
+      : studentsQuery.isPending || teachersQuery.isPending || classroomsQuery.isPending || examsQuery.isPending;
   const failedQuery = isTeacher
     ? [myAssignmentsQuery, examsQuery].find((q) => q.isError)
-    : [studentsQuery, teachersQuery, classroomsQuery, examsQuery].find((q) => q.isError);
+    : isFamily
+      ? [yearsQuery, meStudentQuery, bulletinQuery, childrenQuery].find((q) => q.isError)
+      : [studentsQuery, teachersQuery, classroomsQuery, examsQuery].find((q) => q.isError);
 
   const retryAll = () => {
     if (isTeacher) {
       void myAssignmentsQuery.refetch();
       void examsQuery.refetch();
+      return;
+    }
+    if (isFamily) {
+      void yearsQuery.refetch();
+      void meStudentQuery.refetch();
+      void bulletinQuery.refetch();
+      void childrenQuery.refetch();
       return;
     }
     void studentsQuery.refetch();
@@ -126,21 +189,49 @@ export default function DashboardPage() {
 
   const myClasses = new Set((myAssignmentsQuery.data ?? []).map((a) => a.classroom.id));
   const mySubjects = new Set((myAssignmentsQuery.data ?? []).map((a) => a.subject.id));
+  const myChildren = childrenQuery.data ?? [];
 
-  const stats = isTeacher
+  const stats: Array<{ label: string; display: string; to: string }> = isTeacher
     ? [
-        { label: "Mes classes", value: myClasses.size, to: "/teacher-assignments" },
-        { label: "Mes matières", value: mySubjects.size, to: "/teacher-assignments" },
-        { label: "Examens", value: examsQuery.data?.length ?? 0, to: "/exams" },
+        { label: "Mes classes", display: String(myClasses.size), to: "/teacher-assignments" },
+        { label: "Mes matières", display: String(mySubjects.size), to: "/teacher-assignments" },
+        { label: "Examens", display: String(examsQuery.data?.length ?? 0), to: "/exams" },
       ]
-    : [
-        { label: "Élèves", value: studentsQuery.data?.length ?? 0, to: "/students" },
-        { label: "Enseignants", value: teachersQuery.data?.length ?? 0, to: "/teachers" },
-        { label: "Classes", value: classroomsQuery.data?.length ?? 0, to: "/classrooms" },
-        { label: "Examens", value: examsQuery.data?.length ?? 0, to: "/exams" },
-      ];
-  const isEmpty = !isLoading && !failedQuery && stats.every((s) => s.value === 0);
-  const shortcuts = role === "TEACHER" ? TEACHER_SHORTCUTS : STAFF_SHORTCUTS;
+    : isStudent
+      ? [
+          {
+            label: "Ma moyenne générale",
+            display: bulletinQuery.data?.generalAverage == null ? "—" : `${bulletinQuery.data.generalAverage}/20`,
+            to: "/report-cards",
+          },
+        ]
+      : isParent
+        ? [{ label: "Mes enfants", display: String(myChildren.length), to: "/my-children" }]
+        : [
+            { label: "Élèves", display: String(studentsQuery.data?.length ?? 0), to: "/students" },
+            { label: "Enseignants", display: String(teachersQuery.data?.length ?? 0), to: "/teachers" },
+            { label: "Classes", display: String(classroomsQuery.data?.length ?? 0), to: "/classrooms" },
+            { label: "Examens", display: String(examsQuery.data?.length ?? 0), to: "/exams" },
+          ];
+  const isEmpty =
+    !isLoading &&
+    !failedQuery &&
+    (isFamily
+      ? isStudent
+        ? !meStudentQuery.data
+        : myChildren.length === 0
+      : (studentsQuery.data?.length ?? 0) === 0 &&
+        (teachersQuery.data?.length ?? 0) === 0 &&
+        (classroomsQuery.data?.length ?? 0) === 0 &&
+        (examsQuery.data?.length ?? 0) === 0);
+  const shortcuts =
+    role === "TEACHER"
+      ? TEACHER_SHORTCUTS
+      : isStudent
+        ? STUDENT_SHORTCUTS
+        : isParent
+          ? PARENT_SHORTCUTS
+          : STAFF_SHORTCUTS;
 
   return (
     <div className="flex flex-col gap-p6">
@@ -166,25 +257,32 @@ export default function DashboardPage() {
           ))}
         </div>
       ) : isEmpty ? (
-        <EmptyState
-          title="Aucune donnée pour le moment"
-          description="Commencez par créer une année scolaire, puis des classes et des élèves."
-          action={
-            <Link
-              to="/academic-years"
-              className="inline-flex items-center gap-p1 text-r14 font-medium text-(--common-blue) hover:underline"
-            >
-              Créer une année scolaire <ArrowForwardIcon className="size-4" />
-            </Link>
-          }
-        />
+        isFamily ? (
+          <EmptyState
+            title={isStudent ? "Aucun dossier élève" : "Aucun enfant lié"}
+            description="Contactez la direction de l'établissement pour lier votre compte."
+          />
+        ) : (
+          <EmptyState
+            title="Aucune donnée pour le moment"
+            description="Commencez par créer une année scolaire, puis des classes et des élèves."
+            action={
+              <Link
+                to="/academic-years"
+                className="inline-flex items-center gap-p1 text-r14 font-medium text-(--common-blue) hover:underline"
+              >
+                Créer une année scolaire <ArrowForwardIcon className="size-4" />
+              </Link>
+            }
+          />
+        )
       ) : (
         <div className="grid grid-cols-1 gap-p4 sm:grid-cols-2 xl:grid-cols-4">
           {stats.map((stat) => (
             <Link key={stat.label} to={stat.to}>
               <Card className="p-p4 transition-colors hover:border-(--black-20)">
                 <p className="text-r14 text-(--skools-text-muted)">{stat.label}</p>
-                <p className="mt-p1 text-sb32 text-(--skools-text-primary)">{stat.value}</p>
+                <p className="mt-p1 text-sb32 text-(--skools-text-primary)">{stat.display}</p>
               </Card>
             </Link>
           ))}

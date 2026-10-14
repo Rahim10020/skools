@@ -33,14 +33,32 @@ export class AcademicYearsController {
   }
 
   @Get()
-  @Roles(Role.DIRECTOR, Role.ADMIN, Role.CENSEUR)
+  @Roles(
+    Role.DIRECTOR,
+    Role.ADMIN,
+    Role.CENSEUR,
+    Role.BIBLIOTECAIRE,
+    Role.SURVEILLANT,
+    Role.TEACHER,
+    Role.STUDENT,
+    Role.PARENT,
+  )
   findAll(@Request() req: any) {
     const establishmentId = req.user.establishmentId;
     return this.academicYearsService.findAll(establishmentId);
   }
 
   @Get(':id')
-  @Roles(Role.DIRECTOR, Role.ADMIN, Role.CENSEUR)
+  @Roles(
+    Role.DIRECTOR,
+    Role.ADMIN,
+    Role.CENSEUR,
+    Role.BIBLIOTECAIRE,
+    Role.SURVEILLANT,
+    Role.TEACHER,
+    Role.STUDENT,
+    Role.PARENT,
+  )
   findOne(@Param('id', ParseUUIDPipe) id: string, @Request() req: any) {
     return this.academicYearsService.findOne(id, req.user.establishmentId);
   }

@@ -60,6 +60,7 @@ export const SIDEBAR_NAV: SidebarNavGroup[] = [
       { to: "/teachers", label: "Enseignants", icon: EyeIcon },
       { to: "/parents", label: "Parents", icon: MailIcon },
       { to: "/link-parents", label: "Lier parents", icon: LinkIcon },
+      { to: "/my-children", label: "Mes enfants", icon: ContactsIcon },
       { to: "/teacher-assignments", label: "Affectations", icon: ArrowForwardIcon },
       { to: "/enrollments", label: "Inscriptions", icon: AddIcon },
     ],
@@ -69,6 +70,7 @@ export const SIDEBAR_NAV: SidebarNavGroup[] = [
     items: [
       { to: "/exams", label: "Examens", icon: ExamIcon },
       { to: "/grades", label: "Notes", icon: CheckCircleIcon },
+      { to: "/my-grades", label: "Mes notes", icon: CheckCircleIcon },
       { to: "/report-cards", label: "Bulletins", icon: DownloadIcon },
     ],
   },
@@ -76,6 +78,7 @@ export const SIDEBAR_NAV: SidebarNavGroup[] = [
     title: "Vie scolaire",
     items: [
       { to: "/attendances", label: "Présences", icon: CheckIcon },
+      { to: "/my-absences", label: "Mes absences", icon: CheckIcon },
       { to: "/schedules", label: "Emplois du temps", icon: DateIcon },
       { to: "/discipline", label: "Discipline", icon: InfoCircleIcon },
     ],

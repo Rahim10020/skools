@@ -11,6 +11,10 @@ import {
   assignedClassroomIds,
   resolveTeacherScope,
 } from '../../common/helpers/teacher-scope.js';
+import {
+  resolveEnrolledClassroomIds,
+  resolveVisibleStudentIds,
+} from '../../common/helpers/family-scope.js';
 import type { RequestActor } from '../../common/types/request-actor.js';
 
 @Injectable()
@@ -73,6 +77,23 @@ export class SchedulesService {
     const scope = await resolveTeacherScope(this.prisma, establishmentId, actor);
     if (scope) allowedClassrooms = [...assignedClassroomIds(scope)];
 
+    // Périmètre famille : classes d'inscription (lui-même / ses enfants).
+    if (actor?.role === 'STUDENT' || actor?.role === 'PARENT') {
+      const studentIds = await resolveVisibleStudentIds(
+        this.prisma,
+        actor,
+        establishmentId,
+      );
+      allowedClassrooms = await resolveEnrolledClassroomIds(
+        this.prisma,
+        establishmentId,
+        studentIds,
+      );
+      if (classroomId && !allowedClassrooms.includes(classroomId)) {
+        throw new ForbiddenException('Classe hors de votre périmètre');
+      }
+    }
+
     return this.prisma.schedule.findMany({
       where: {
         establishmentId,
@@ -106,6 +127,21 @@ export class SchedulesService {
     const scope = await resolveTeacherScope(this.prisma, establishmentId, actor);
     if (scope && !assignedClassroomIds(scope).has(schedule.classroomId)) {
       throw new ForbiddenException('Créneau hors de votre périmètre');
+    }
+    if (actor?.role === 'STUDENT' || actor?.role === 'PARENT') {
+      const studentIds = await resolveVisibleStudentIds(
+        this.prisma,
+        actor,
+        establishmentId,
+      );
+      const allowed = await resolveEnrolledClassroomIds(
+        this.prisma,
+        establishmentId,
+        studentIds,
+      );
+      if (!allowed.includes(schedule.classroomId)) {
+        throw new ForbiddenException('Créneau hors de votre périmètre');
+      }
     }
     return schedule;
   }

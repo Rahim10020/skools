@@ -11,8 +11,13 @@ import { AttendanceStatus } from '@prisma/client';
 import type { RequestActor } from '../../common/types/request-actor.js';
 import {
   assertClassroomAssigned,
+  assignedClassroomIds,
   resolveTeacherScope,
 } from '../../common/helpers/teacher-scope.js';
+import {
+  assertStudentVisible,
+  resolveVisibleStudentIds,
+} from '../../common/helpers/family-scope.js';
 
 @Injectable()
 export class AttendancesService {
@@ -120,7 +125,8 @@ export class AttendancesService {
   ) {
     // Périmètre élève/parent : inscrit (ou enfant inscrit) dans la classe.
     if (actor?.role === 'STUDENT' || actor?.role === 'PARENT') {
-      const studentIds = await this.resolveVisibleStudentIds(
+      const studentIds = await resolveVisibleStudentIds(
+        this.prisma,
         actor,
         establishmentId,
       );
@@ -170,33 +176,42 @@ export class AttendancesService {
     });
   }
 
-  async findByStudent(studentId: string, establishmentId: string) {
+  /** Historique des présences d'un élève (« Mes absences »), périmètre vérifié. */
+  async findByStudent(
+    studentId: string,
+    establishmentId: string,
+    actor?: RequestActor,
+  ) {
+    if (actor?.role === 'STUDENT' || actor?.role === 'PARENT') {
+      await assertStudentVisible(this.prisma, actor, studentId, establishmentId);
+    }
+    if (actor?.role === 'TEACHER') {
+      const scope = await resolveTeacherScope(
+        this.prisma,
+        establishmentId,
+        actor,
+      );
+      if (scope) {
+        const allowed = assignedClassroomIds(scope);
+        const enrolled = await this.prisma.enrollment.findFirst({
+          where: {
+            studentId,
+            establishmentId,
+            isActive: true,
+            classroomId: { in: [...allowed] },
+          },
+        });
+        if (!enrolled) {
+          throw new ForbiddenException('Élève hors de votre périmètre');
+        }
+      }
+    }
     return this.prisma.attendance.findMany({
       where: { studentId, establishmentId },
+      include: {
+        classroom: { select: { id: true, name: true } },
+      },
       orderBy: { date: 'desc' },
     });
-  }
-
-  /** IDs d'élèves visibles : lui-même (STUDENT) ou ses enfants (PARENT). */
-  private async resolveVisibleStudentIds(
-    actor: RequestActor,
-    establishmentId: string,
-  ): Promise<string[]> {
-    if (actor.role === 'STUDENT') {
-      const student = await this.prisma.student.findFirst({
-        where: { userId: actor.id, establishmentId },
-      });
-      return student ? [student.id] : [];
-    }
-
-    const parent = await this.prisma.parent.findFirst({
-      where: { userId: actor.id, establishmentId, isActive: true },
-    });
-    if (!parent) return [];
-    const links = await this.prisma.parentStudent.findMany({
-      where: { parentId: parent.id },
-      select: { studentId: true },
-    });
-    return links.map((link) => link.studentId);
   }
 }

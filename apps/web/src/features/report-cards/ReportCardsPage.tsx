@@ -1,6 +1,12 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import api, { getErrorMessage } from "../../lib/api";
+import { useAuthStore } from "../../stores/auth-store";
+import { ChildSelector } from "../../components/ChildSelector";
+import {
+  useEffectiveChildId,
+  useMyChildren,
+} from "../../lib/my-children";
 import { PageHeader } from "../../layouts/PageHeader";
 import { Button } from "../../components/ui/button";
 import { Card } from "../../components/ui/card";
@@ -57,6 +63,13 @@ function formatAverage(value: number | null): string {
 }
 
 export default function ReportCardsPage() {
+  const role = useAuthStore((state) => state.role);
+  const isParent = role === "PARENT";
+  const isStudent = role === "STUDENT";
+  const isFamily = isParent || isStudent;
+  const childId = useEffectiveChildId(isParent);
+  const childrenQuery = useMyChildren(isParent);
+
   const [viewMode, setViewMode] = useState<"student" | "classroom">("student");
   const [selectedStudentId, setSelectedStudentId] = useState("");
   const [selectedYearId, setSelectedYearId] = useState("");
@@ -65,6 +78,8 @@ export default function ReportCardsPage() {
   const studentsQuery = useQuery({
     queryKey: ["students"],
     queryFn: async () => (await api.get<StudentOption[]>("/students")).data,
+    // Famille : pas d'accès aux listes globales (matrice).
+    enabled: !isFamily,
   });
   const yearsQuery = useQuery({
     queryKey: ["academic-years"],
@@ -73,17 +88,29 @@ export default function ReportCardsPage() {
   const classroomsQuery = useQuery({
     queryKey: ["classrooms"],
     queryFn: async () => (await api.get<IdName[]>("/classrooms")).data,
+    enabled: !isFamily,
+  });
+  const meQuery = useQuery({
+    queryKey: ["students", "me"],
+    queryFn: async () =>
+      (await api.get<{ id: string }>("/students/me")).data,
+    enabled: isStudent,
   });
 
+  // Famille : élève imposé (lui-même / enfant sélectionné), vue bulletin uniquement.
+  const familyStudentId = isStudent ? (meQuery.data?.id ?? "") : childId;
+  const effectiveStudentId = isFamily ? familyStudentId : selectedStudentId;
+  const effectiveViewMode = isFamily ? "student" : viewMode;
+
   const studentReportQuery = useQuery({
-    queryKey: ["report-card", selectedStudentId, selectedYearId],
+    queryKey: ["report-card", effectiveStudentId, selectedYearId],
     queryFn: async () =>
       (
         await api.get<StudentReport>("/report-cards/student", {
-          params: { studentId: selectedStudentId, academicYearId: selectedYearId },
+          params: { studentId: effectiveStudentId, academicYearId: selectedYearId },
         })
       ).data,
-    enabled: viewMode === "student" && !!selectedStudentId && !!selectedYearId,
+    enabled: effectiveViewMode === "student" && !!effectiveStudentId && !!selectedYearId,
   });
 
   const classroomQuery = useQuery({
@@ -100,32 +127,60 @@ export default function ReportCardsPage() {
   const studentReport = studentReportQuery.data ?? null;
   const overview = classroomQuery.data ?? [];
 
+  // Famille : présélectionne l'année en cours (même pattern que GradesPage).
+  const years = yearsQuery.data;
+  const [prevYears, setPrevYears] = useState(years);
+  if (years !== prevYears) {
+    setPrevYears(years);
+    if (isFamily && !selectedYearId) {
+      const current = years?.find((year) => year.isCurrent) ?? years?.[0];
+      if (current) setSelectedYearId(current.id);
+    }
+  }
+
   return (
     <div>
       <PageHeader
-        title="Bulletins et moyennes"
-        description="Bulletins calculés à la volée depuis les notes (lecture seule)."
+        title={isStudent ? "Mon bulletin" : isParent ? "Notes & bulletins" : "Bulletins et moyennes"}
+        description={
+          isFamily
+            ? "Moyennes calculées à la volée depuis les notes (lecture seule)."
+            : "Bulletins calculés à la volée depuis les notes (lecture seule)."
+        }
         actions={
-          <div className="flex gap-p2" role="group" aria-label="Mode de vue">
-            <Button
-              fullWidth={false}
-              variant={viewMode === "student" ? "primary" : "outline"}
-              onClick={() => setViewMode("student")}
-            >
-              Bulletin élève
-            </Button>
-            <Button
-              fullWidth={false}
-              variant={viewMode === "classroom" ? "primary" : "outline"}
-              onClick={() => setViewMode("classroom")}
-            >
-              Vue classe
-            </Button>
-          </div>
+          isFamily ? undefined : (
+            <div className="flex gap-p2" role="group" aria-label="Mode de vue">
+              <Button
+                fullWidth={false}
+                variant={viewMode === "student" ? "primary" : "outline"}
+                onClick={() => setViewMode("student")}
+              >
+                Bulletin élève
+              </Button>
+              <Button
+                fullWidth={false}
+                variant={viewMode === "classroom" ? "primary" : "outline"}
+                onClick={() => setViewMode("classroom")}
+              >
+                Vue classe
+              </Button>
+            </div>
+          )
         }
       />
 
-      <Card className="p-p4">
+      {isParent && <ChildSelector />}
+
+      {isParent && !childrenQuery.isPending && (childrenQuery.data ?? []).length === 0 ? (
+        <div className="mt-p6">
+          <EmptyState
+            title="Aucun enfant lié"
+            description="Aucun enfant n'est lié à votre compte. Contactez la direction de l'établissement."
+          />
+        </div>
+      ) : (
+        <>
+          <Card className="p-p4">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-p4">
           <div className="flex flex-col gap-p1">
             <span className="text-m12 text-(--skools-text-primary)">Année scolaire</span>
@@ -139,7 +194,7 @@ export default function ReportCardsPage() {
               }))}
             />
           </div>
-          {viewMode === "student" ? (
+          {!isFamily && viewMode === "student" && (
             <div className="flex flex-col gap-p1">
               <span className="text-m12 text-(--skools-text-primary)">Élève</span>
               <Select
@@ -152,7 +207,8 @@ export default function ReportCardsPage() {
                 }))}
               />
             </div>
-          ) : (
+          )}
+          {!isFamily && viewMode === "classroom" && (
             <div className="flex flex-col gap-p1">
               <span className="text-m12 text-(--skools-text-primary)">Classe</span>
               <Select
@@ -170,7 +226,7 @@ export default function ReportCardsPage() {
       </Card>
 
       <div className="mt-p6">
-        {viewMode === "student" && selectedStudentId && selectedYearId && (
+        {effectiveViewMode === "student" && effectiveStudentId && selectedYearId && (
           <>
             {studentReportQuery.isError ? (
               <ErrorState
@@ -241,7 +297,7 @@ export default function ReportCardsPage() {
           </>
         )}
 
-        {viewMode === "classroom" && selectedClassroomId && selectedYearId && (
+        {effectiveViewMode === "classroom" && selectedClassroomId && selectedYearId && (
           <>
             {classroomQuery.isError ? (
               <ErrorState
@@ -288,6 +344,8 @@ export default function ReportCardsPage() {
           </>
         )}
       </div>
+        </>
+      )}
     </div>
   );
 }

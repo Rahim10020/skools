@@ -116,7 +116,7 @@ export class ParentStudentsService {
     return this.prisma.parentStudent.delete({ where: { id } });
   }
 
-  /** Enfants du compte connecté (rôle PARENT). */
+  /** Enfants du compte connecté (rôle PARENT), avec leur classe de l'année en cours. */
   async findMyChildren(userId: string, establishmentId: string) {
     const parent = await this.prisma.parent.findFirst({
       where: { userId, establishmentId, isActive: true },
@@ -125,7 +125,7 @@ export class ParentStudentsService {
       throw new NotFoundException('Aucun dossier parent lié à ce compte');
     }
 
-    return this.prisma.parentStudent.findMany({
+    const links = await this.prisma.parentStudent.findMany({
       where: { parentId: parent.id },
       include: {
         student: {
@@ -134,5 +134,30 @@ export class ParentStudentsService {
       },
       orderBy: { student: { lastName: 'asc' } },
     });
+
+    const currentYear = await this.prisma.academicYear.findFirst({
+      where: { establishmentId, isCurrent: true, isActive: true },
+      select: { id: true },
+    });
+
+    const enrollments = currentYear
+      ? await this.prisma.enrollment.findMany({
+          where: {
+            studentId: { in: links.map((l) => l.student.id) },
+            academicYearId: currentYear.id,
+            establishmentId,
+            isActive: true,
+          },
+          include: { classroom: { select: { id: true, name: true } } },
+        })
+      : [];
+    const classroomByStudent = new Map(
+      enrollments.map((e) => [e.studentId, e.classroom]),
+    );
+
+    return links.map((link) => ({
+      ...link,
+      classroom: classroomByStudent.get(link.student.id) ?? null,
+    }));
   }
 }

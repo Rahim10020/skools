@@ -21,17 +21,11 @@ import { Badge } from "../../components/ui/badge";
 import { EmptyState, ErrorState } from "../../components/ui/empty-state";
 import { Skeleton } from "../../components/ui/skeleton";
 import { toast } from "../../components/ui/toast";
-
-type AttendanceStatus = "PRESENT" | "ABSENT" | "LATE" | "EXCUSED";
-
-const STATUS_META: Record<AttendanceStatus, { label: string; selectClass: string }> = {
-  PRESENT: { label: "Présent", selectClass: "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400" },
-  ABSENT: { label: "Absent", selectClass: "bg-(--common-red)/10 text-(--common-red)" },
-  LATE: { label: "Retard", selectClass: "bg-amber-500/10 text-amber-700 dark:text-amber-400" },
-  EXCUSED: { label: "Excusé", selectClass: "bg-(--common-blue)/10 text-(--common-blue)" },
-};
-
-const STATUSES = Object.keys(STATUS_META) as AttendanceStatus[];
+import {
+  ATTENDANCE_STATUS_META as STATUS_META,
+  ATTENDANCE_STATUSES as STATUSES,
+  type AttendanceStatus,
+} from "./status-meta";
 
 interface StudentRow {
   id: string;

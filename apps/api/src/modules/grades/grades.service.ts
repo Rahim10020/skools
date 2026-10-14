@@ -13,6 +13,9 @@ import {
   examInScope,
   resolveTeacherScope,
 } from '../../common/helpers/teacher-scope.js';
+import {
+  assertStudentVisible,
+} from '../../common/helpers/family-scope.js';
 import type { RequestActor } from '../../common/types/request-actor.js';
 
 @Injectable()
@@ -155,7 +158,24 @@ export class GradesService {
     });
   }
 
-  async findAll(establishmentId: string, actor?: RequestActor) {
+  async findAll(
+    establishmentId: string,
+    actor?: RequestActor,
+    filters?: { studentId?: string },
+  ) {
+    // Périmètre famille : lui-même / ses enfants uniquement.
+    if (actor?.role === 'STUDENT' || actor?.role === 'PARENT') {
+      if (!filters?.studentId) {
+        throw new ForbiddenException('Précisez un élève');
+      }
+      await assertStudentVisible(
+        this.prisma,
+        actor,
+        filters.studentId,
+        establishmentId,
+      );
+    }
+
     const scope = await resolveTeacherScope(this.prisma, establishmentId, actor);
     // Restriction aux examens du périmètre (aucune note hors assignation).
     let examIds: string[] | undefined;
@@ -168,11 +188,25 @@ export class GradesService {
         .filter((exam) => examInScope(scope, exam))
         .map((exam) => exam.id);
     }
+    // PARENT/STUDENT voient toutes les notes de l'élève (tous examens).
+    const studentIds = filters?.studentId ? [filters.studentId] : undefined;
     return this.prisma.grade.findMany({
-      where: { establishmentId, ...(examIds ? { examId: { in: examIds } } : {}) },
+      where: {
+        establishmentId,
+        ...(examIds ? { examId: { in: examIds } } : {}),
+        ...(studentIds ? { studentId: { in: studentIds } } : {}),
+      },
       include: {
         student: { select: { id: true, firstName: true, lastName: true } },
-        exam: { select: { id: true, name: true, maxScore: true } },
+        exam: {
+          select: {
+            id: true,
+            name: true,
+            maxScore: true,
+            examDate: true,
+            subject: { select: { id: true, name: true } },
+          },
+        },
       },
       orderBy: { createdAt: 'desc' },
     });

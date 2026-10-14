@@ -43,13 +43,17 @@ export class GradesController {
   }
 
   @Get()
-  @Roles(Role.DIRECTOR, Role.CENSEUR, Role.TEACHER)
-  findAll(@Request() req: any, @Query('examId') examId?: string) {
+  @Roles(Role.DIRECTOR, Role.CENSEUR, Role.TEACHER, Role.STUDENT, Role.PARENT)
+  findAll(
+    @Request() req: any,
+    @Query('examId') examId?: string,
+    @Query('studentId') studentId?: string,
+  ) {
     const actor = { id: req.user.id, role: req.user.role };
     if (examId) {
       return this.gradesService.findByExam(examId, req.user.establishmentId, actor);
     }
-    return this.gradesService.findAll(req.user.establishmentId, actor);
+    return this.gradesService.findAll(req.user.establishmentId, actor, { studentId });
   }
 
   @Patch(':id')
