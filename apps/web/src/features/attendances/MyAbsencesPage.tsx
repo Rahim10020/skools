@@ -4,10 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import api, { getErrorMessage } from "../../lib/api";
 import { useAuthStore } from "../../stores/auth-store";
 import { ChildSelector } from "../../components/ChildSelector";
-import {
-  useEffectiveChildId,
-  useMyChildren,
-} from "../../lib/my-children";
+import { useEffectiveChildId, useMyChildren } from "../../lib/my-children";
 import { formatDateFr } from "../../components/crud/crud-helpers";
 import { PageHeader } from "../../layouts/PageHeader";
 import { Badge } from "../../components/ui/badge";
@@ -23,10 +20,7 @@ import {
 } from "../../components/ui/table";
 import { EmptyState, ErrorState } from "../../components/ui/empty-state";
 import { Skeleton } from "../../components/ui/skeleton";
-import {
-  ATTENDANCE_STATUS_META,
-  type AttendanceStatus,
-} from "./status-meta";
+import { ATTENDANCE_STATUS_META, type AttendanceStatus } from "./status-meta";
 
 interface AttendanceHistoryItem {
   id: string;
@@ -71,12 +65,12 @@ export default function MyAbsencesPage() {
   });
 
   const items = historyQuery.data ?? [];
-  const counts = (Object.keys(ATTENDANCE_STATUS_META) as AttendanceStatus[]).map(
-    (status) => ({
-      status,
-      count: items.filter((item) => item.status === status).length,
-    }),
-  );
+  const counts = (
+    Object.keys(ATTENDANCE_STATUS_META) as AttendanceStatus[]
+  ).map((status) => ({
+    status,
+    count: items.filter((item) => item.status === status).length,
+  }));
 
   const loading =
     (isParent ? childrenQuery.isPending : meQuery.isPending) ||
@@ -153,9 +147,13 @@ export default function MyAbsencesPage() {
               <TableBody>
                 {items.map((item) => (
                   <TableRow key={item.id}>
-                    <TableCellPrimary>{formatDateFr(item.date)}</TableCellPrimary>
+                    <TableCellPrimary>
+                      {formatDateFr(item.date)}
+                    </TableCellPrimary>
                     <TableCell>{item.classroom.name}</TableCell>
-                    <TableCell>{ATTENDANCE_STATUS_META[item.status].label}</TableCell>
+                    <TableCell>
+                      {ATTENDANCE_STATUS_META[item.status].label}
+                    </TableCell>
                   </TableRow>
                 ))}
               </TableBody>

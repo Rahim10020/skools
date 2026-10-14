@@ -36,15 +36,29 @@ export default function CyclesPage() {
         { header: "Ordre", render: (cycle) => cycle.order ?? "—" },
       ]}
       fields={[
-        { name: "name", label: "Nom", type: "text", placeholder: "Ex : Primaire", required: true },
-        { name: "order", label: "Ordre d'affichage", type: "number", placeholder: "Ex : 1" },
+        {
+          name: "name",
+          label: "Nom",
+          type: "text",
+          placeholder: "Ex : Primaire",
+          required: true,
+        },
+        {
+          name: "order",
+          label: "Ordre d'affichage",
+          type: "number",
+          placeholder: "Ex : 1",
+        },
       ]}
       schema={schema}
       toDefaults={(cycle) => ({
         name: cycle?.name ?? "",
         order: cycle?.order != null ? String(cycle.order) : "",
       })}
-      toSubmit={(values) => ({ name: values.name, order: toOptionalNumber(values.order) })}
+      toSubmit={(values) => ({
+        name: values.name,
+        order: toOptionalNumber(values.order),
+      })}
       nameOf={(cycle) => cycle.name}
     />
   );

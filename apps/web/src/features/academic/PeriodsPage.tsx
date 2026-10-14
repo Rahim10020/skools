@@ -41,7 +41,8 @@ export default function PeriodsPage() {
   // CENSEUR : supervision en lecture seule (matrice), écritures refusées 403.
   const yearsQuery = useQuery({
     queryKey: KEYS.academicYears,
-    queryFn: async () => (await api.get<AcademicYearOption[]>(API.academicYears)).data,
+    queryFn: async () =>
+      (await api.get<AcademicYearOption[]>(API.academicYears)).data,
   });
 
   return (
@@ -60,7 +61,9 @@ export default function PeriodsPage() {
           render: (period) => (
             <span className="inline-flex items-center gap-p2">
               {period.academicYear.name}
-              {period.academicYear.isCurrent && <Badge variant="success">En cours</Badge>}
+              {period.academicYear.isCurrent && (
+                <Badge variant="success">En cours</Badge>
+              )}
             </span>
           ),
         },
@@ -74,12 +77,31 @@ export default function PeriodsPage() {
           label: "Année scolaire",
           type: "select",
           required: true,
-          options: (yearsQuery.data ?? []).map((year) => ({ label: year.name, value: year.id })),
+          options: (yearsQuery.data ?? []).map((year) => ({
+            label: year.name,
+            value: year.id,
+          })),
         },
-        { name: "name", label: "Nom", type: "text", placeholder: "Ex : Trimestre 1", required: true },
-        { name: "startDate", label: "Date de début", type: "date", required: true },
+        {
+          name: "name",
+          label: "Nom",
+          type: "text",
+          placeholder: "Ex : Trimestre 1",
+          required: true,
+        },
+        {
+          name: "startDate",
+          label: "Date de début",
+          type: "date",
+          required: true,
+        },
         { name: "endDate", label: "Date de fin", type: "date", required: true },
-        { name: "order", label: "Ordre d'affichage", type: "number", placeholder: "Ex : 1" },
+        {
+          name: "order",
+          label: "Ordre d'affichage",
+          type: "number",
+          placeholder: "Ex : 1",
+        },
       ]}
       schema={schema}
       toDefaults={(period) => ({

@@ -21,18 +21,36 @@ export const KEYS = {
   teacherAssignments: ["teacher-assignments"],
   teacherAssignmentsMe: ["teacher-assignments", "me"],
   teacherAssignmentsAll: ["teacher-assignments", "all"],
-  parentStudentsOfStudent: (studentId: string) => ["parent-students", studentId],
+  parentStudentsOfStudent: (studentId: string) => [
+    "parent-students",
+    studentId,
+  ],
   enrollments: ["enrollments"],
   exams: ["exams"],
   grades: ["grades"],
   gradesByExam: (examId: string) => ["grades", examId],
   gradesByStudent: (studentId: string) => ["grades", "student", studentId],
-  reportCard: (studentId: string, academicYearId: string, periodId = "") =>
-    ["report-card", studentId, academicYearId, periodId],
-  classroomOverview: (classroomId: string, academicYearId: string) =>
-    ["classroom-overview", classroomId, academicYearId],
-  attendances: (classroomId: string, date: string) => ["attendances", classroomId, date],
-  attendancesByStudent: (studentId: string) => ["attendances", "student", studentId],
+  reportCard: (studentId: string, academicYearId: string, periodId = "") => [
+    "report-card",
+    studentId,
+    academicYearId,
+    periodId,
+  ],
+  classroomOverview: (classroomId: string, academicYearId: string) => [
+    "classroom-overview",
+    classroomId,
+    academicYearId,
+  ],
+  attendances: (classroomId: string, date: string) => [
+    "attendances",
+    classroomId,
+    date,
+  ],
+  attendancesByStudent: (studentId: string) => [
+    "attendances",
+    "student",
+    studentId,
+  ],
   schedules: (classroomId = "") => ["schedules", classroomId],
   discipline: (studentId = "") => ["discipline", studentId],
   members: ["members"],

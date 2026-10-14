@@ -40,12 +40,18 @@ export interface SidebarNavGroup {
 export const SIDEBAR_NAV: SidebarNavGroup[] = [
   {
     title: "Pilotage",
-    items: [{ to: ROUTES.dashboard, label: "Tableau de bord", icon: DashboardIcon }],
+    items: [
+      { to: ROUTES.dashboard, label: "Tableau de bord", icon: DashboardIcon },
+    ],
   },
   {
     title: "Référentiels",
     items: [
-      { to: ROUTES.academicYears, label: "Années scolaires", icon: CalendarIcon },
+      {
+        to: ROUTES.academicYears,
+        label: "Années scolaires",
+        icon: CalendarIcon,
+      },
       { to: ROUTES.cycles, label: "Cycles", icon: FolderIcon },
       { to: ROUTES.levels, label: "Niveaux", icon: FilterIcon },
       { to: ROUTES.series, label: "Séries", icon: FileIcon },
@@ -62,7 +68,11 @@ export const SIDEBAR_NAV: SidebarNavGroup[] = [
       { to: ROUTES.parents, label: "Parents", icon: MailIcon },
       { to: ROUTES.linkParents, label: "Lier parents", icon: LinkIcon },
       { to: ROUTES.myChildren, label: "Mes enfants", icon: ContactsIcon },
-      { to: ROUTES.teacherAssignments, label: "Affectations", icon: ArrowForwardIcon },
+      {
+        to: ROUTES.teacherAssignments,
+        label: "Affectations",
+        icon: ArrowForwardIcon,
+      },
       { to: ROUTES.enrollments, label: "Inscriptions", icon: AddIcon },
     ],
   },

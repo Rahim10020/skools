@@ -45,12 +45,21 @@ export default function SeriesPage() {
         { header: "Niveau", render: (series) => series.level?.name ?? "—" },
       ]}
       fields={[
-        { name: "name", label: "Nom", type: "text", placeholder: "Ex : A", required: true },
+        {
+          name: "name",
+          label: "Nom",
+          type: "text",
+          placeholder: "Ex : A",
+          required: true,
+        },
         {
           name: "levelId",
           label: "Niveau (optionnel)",
           type: "select",
-          options: (levelsQuery.data ?? []).map((level) => ({ label: level.name, value: level.id })),
+          options: (levelsQuery.data ?? []).map((level) => ({
+            label: level.name,
+            value: level.id,
+          })),
         },
       ]}
       schema={schema}

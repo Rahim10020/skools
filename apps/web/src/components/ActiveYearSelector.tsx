@@ -25,7 +25,8 @@ export function ActiveYearSelector({ collapsed }: { collapsed: boolean }) {
 
   const yearsQuery = useQuery({
     queryKey: KEYS.academicYears,
-    queryFn: async () => (await api.get<AcademicYearOption[]>(API.academicYears)).data,
+    queryFn: async () =>
+      (await api.get<AcademicYearOption[]>(API.academicYears)).data,
     enabled: !!establishmentId && role !== "SUPER_ADMIN",
   });
 
@@ -39,7 +40,9 @@ export function ActiveYearSelector({ collapsed }: { collapsed: boolean }) {
 
   return (
     <div className="px-p4 pb-p3">
-      <span className="text-m12 text-(--skools-text-primary)">Année scolaire</span>
+      <span className="text-m12 text-(--skools-text-primary)">
+        Année scolaire
+      </span>
       <div className="mt-p1">
         <Select
           label="Choisir…"

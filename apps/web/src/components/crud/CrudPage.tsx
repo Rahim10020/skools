@@ -24,7 +24,8 @@ import { EmptyState, ErrorState } from "../ui/empty-state";
 import { toast } from "../ui/toast";
 import PlusIcon from "../icons/PlusIcon";
 
-export type CrudFieldType = "text" | "number" | "date" | "time" | "select" | "textarea" | "checkbox";
+export type CrudFieldType =
+  "text" | "number" | "date" | "time" | "select" | "textarea" | "checkbox";
 
 export interface CrudFieldDef {
   name: string;
@@ -73,7 +74,10 @@ export interface CrudPageProps<T> {
   editFields?: CrudFieldDef[];
   schema: CrudSchema;
   toDefaults: (item?: T) => Record<string, string>;
-  toSubmit: (values: Record<string, string>, mode: "create" | "edit") => Record<string, unknown>;
+  toSubmit: (
+    values: Record<string, string>,
+    mode: "create" | "edit",
+  ) => Record<string, unknown>;
   nameOf: (item: T) => string;
   idOf?: (item: T) => string;
 }
@@ -143,7 +147,8 @@ function CrudFormModal({
       const errors: Record<string, string> = {};
       for (const issue of parsed.error?.issues ?? []) {
         const key = issue.path[0];
-        if (typeof key === "string" && !errors[key]) errors[key] = issue.message;
+        if (typeof key === "string" && !errors[key])
+          errors[key] = issue.message;
       }
       setFieldErrors(errors);
       return;
@@ -164,7 +169,11 @@ function CrudFormModal({
     switch (field.type) {
       case "select":
         return (
-          <FieldShell label={field.label} required={field.required} error={error}>
+          <FieldShell
+            label={field.label}
+            required={field.required}
+            error={error}
+          >
             <Select
               label={field.placeholder ?? field.label}
               options={field.options ?? []}
@@ -177,7 +186,11 @@ function CrudFormModal({
         );
       case "textarea":
         return (
-          <FieldShell label={field.label} required={field.required} error={error}>
+          <FieldShell
+            label={field.label}
+            required={field.required}
+            error={error}
+          >
             <Textarea
               label={field.placeholder ?? field.label}
               value={value}
@@ -192,12 +205,18 @@ function CrudFormModal({
           <Checkbox
             label={field.label}
             checked={value === "true"}
-            onChange={(checked) => setValue(field.name, checked ? "true" : "false")}
+            onChange={(checked) =>
+              setValue(field.name, checked ? "true" : "false")
+            }
           />
         );
       case "date":
         return (
-          <FieldShell label={field.label} required={field.required} error={error}>
+          <FieldShell
+            label={field.label}
+            required={field.required}
+            error={error}
+          >
             <Input
               variant="date"
               label={field.placeholder ?? field.label}
@@ -209,19 +228,29 @@ function CrudFormModal({
         );
       case "time":
         return (
-          <FieldShell label={field.label} required={field.required} error={error}>
+          <FieldShell
+            label={field.label}
+            required={field.required}
+            error={error}
+          >
             <input
               type="time"
               aria-label={field.label}
               value={value}
               onChange={(e) => setValue(field.name, e.target.value)}
-              className={[INPUT_BASE, "px-(--spacing-p4)", getBg(!!error)].join(" ")}
+              className={[INPUT_BASE, "px-(--spacing-p4)", getBg(!!error)].join(
+                " ",
+              )}
             />
           </FieldShell>
         );
       case "number":
         return (
-          <FieldShell label={field.label} required={field.required} error={error}>
+          <FieldShell
+            label={field.label}
+            required={field.required}
+            error={error}
+          >
             <Input
               label={field.placeholder ?? field.label}
               value={value}
@@ -235,7 +264,11 @@ function CrudFormModal({
       case "text":
       default:
         return (
-          <FieldShell label={field.label} required={field.required} error={error}>
+          <FieldShell
+            label={field.label}
+            required={field.required}
+            error={error}
+          >
             <Input
               label={field.placeholder ?? field.label}
               value={value}
@@ -254,7 +287,12 @@ function CrudFormModal({
         <Modal.Title id="crud-form-title">{title}</Modal.Title>
       </Modal.Header>
       <Modal.Body>
-        <form id="crud-form" onSubmit={handleSubmit} className="flex flex-col gap-p4" noValidate>
+        <form
+          id="crud-form"
+          onSubmit={handleSubmit}
+          className="flex flex-col gap-p4"
+          noValidate
+        >
           {fields.map((field) => (
             <div key={field.name}>{renderField(field)}</div>
           ))}
@@ -285,7 +323,8 @@ function CrudFormModal({
   );
 }
 
-const defaultIdOf = <T,>(item: T): string => (item as unknown as { id: string }).id;
+const defaultIdOf = <T,>(item: T): string =>
+  (item as unknown as { id: string }).id;
 
 export function CrudPage<T>({
   title,
@@ -311,11 +350,8 @@ export function CrudPage<T>({
   const [editing, setEditing] = useState<T | null | undefined>(undefined);
   const [deleteTarget, setDeleteTarget] = useState<T | null>(null);
 
-  const { list, createOne, updateOne, removeOne, invalidate } = useCrudResource<T>(
-    endpoint,
-    queryKey,
-    listPath,
-  );
+  const { list, createOne, updateOne, removeOne, invalidate } =
+    useCrudResource<T>(endpoint, queryKey, listPath);
   const items = list.data ?? [];
   const formFields = editing ? (editFields ?? fields) : fields;
 
@@ -327,11 +363,13 @@ export function CrudPage<T>({
     });
 
   const handleUpdate = (item: T) => (values: Record<string, string>) =>
-    updateOne.mutateAsync({ id: idOf(item), data: toSubmit(values, "edit") }).then(() => {
-      invalidate();
-      toast.success("Modifications enregistrées");
-      setEditing(undefined);
-    });
+    updateOne
+      .mutateAsync({ id: idOf(item), data: toSubmit(values, "edit") })
+      .then(() => {
+        invalidate();
+        toast.success("Modifications enregistrées");
+        setEditing(undefined);
+      });
 
   const handleDelete = async () => {
     if (!deleteTarget) return;
@@ -352,7 +390,11 @@ export function CrudPage<T>({
         description={description}
         actions={
           readOnly ? undefined : (
-            <Button fullWidth={false} icon={<PlusIcon className="size-full" />} onClick={() => setEditing(null)}>
+            <Button
+              fullWidth={false}
+              icon={<PlusIcon className="size-full" />}
+              onClick={() => setEditing(null)}
+            >
               {createLabel}
             </Button>
           )
@@ -391,7 +433,10 @@ export function CrudPage<T>({
       ) : items.length === 0 ? (
         <EmptyState
           title={`Aucun ${itemLabel} pour le moment`}
-          description={emptyDescription ?? `Créez le premier élément avec le bouton « ${createLabel} ».`}
+          description={
+            emptyDescription ??
+            `Créez le premier élément avec le bouton « ${createLabel} ».`
+          }
         />
       ) : (
         <TableContainer>
@@ -399,7 +444,9 @@ export function CrudPage<T>({
             <TableHeader>
               <tr>
                 {columns.map((column) => (
-                  <TableHeaderCell key={column.header}>{column.header}</TableHeaderCell>
+                  <TableHeaderCell key={column.header}>
+                    {column.header}
+                  </TableHeaderCell>
                 ))}
                 {!readOnly && (
                   <TableHeaderCell>
@@ -415,9 +462,13 @@ export function CrudPage<T>({
                   <TableRow key={idOf(item)}>
                     {columns.map((column) =>
                       column.primary ? (
-                        <TableCellPrimary key={column.header}>{column.render(item)}</TableCellPrimary>
+                        <TableCellPrimary key={column.header}>
+                          {column.render(item)}
+                        </TableCellPrimary>
                       ) : (
-                        <TableCell key={column.header}>{column.render(item)}</TableCell>
+                        <TableCell key={column.header}>
+                          {column.render(item)}
+                        </TableCell>
                       ),
                     )}
                     {!readOnly && (
@@ -460,7 +511,9 @@ export function CrudPage<T>({
           <Modal.Content labelledBy="crud-form-title">
             <CrudFormModal
               key={editing === null ? "new" : idOf(editing)}
-              title={editing === null ? createLabel : `Modifier ${nameOf(editing)}`}
+              title={
+                editing === null ? createLabel : `Modifier ${nameOf(editing)}`
+              }
               submitLabel={editing === null ? "Créer" : "Enregistrer"}
               fields={formFields}
               schema={schema}
@@ -482,10 +535,12 @@ export function CrudPage<T>({
         {deleteTarget && (
           <Modal.Content labelledBy="crud-delete-title">
             <Modal.Header>
-              <Modal.Title id="crud-delete-title">Confirmer la suppression</Modal.Title>
+              <Modal.Title id="crud-delete-title">
+                Confirmer la suppression
+              </Modal.Title>
               <Modal.Description>
-                Voulez-vous vraiment supprimer « {nameOf(deleteTarget)} » ? Cette action est
-                irréversible.
+                Voulez-vous vraiment supprimer « {nameOf(deleteTarget)} » ?
+                Cette action est irréversible.
               </Modal.Description>
             </Modal.Header>
             <Modal.Footer>

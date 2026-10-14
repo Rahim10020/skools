@@ -121,9 +121,16 @@ export const NAV_BY_ROLE: Record<string, string[]> = {
 };
 
 /** Accessibles à tout utilisateur authentifié, quel que soit le rôle. */
-const ALWAYS_ALLOWED: string[] = [ROUTES.dashboard, ROUTES.profil, ROUTES.createEstablishment];
+const ALWAYS_ALLOWED: string[] = [
+  ROUTES.dashboard,
+  ROUTES.profil,
+  ROUTES.createEstablishment,
+];
 
-export function canAccess(path: string, role: string | null | undefined): boolean {
+export function canAccess(
+  path: string,
+  role: string | null | undefined,
+): boolean {
   if (ALWAYS_ALLOWED.includes(path)) return true;
   if (!role) return false;
   return NAV_BY_ROLE[role]?.includes(path) ?? false;

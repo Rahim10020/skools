@@ -5,7 +5,12 @@ import { useAuthStore } from "../stores/auth-store";
 import { useSelectedChildStore } from "../stores/selected-child-store";
 
 export interface ChildOption {
-  student: { id: string; firstName: string; lastName: string; matricule: string | null };
+  student: {
+    id: string;
+    firstName: string;
+    lastName: string;
+    matricule: string | null;
+  };
   classroom: { id: string; name: string } | null;
 }
 
@@ -14,11 +19,7 @@ export function useMyChildren(enabled = true) {
   return useQuery({
     queryKey: ["my-children"],
     queryFn: async () =>
-      (
-        await api.get<Array<ChildOption & { id: string }>>(
-          API.myChildren,
-        )
-      ).data,
+      (await api.get<Array<ChildOption & { id: string }>>(API.myChildren)).data,
     enabled,
   });
 }
@@ -30,6 +31,7 @@ export function useEffectiveChildId(enabled = true): string {
   const selectedChildId = useSelectedChildStore((s) => s.selectedChildId);
   const childrenQuery = useMyChildren(enabled);
   const children = childrenQuery.data ?? [];
-  if (storedEstablishmentId === establishmentId && selectedChildId) return selectedChildId;
+  if (storedEstablishmentId === establishmentId && selectedChildId)
+    return selectedChildId;
   return children[0]?.student.id ?? "";
 }

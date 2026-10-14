@@ -7,7 +7,11 @@ import api from "../lib/api";
  * (ex. `apiPath.schedulesByClassroom(…)`) ; les mutations utilisent `endpoint` nu.
  * Les toasts et l'invalidation sont gérés par l'appelant (CrudPage).
  */
-export function useCrudResource<TList>(endpoint: string, queryKey: readonly string[], listPath?: string) {
+export function useCrudResource<TList>(
+  endpoint: string,
+  queryKey: readonly string[],
+  listPath?: string,
+) {
   const queryClient = useQueryClient();
 
   const list = useQuery({
@@ -23,12 +27,18 @@ export function useCrudResource<TList>(endpoint: string, queryKey: readonly stri
   });
 
   const updateOne = useMutation({
-    mutationFn: async ({ id, data }: { id: string; data: Record<string, unknown> }) =>
-      (await api.patch(`${endpoint}/${id}`, data)).data,
+    mutationFn: async ({
+      id,
+      data,
+    }: {
+      id: string;
+      data: Record<string, unknown>;
+    }) => (await api.patch(`${endpoint}/${id}`, data)).data,
   });
 
   const removeOne = useMutation({
-    mutationFn: async (id: string) => (await api.delete(`${endpoint}/${id}`)).data,
+    mutationFn: async (id: string) =>
+      (await api.delete(`${endpoint}/${id}`)).data,
   });
 
   return { list, createOne, updateOne, removeOne, invalidate };

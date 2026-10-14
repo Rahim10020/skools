@@ -72,7 +72,11 @@ function NavItemLink({
         .join(" ")}
     >
       <Icon component={item.icon} size={18} className="shrink-0" />
-      <span className={["truncate", collapsed ? "lg:hidden" : ""].filter(Boolean).join(" ")}>
+      <span
+        className={["truncate", collapsed ? "lg:hidden" : ""]
+          .filter(Boolean)
+          .join(" ")}
+      >
         {item.label}
       </span>
     </Link>
@@ -92,14 +96,27 @@ function NavItemLink({
   );
 }
 
-function CollapseButton({ collapsed, onToggle }: { collapsed: boolean; onToggle: () => void }) {
+function CollapseButton({
+  collapsed,
+  onToggle,
+}: {
+  collapsed: boolean;
+  onToggle: () => void;
+}) {
   return (
     <IconButton
       onClick={onToggle}
-      aria-label={collapsed ? "Déplier la barre latérale" : "Replier la barre latérale"}
+      aria-label={
+        collapsed ? "Déplier la barre latérale" : "Replier la barre latérale"
+      }
       title={collapsed ? "Déplier (Ctrl+B)" : "Replier (Ctrl+B)"}
     >
-      <ChevronBackIcon className={["size-4 transition-transform", collapsed ? "rotate-180" : ""].join(" ")} />
+      <ChevronBackIcon
+        className={[
+          "size-4 transition-transform",
+          collapsed ? "rotate-180" : "",
+        ].join(" ")}
+      />
     </IconButton>
   );
 }
@@ -150,7 +167,9 @@ export function Sidebar({
     navigate(ROUTES.login);
   };
 
-  const fullName = [user?.firstName, user?.lastName].filter(Boolean).join(" ") || "Utilisateur";
+  const fullName =
+    [user?.firstName, user?.lastName].filter(Boolean).join(" ") ||
+    "Utilisateur";
   // Sans établissement (compte venant de s'inscrire) : navigation réduite.
   // Matrice : on masque les entrées non autorisées, on ne grise jamais.
   const groups = (establishmentId ? SIDEBAR_NAV : SIDEBAR_NAV.slice(0, 1))
@@ -166,8 +185,9 @@ export function Sidebar({
     queryFn: async () => (await api.get<MeEstablishments>(API.authMe)).data,
   });
   const establishmentName =
-    meQuery.data?.establishments.find((e) => e.establishment.id === establishmentId)
-      ?.establishment.name ?? null;
+    meQuery.data?.establishments.find(
+      (e) => e.establishment.id === establishmentId,
+    )?.establishment.name ?? null;
 
   return (
     <aside
@@ -197,7 +217,10 @@ export function Sidebar({
             <Wordmark compact />
           </span>
           <span className="hidden lg:block">
-            <CollapseButton collapsed={collapsed} onToggle={() => setCollapsed((v) => !v)} />
+            <CollapseButton
+              collapsed={collapsed}
+              onToggle={() => setCollapsed((v) => !v)}
+            />
           </span>
           <span className="lg:hidden">
             <IconButton onClick={onCloseMobile} aria-label="Fermer le menu">
@@ -220,7 +243,10 @@ export function Sidebar({
         )}
       </div>
 
-      <nav aria-label="Sections" className="sidebar-scrollbar flex-1 overflow-y-auto px-p4 py-p4">
+      <nav
+        aria-label="Sections"
+        className="sidebar-scrollbar flex-1 overflow-y-auto px-p4 py-p4"
+      >
         {groups.map((group, gi) => (
           <div key={group.title} className={gi > 0 ? "mt-p4" : ""}>
             <p
@@ -240,7 +266,12 @@ export function Sidebar({
             )}
             <div className="flex flex-col gap-p1">
               {group.items.map((item) => (
-                <NavItemLink key={item.to} item={item} collapsed={collapsed} onNavigate={onCloseMobile} />
+                <NavItemLink
+                  key={item.to}
+                  item={item}
+                  collapsed={collapsed}
+                  onNavigate={onCloseMobile}
+                />
               ))}
             </div>
           </div>
@@ -250,7 +281,12 @@ export function Sidebar({
             <Separator className="mb-p4" />
             <div className="flex flex-col gap-p1">
               {bottomItems.map((item) => (
-                <NavItemLink key={item.to} item={item} collapsed={collapsed} onNavigate={onCloseMobile} />
+                <NavItemLink
+                  key={item.to}
+                  item={item}
+                  collapsed={collapsed}
+                  onNavigate={onCloseMobile}
+                />
               ))}
             </div>
           </div>
@@ -261,13 +297,30 @@ export function Sidebar({
       <ActiveYearSelector collapsed={collapsed} />
 
       <div className="border-t border-(--skools-border-subtle) p-p4">
-        <div className={["flex items-center gap-p2", collapsed ? "lg:flex-col lg:justify-center" : ""].join(" ")}>
+        <div
+          className={[
+            "flex items-center gap-p2",
+            collapsed ? "lg:flex-col lg:justify-center" : "",
+          ].join(" ")}
+        >
           <Avatar alt={fullName} />
-          <div className={["flex-1 min-w-0", collapsed ? "lg:hidden" : ""].filter(Boolean).join(" ")}>
-            <p className="text-m12 text-(--skools-text-primary) truncate">{fullName}</p>
-              {role && <p className="text-r11 text-(--skools-text-muted) truncate">{roleLabel(role)}</p>}
+          <div
+            className={["flex-1 min-w-0", collapsed ? "lg:hidden" : ""]
+              .filter(Boolean)
+              .join(" ")}
+          >
+            <p className="text-m12 text-(--skools-text-primary) truncate">
+              {fullName}
+            </p>
+            {role && (
+              <p className="text-r11 text-(--skools-text-muted) truncate">
+                {roleLabel(role)}
+              </p>
+            )}
           </div>
-          {role !== "SUPER_ADMIN" && <NotificationsBell collapsed={collapsed} />}
+          {role !== "SUPER_ADMIN" && (
+            <NotificationsBell collapsed={collapsed} />
+          )}
           <ThemeToggle />
         </div>
         <span className={collapsed ? "lg:hidden" : ""}>

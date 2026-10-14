@@ -42,7 +42,8 @@ export default function LoginPage() {
   const onSubmit = async (data: LoginForm) => {
     try {
       const response = await api.post<LoginResponse>(API.authLogin, data);
-      const { user, accessToken, refreshToken, establishmentId, role } = response.data;
+      const { user, accessToken, refreshToken, establishmentId, role } =
+        response.data;
 
       // Changement de session : purger le cache (données d'un autre compte/établissement).
       queryClient.clear();
@@ -65,11 +66,18 @@ export default function LoginPage() {
         </p>
       </div>
 
-      <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-p4" noValidate>
+      <form
+        onSubmit={handleSubmit(onSubmit)}
+        className="flex flex-col gap-p4"
+        noValidate
+      >
         <Controller
           name="email"
           control={control}
-          render={({ field: { value, onChange, onBlur, name }, fieldState }) => (
+          render={({
+            field: { value, onChange, onBlur, name },
+            fieldState,
+          }) => (
             <AuthField label="Email" error={fieldState.error?.message}>
               <Input
                 label="adresse@exemple.com"
@@ -87,7 +95,10 @@ export default function LoginPage() {
         <Controller
           name="password"
           control={control}
-          render={({ field: { value, onChange, onBlur, name }, fieldState }) => (
+          render={({
+            field: { value, onChange, onBlur, name },
+            fieldState,
+          }) => (
             <AuthField label="Mot de passe" error={fieldState.error?.message}>
               <Input
                 variant="password"

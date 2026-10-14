@@ -34,9 +34,14 @@ interface RetryableRequest {
 api.interceptors.response.use(
   (response) => response,
   async (error) => {
-    const originalRequest = error.config as (typeof error.config & RetryableRequest) | undefined;
+    const originalRequest = error.config as
+      (typeof error.config & RetryableRequest) | undefined;
 
-    if (error.response?.status === 401 && originalRequest && !originalRequest._retry) {
+    if (
+      error.response?.status === 401 &&
+      originalRequest &&
+      !originalRequest._retry
+    ) {
       // Ne jamais boucler sur l'endpoint de refresh lui-même.
       if (originalRequest.url?.includes(API.authRefresh)) {
         useAuthStore.getState().logout();
@@ -109,7 +114,8 @@ export function getErrorMessage(error: unknown): string {
     const message = data?.message;
     if (Array.isArray(message)) return message.join(", ");
     if (typeof message === "string" && message.length > 0) return message;
-    if (typeof data?.error === "string" && data.error.length > 0) return data.error;
+    if (typeof data?.error === "string" && data.error.length > 0)
+      return data.error;
     return `Erreur ${error.response.status}. Veuillez réessayer.`;
   }
   if (error instanceof Error && error.message) return error.message;

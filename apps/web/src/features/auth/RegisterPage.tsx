@@ -48,7 +48,13 @@ export default function RegisterPage() {
 
       // Contrat : register ne renvoie ni establishmentId ni role.
       queryClient.clear();
-      setAuth({ user, accessToken, refreshToken, establishmentId: null, role: null });
+      setAuth({
+        user,
+        accessToken,
+        refreshToken,
+        establishmentId: null,
+        role: null,
+      });
 
       // Sans établissement : RequireEstablishment + Dashboard redirigent vers la création.
       navigate(ROUTES.dashboard);
@@ -68,12 +74,19 @@ export default function RegisterPage() {
         </p>
       </div>
 
-      <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-p4" noValidate>
+      <form
+        onSubmit={handleSubmit(onSubmit)}
+        className="flex flex-col gap-p4"
+        noValidate
+      >
         <div className="grid grid-cols-2 gap-p4">
           <Controller
             name="firstName"
             control={control}
-            render={({ field: { value, onChange, onBlur, name }, fieldState }) => (
+            render={({
+              field: { value, onChange, onBlur, name },
+              fieldState,
+            }) => (
               <AuthField label="Prénom" error={fieldState.error?.message}>
                 <Input
                   label="Awa"
@@ -91,7 +104,10 @@ export default function RegisterPage() {
           <Controller
             name="lastName"
             control={control}
-            render={({ field: { value, onChange, onBlur, name }, fieldState }) => (
+            render={({
+              field: { value, onChange, onBlur, name },
+              fieldState,
+            }) => (
               <AuthField label="Nom" error={fieldState.error?.message}>
                 <Input
                   label="Diallo"
@@ -110,7 +126,10 @@ export default function RegisterPage() {
         <Controller
           name="email"
           control={control}
-          render={({ field: { value, onChange, onBlur, name }, fieldState }) => (
+          render={({
+            field: { value, onChange, onBlur, name },
+            fieldState,
+          }) => (
             <AuthField label="Email" error={fieldState.error?.message}>
               <Input
                 label="adresse@exemple.com"
@@ -128,7 +147,10 @@ export default function RegisterPage() {
         <Controller
           name="password"
           control={control}
-          render={({ field: { value, onChange, onBlur, name }, fieldState }) => (
+          render={({
+            field: { value, onChange, onBlur, name },
+            fieldState,
+          }) => (
             <AuthField label="Mot de passe" error={fieldState.error?.message}>
               <Input
                 variant="password"
@@ -158,7 +180,10 @@ export default function RegisterPage() {
 
       <p className="text-center text-r14 text-(--skools-text-muted)">
         Déjà un compte ?{" "}
-        <Link to={ROUTES.login} className="font-medium text-(--common-blue) hover:underline">
+        <Link
+          to={ROUTES.login}
+          className="font-medium text-(--common-blue) hover:underline"
+        >
           Se connecter
         </Link>
       </p>

@@ -23,7 +23,11 @@ export function RequireAuth() {
   return <Outlet />;
 }
 
-const SETUP_FREE_PATHS: string[] = [ROUTES.dashboard, ROUTES.createEstablishment, ROUTES.profil];
+const SETUP_FREE_PATHS: string[] = [
+  ROUTES.dashboard,
+  ROUTES.createEstablishment,
+  ROUTES.profil,
+];
 
 /**
  * Les pages métier exigent un établissement courant.

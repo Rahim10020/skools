@@ -77,18 +77,22 @@ export default function AttendancesPage() {
   const isTeacher = role === "TEACHER";
   const [selectedClassroomId, setSelectedClassroomId] = useState("");
   const [selectedDate, setSelectedDate] = useState(todayLocal);
-  const [statuses, setStatuses] = useState<Record<string, AttendanceStatus>>({});
+  const [statuses, setStatuses] = useState<Record<string, AttendanceStatus>>(
+    {},
+  );
   const [submitError, setSubmitError] = useState<string | null>(null);
 
   const classroomsQuery = useQuery({
     queryKey: KEYS.classrooms,
-    queryFn: async () => (await api.get<ClassroomOption[]>(API.classrooms)).data,
+    queryFn: async () =>
+      (await api.get<ClassroomOption[]>(API.classrooms)).data,
     // Enseignant : classes issues de /teacher-assignments/me (403 sur /classrooms).
     enabled: !isTeacher,
   });
   const myAssignmentsQuery = useQuery({
     queryKey: KEYS.teacherAssignmentsMe,
-    queryFn: async () => (await api.get<MyAssignment[]>(API.teacherAssignmentsMe)).data,
+    queryFn: async () =>
+      (await api.get<MyAssignment[]>(API.teacherAssignmentsMe)).data,
     enabled: isTeacher,
   });
   const enrollmentsQuery = useQuery({
@@ -109,12 +113,17 @@ export default function AttendancesPage() {
   });
 
   const studentsInClass = (enrollmentsQuery.data ?? [])
-    .filter((e) => e.classroomId === selectedClassroomId && e.isActive && e.student)
+    .filter(
+      (e) => e.classroomId === selectedClassroomId && e.isActive && e.student,
+    )
     .map((e) => e.student as StudentRow);
 
   const serverAttendances = attendancesQuery.data;
   const syncKey = `${selectedClassroomId}|${selectedDate}`;
-  const [prevSync, setPrevSync] = useState<{ key: string; data: typeof serverAttendances } | null>(null);
+  const [prevSync, setPrevSync] = useState<{
+    key: string;
+    data: typeof serverAttendances;
+  } | null>(null);
   if (prevSync?.key !== syncKey || prevSync?.data !== serverAttendances) {
     setPrevSync({ key: syncKey, data: serverAttendances });
     const next: Record<string, AttendanceStatus> = {};
@@ -146,15 +155,26 @@ export default function AttendancesPage() {
 
   const counts = STATUSES.map((status) => ({
     status,
-    count: studentsInClass.filter((s) => (statuses[s.id] ?? "PRESENT") === status).length,
+    count: studentsInClass.filter(
+      (s) => (statuses[s.id] ?? "PRESENT") === status,
+    ).length,
   }));
   const recordedCount = (serverAttendances ?? []).length;
 
   // Options de classe : assignations dédupliquées pour TEACHER, référentiel sinon.
   const classroomOptions = isTeacher
-    ? [...new Map((myAssignmentsQuery.data ?? []).map((a) => [a.classroom.id, a.classroom])).values()]
+    ? [
+        ...new Map(
+          (myAssignmentsQuery.data ?? []).map((a) => [
+            a.classroom.id,
+            a.classroom,
+          ]),
+        ).values(),
+      ]
     : (classroomsQuery.data ?? []);
-  const classroomPending = isTeacher ? myAssignmentsQuery.isPending : classroomsQuery.isPending;
+  const classroomPending = isTeacher
+    ? myAssignmentsQuery.isPending
+    : classroomsQuery.isPending;
 
   return (
     <div>
@@ -175,28 +195,32 @@ export default function AttendancesPage() {
           />
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-p4">
-          <div className="flex flex-col gap-p1">
-            <span className="text-m12 text-(--skools-text-primary)">Classe</span>
-            <Select
-              label="Choisir une classe…"
-              value={selectedClassroomId}
-              onChange={setSelectedClassroomId}
-              loading={classroomPending}
-              options={classroomOptions.map((classroom) => ({
-                label: classroom.name,
-                value: classroom.id,
-              }))}
-            />
-          </div>
-          <div className="flex flex-col gap-p1">
-            <span className="text-m12 text-(--skools-text-primary)">Date</span>
-            <Input
-              variant="date"
-              label="Date de l'appel"
-              value={selectedDate}
-              onChange={setSelectedDate}
-            />
-          </div>
+            <div className="flex flex-col gap-p1">
+              <span className="text-m12 text-(--skools-text-primary)">
+                Classe
+              </span>
+              <Select
+                label="Choisir une classe…"
+                value={selectedClassroomId}
+                onChange={setSelectedClassroomId}
+                loading={classroomPending}
+                options={classroomOptions.map((classroom) => ({
+                  label: classroom.name,
+                  value: classroom.id,
+                }))}
+              />
+            </div>
+            <div className="flex flex-col gap-p1">
+              <span className="text-m12 text-(--skools-text-primary)">
+                Date
+              </span>
+              <Input
+                variant="date"
+                label="Date de l'appel"
+                value={selectedDate}
+                onChange={setSelectedDate}
+              />
+            </div>
           </div>
         )}
       </Card>
@@ -223,7 +247,17 @@ export default function AttendancesPage() {
                 {counts.map(({ status, count }) => (
                   <Badge
                     key={status}
-                    variant={count > 0 ? (status === "PRESENT" ? "success" : status === "ABSENT" ? "destructive" : status === "LATE" ? "warning" : "default") : "neutral"}
+                    variant={
+                      count > 0
+                        ? status === "PRESENT"
+                          ? "success"
+                          : status === "ABSENT"
+                            ? "destructive"
+                            : status === "LATE"
+                              ? "warning"
+                              : "default"
+                        : "neutral"
+                    }
                   >
                     {STATUS_META[status].label} : {count}
                   </Badge>
@@ -255,7 +289,8 @@ export default function AttendancesPage() {
                               onChange={(e) =>
                                 setStatuses((prev) => ({
                                   ...prev,
-                                  [student.id]: e.target.value as AttendanceStatus,
+                                  [student.id]: e.target
+                                    .value as AttendanceStatus,
                                 }))
                               }
                               disabled={readOnly || saveMutation.isPending}
@@ -280,12 +315,16 @@ export default function AttendancesPage() {
                 <div className="px-p6 py-4 border-t border-(--skools-border-subtle)">
                   {readOnly ? (
                     <p className="text-r14 text-(--skools-text-muted)">
-                      Lecture seule : l'appel est réservé à la direction, aux enseignants et aux surveillants.
+                      Lecture seule : l'appel est réservé à la direction, aux
+                      enseignants et aux surveillants.
                     </p>
                   ) : (
                     <>
                       {submitError && (
-                        <p role="alert" className="text-r14 text-(--common-red) mb-p3">
+                        <p
+                          role="alert"
+                          className="text-r14 text-(--common-red) mb-p3"
+                        >
                           {submitError}
                         </p>
                       )}
@@ -295,7 +334,9 @@ export default function AttendancesPage() {
                         disabled={saveMutation.isPending}
                         onClick={() => saveMutation.mutate()}
                       >
-                        {saveMutation.isPending ? "Enregistrement…" : "Enregistrer les présences"}
+                        {saveMutation.isPending
+                          ? "Enregistrement…"
+                          : "Enregistrer les présences"}
                       </Button>
                     </>
                   )}

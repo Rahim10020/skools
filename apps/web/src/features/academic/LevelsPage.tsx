@@ -52,15 +52,29 @@ export default function LevelsPage() {
         { header: "Ordre", render: (level) => level.order ?? "—" },
       ]}
       fields={[
-        { name: "name", label: "Nom", type: "text", placeholder: "Ex : 6ème", required: true },
+        {
+          name: "name",
+          label: "Nom",
+          type: "text",
+          placeholder: "Ex : 6ème",
+          required: true,
+        },
         {
           name: "cycleId",
           label: "Cycle",
           type: "select",
           required: true,
-          options: (cyclesQuery.data ?? []).map((cycle) => ({ label: cycle.name, value: cycle.id })),
+          options: (cyclesQuery.data ?? []).map((cycle) => ({
+            label: cycle.name,
+            value: cycle.id,
+          })),
         },
-        { name: "order", label: "Ordre d'affichage", type: "number", placeholder: "Ex : 1" },
+        {
+          name: "order",
+          label: "Ordre d'affichage",
+          type: "number",
+          placeholder: "Ex : 1",
+        },
       ]}
       schema={schema}
       toDefaults={(level) => ({

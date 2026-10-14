@@ -52,8 +52,19 @@ export default function AcademicYearsPage() {
         },
       ]}
       fields={[
-        { name: "name", label: "Nom", type: "text", placeholder: "Ex : 2025-2026", required: true },
-        { name: "startDate", label: "Date de début", type: "date", required: true },
+        {
+          name: "name",
+          label: "Nom",
+          type: "text",
+          placeholder: "Ex : 2025-2026",
+          required: true,
+        },
+        {
+          name: "startDate",
+          label: "Date de début",
+          type: "date",
+          required: true,
+        },
         { name: "endDate", label: "Date de fin", type: "date", required: true },
         { name: "isCurrent", label: "Année en cours", type: "checkbox" },
       ]}

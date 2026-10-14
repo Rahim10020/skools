@@ -64,11 +64,24 @@ export default function ClassroomsPage() {
       queryKey={KEYS.classrooms}
       endpoint={API.classrooms}
       columns={[
-        { header: "Classe", primary: true, render: (classroom) => classroom.name },
-        { header: "Année scolaire", render: (classroom) => classroom.academicYear.name },
+        {
+          header: "Classe",
+          primary: true,
+          render: (classroom) => classroom.name,
+        },
+        {
+          header: "Année scolaire",
+          render: (classroom) => classroom.academicYear.name,
+        },
         { header: "Niveau", render: (classroom) => classroom.level.name },
-        { header: "Série", render: (classroom) => classroom.series?.name ?? "—" },
-        { header: "Effectif max", render: (classroom) => classroom.capacity ?? "—" },
+        {
+          header: "Série",
+          render: (classroom) => classroom.series?.name ?? "—",
+        },
+        {
+          header: "Effectif max",
+          render: (classroom) => classroom.capacity ?? "—",
+        },
       ]}
       fields={[
         {
@@ -91,8 +104,19 @@ export default function ClassroomsPage() {
           type: "select",
           options: toOptions(seriesQuery.data),
         },
-        { name: "name", label: "Nom", type: "text", placeholder: "Ex : 6ème A", required: true },
-        { name: "capacity", label: "Effectif maximum", type: "number", placeholder: "Ex : 40" },
+        {
+          name: "name",
+          label: "Nom",
+          type: "text",
+          placeholder: "Ex : 6ème A",
+          required: true,
+        },
+        {
+          name: "capacity",
+          label: "Effectif maximum",
+          type: "number",
+          placeholder: "Ex : 40",
+        },
       ]}
       schema={schema}
       toDefaults={(classroom) => ({

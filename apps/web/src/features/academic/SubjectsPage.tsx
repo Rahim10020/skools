@@ -33,10 +33,19 @@ export default function SubjectsPage() {
       columns={[
         { header: "Matière", primary: true, render: (subject) => subject.name },
         { header: "Code", render: (subject) => subject.code || "—" },
-        { header: "Description", render: (subject) => subject.description || "—" },
+        {
+          header: "Description",
+          render: (subject) => subject.description || "—",
+        },
       ]}
       fields={[
-        { name: "name", label: "Nom", type: "text", placeholder: "Ex : Mathématiques", required: true },
+        {
+          name: "name",
+          label: "Nom",
+          type: "text",
+          placeholder: "Ex : Mathématiques",
+          required: true,
+        },
         { name: "code", label: "Code", type: "text", placeholder: "Ex : MATH" },
         { name: "description", label: "Description", type: "textarea" },
       ]}
@@ -47,7 +56,11 @@ export default function SubjectsPage() {
         description: subject?.description ?? "",
       })}
       toSubmit={(values) =>
-        omitEmptyStrings({ name: values.name, code: values.code, description: values.description })
+        omitEmptyStrings({
+          name: values.name,
+          code: values.code,
+          description: values.description,
+        })
       }
       nameOf={(subject) => subject.name}
     />
