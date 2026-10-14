@@ -1,3 +1,4 @@
+import { ROLES } from "../../lib/roles";
 import { API } from "../../lib/api-endpoints";
 import { ROUTES } from "../../lib/routes";
 import { useEffect, useState } from "react";
@@ -293,7 +294,7 @@ export function Sidebar({
         )}
       </nav>
 
-      {role === "PARENT" && !collapsed && <ChildSelector />}
+      {role === ROLES.PARENT && !collapsed && <ChildSelector />}
       <ActiveYearSelector collapsed={collapsed} />
 
       <div className="border-t border-(--skools-border-subtle) p-p4">
@@ -318,7 +319,7 @@ export function Sidebar({
               </p>
             )}
           </div>
-          {role !== "SUPER_ADMIN" && (
+          {role !== ROLES.SUPER_ADMIN && (
             <NotificationsBell collapsed={collapsed} />
           )}
           <ThemeToggle />

@@ -1,3 +1,4 @@
+import { ROLES } from "../lib/roles";
 import { useState } from "react";
 import { Outlet } from "react-router-dom";
 import { Sidebar } from "../components/layout/Sidebar";
@@ -52,7 +53,7 @@ export function AppShell() {
         </button>
         <Wordmark />
         <span className="flex-1" />
-        {role !== "SUPER_ADMIN" && <NotificationsBell />}
+        {role !== ROLES.SUPER_ADMIN && <NotificationsBell />}
         <ThemeToggle />
       </header>
 

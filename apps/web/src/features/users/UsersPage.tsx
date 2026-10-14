@@ -1,3 +1,4 @@
+import { ROLES } from "../../lib/roles";
 import { API, apiPath } from "../../lib/api-endpoints";
 import { KEYS } from "../../lib/query-keys";
 import { useState, type FormEvent } from "react";
@@ -35,7 +36,7 @@ interface Member {
 
 /** Rôles attribuables par un DIRECTOR (matrice : tout sauf SUPER_ADMIN). */
 const ASSIGNABLE_ROLES = Object.keys(ROLE_LABELS_FR)
-  .filter((role) => role !== "SUPER_ADMIN")
+  .filter((role) => role !== ROLES.SUPER_ADMIN)
   .map((role) => ({ label: ROLE_LABELS_FR[role], value: role }));
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -64,15 +65,23 @@ export default function UsersPage() {
     queryClient.invalidateQueries({ queryKey: KEYS.members });
 
   const addMutation = useMutation({
-    mutationFn: async () => (await api.post(API.userEstablishments, { email: email.trim(), role })).data,
+    mutationFn: async () =>
+      (await api.post(API.userEstablishments, { email: email.trim(), role }))
+        .data,
   });
 
   const editMutation = useMutation({
-    mutationFn: async () => (await api.patch(apiPath.withId(API.userEstablishments, editing!.id), { role: editRole })).data,
+    mutationFn: async () =>
+      (
+        await api.patch(apiPath.withId(API.userEstablishments, editing!.id), {
+          role: editRole,
+        })
+      ).data,
   });
 
   const deleteMutation = useMutation({
-    mutationFn: async (id: string) => (await api.delete(apiPath.withId(API.userEstablishments, id))).data,
+    mutationFn: async (id: string) =>
+      (await api.delete(apiPath.withId(API.userEstablishments, id))).data,
   });
 
   const handleAdd = async (event: FormEvent) => {
@@ -141,7 +150,11 @@ export default function UsersPage() {
         title="Utilisateurs & rôles"
         description="Les comptes membres de l'établissement et leurs rôles. L'utilisateur doit déjà avoir un compte Skools."
         actions={
-          <Button fullWidth={false} icon={<PlusIcon className="size-full" />} onClick={() => setAddOpen(true)}>
+          <Button
+            fullWidth={false}
+            icon={<PlusIcon className="size-full" />}
+            onClick={() => setAddOpen(true)}
+          >
             Ajouter un membre
           </Button>
         }
@@ -199,7 +212,9 @@ export default function UsersPage() {
                     <TableCellPrimary>
                       {memberName(member)}
                       {isSelf && (
-                        <span className="ml-p2 text-r11 text-(--skools-text-muted)">(vous)</span>
+                        <span className="ml-p2 text-r11 text-(--skools-text-muted)">
+                          (vous)
+                        </span>
                       )}
                     </TableCellPrimary>
                     <TableCell>{member.user.email}</TableCell>
@@ -207,7 +222,9 @@ export default function UsersPage() {
                     <TableCell>
                       <div className="flex justify-end gap-p3">
                         {isSelf ? (
-                          <span className="text-r12 text-(--skools-text-muted)">—</span>
+                          <span className="text-r12 text-(--skools-text-muted)">
+                            —
+                          </span>
                         ) : (
                           <>
                             <button
@@ -239,17 +256,26 @@ export default function UsersPage() {
       )}
 
       {/* Ajout */}
-      <Modal.Root open={addOpen} onOpenChange={(open) => !open && setAddOpen(false)}>
+      <Modal.Root
+        open={addOpen}
+        onOpenChange={(open) => !open && setAddOpen(false)}
+      >
         {addOpen && (
           <Modal.Content labelledBy="users-add-title">
             <Modal.Header>
               <Modal.Title id="users-add-title">Ajouter un membre</Modal.Title>
               <Modal.Description>
-                Le compte doit exister et ne pas appartenir à un autre établissement.
+                Le compte doit exister et ne pas appartenir à un autre
+                établissement.
               </Modal.Description>
             </Modal.Header>
             <Modal.Body>
-              <form id="users-add-form" onSubmit={handleAdd} className="flex flex-col gap-p4" noValidate>
+              <form
+                id="users-add-form"
+                onSubmit={handleAdd}
+                className="flex flex-col gap-p4"
+                noValidate
+              >
                 <div className="flex flex-col gap-p1">
                   <span className="text-m12 text-(--skools-text-primary)">
                     Email <span className="text-(--common-red)"> *</span>
@@ -301,16 +327,28 @@ export default function UsersPage() {
       </Modal.Root>
 
       {/* Changement de rôle */}
-      <Modal.Root open={editing !== null} onOpenChange={(open) => !open && setEditing(null)}>
+      <Modal.Root
+        open={editing !== null}
+        onOpenChange={(open) => !open && setEditing(null)}
+      >
         {editing && (
           <Modal.Content labelledBy="users-edit-title">
             <Modal.Header>
-              <Modal.Title id="users-edit-title">Modifier le rôle de {memberName(editing)}</Modal.Title>
+              <Modal.Title id="users-edit-title">
+                Modifier le rôle de {memberName(editing)}
+              </Modal.Title>
             </Modal.Header>
             <Modal.Body>
-              <form id="users-edit-form" onSubmit={handleEdit} className="flex flex-col gap-p4" noValidate>
+              <form
+                id="users-edit-form"
+                onSubmit={handleEdit}
+                className="flex flex-col gap-p4"
+                noValidate
+              >
                 <div className="flex flex-col gap-p1">
-                  <span className="text-m12 text-(--skools-text-primary)">Rôle</span>
+                  <span className="text-m12 text-(--skools-text-primary)">
+                    Rôle
+                  </span>
                   <Select
                     label="Choisir un rôle"
                     options={ASSIGNABLE_ROLES}
@@ -347,14 +385,20 @@ export default function UsersPage() {
       </Modal.Root>
 
       {/* Retrait */}
-      <Modal.Root size="sm" open={deleteTarget !== null} onOpenChange={(open) => !open && setDeleteTarget(null)}>
+      <Modal.Root
+        size="sm"
+        open={deleteTarget !== null}
+        onOpenChange={(open) => !open && setDeleteTarget(null)}
+      >
         {deleteTarget && (
           <Modal.Content labelledBy="users-delete-title">
             <Modal.Header>
-              <Modal.Title id="users-delete-title">Confirmer le retrait</Modal.Title>
+              <Modal.Title id="users-delete-title">
+                Confirmer le retrait
+              </Modal.Title>
               <Modal.Description>
-                Retirer l'accès de « {memberName(deleteTarget)} » à l'établissement ? Le compte
-                reste actif mais sans établissement.
+                Retirer l'accès de « {memberName(deleteTarget)} » à
+                l'établissement ? Le compte reste actif mais sans établissement.
               </Modal.Description>
             </Modal.Header>
             <Modal.Footer>

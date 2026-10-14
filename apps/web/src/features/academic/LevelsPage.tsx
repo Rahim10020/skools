@@ -1,3 +1,5 @@
+import type { IdName } from "../../types/api";
+import { ROLES } from "../../lib/roles";
 import { API } from "../../lib/api-endpoints";
 import { KEYS } from "../../lib/query-keys";
 import { z } from "zod";
@@ -18,11 +20,6 @@ interface Level {
   cycle: { id: string; name: string };
 }
 
-interface CycleOption {
-  id: string;
-  name: string;
-}
-
 const schema = z.object({
   name: z.string().min(1, "Nom requis (Ex : 6ème, Seconde)"),
   cycleId: z.string().min(1, "Cycle requis"),
@@ -34,12 +31,12 @@ export default function LevelsPage() {
   // CENSEUR : supervision en lecture seule (matrice), écritures refusées 403.
   const cyclesQuery = useQuery({
     queryKey: KEYS.cycles,
-    queryFn: async () => (await api.get<CycleOption[]>(API.cycles)).data,
+    queryFn: async () => (await api.get<IdName[]>(API.cycles)).data,
   });
 
   return (
     <CrudPage<Level>
-      readOnly={role === "CENSEUR"}
+      readOnly={role === ROLES.CENSEUR}
       title="Niveaux"
       description="Les niveaux rattachés à chaque cycle (6ème, 5ème, Seconde…)."
       itemLabel="niveau"

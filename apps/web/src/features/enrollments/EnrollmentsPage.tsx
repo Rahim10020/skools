@@ -1,3 +1,4 @@
+import type { IdName, StudentRow } from "../../types/api";
 import { API } from "../../lib/api-endpoints";
 import { KEYS } from "../../lib/query-keys";
 import { z } from "zod";
@@ -16,24 +17,20 @@ interface Enrollment {
   academicYearId: string;
   status: EnrollmentStatus;
   notes: string | null;
-  student: { id: string; firstName: string; lastName: string; matricule: string | null };
+  student: {
+    id: string;
+    firstName: string;
+    lastName: string;
+    matricule: string | null;
+  };
   classroom: { id: string; name: string };
   academicYear: { id: string; name: string };
 }
 
-interface IdName {
-  id: string;
-  name: string;
-}
-
-interface StudentOption {
-  id: string;
-  firstName: string;
-  lastName: string;
-  matricule: string | null;
-}
-
-const STATUS_META: Record<EnrollmentStatus, { label: string; variant: BadgeVariant }> = {
+const STATUS_META: Record<
+  EnrollmentStatus,
+  { label: string; variant: BadgeVariant }
+> = {
   PENDING: { label: "En attente", variant: "warning" },
   APPROVED: { label: "Approuvée", variant: "success" },
   REJECTED: { label: "Rejetée", variant: "destructive" },
@@ -51,7 +48,7 @@ const schema = z.object({
 export default function EnrollmentsPage() {
   const studentsQuery = useQuery({
     queryKey: KEYS.students,
-    queryFn: async () => (await api.get<StudentOption[]>(API.students)).data,
+    queryFn: async () => (await api.get<StudentRow[]>(API.students)).data,
   });
   const classroomsQuery = useQuery({
     queryKey: KEYS.classrooms,
@@ -74,10 +71,14 @@ export default function EnrollmentsPage() {
         {
           header: "Élève",
           primary: true,
-          render: (enrollment) => `${enrollment.student.lastName} ${enrollment.student.firstName}`,
+          render: (enrollment) =>
+            `${enrollment.student.lastName} ${enrollment.student.firstName}`,
         },
         { header: "Classe", render: (enrollment) => enrollment.classroom.name },
-        { header: "Année scolaire", render: (enrollment) => enrollment.academicYear.name },
+        {
+          header: "Année scolaire",
+          render: (enrollment) => enrollment.academicYear.name,
+        },
         {
           header: "Statut",
           render: (enrollment) => {
@@ -113,7 +114,10 @@ export default function EnrollmentsPage() {
           label: "Année scolaire",
           type: "select",
           required: true,
-          options: (yearsQuery.data ?? []).map((year) => ({ label: year.name, value: year.id })),
+          options: (yearsQuery.data ?? []).map((year) => ({
+            label: year.name,
+            value: year.id,
+          })),
         },
         {
           name: "status",
@@ -121,9 +125,11 @@ export default function EnrollmentsPage() {
           type: "select",
           required: true,
           disableSelectSearch: true,
-          options: (Object.entries(STATUS_META) as Array<[EnrollmentStatus, (typeof STATUS_META)[EnrollmentStatus]]>).map(
-            ([value, meta]) => ({ label: meta.label, value }),
-          ),
+          options: (
+            Object.entries(STATUS_META) as Array<
+              [EnrollmentStatus, (typeof STATUS_META)[EnrollmentStatus]]
+            >
+          ).map(([value, meta]) => ({ label: meta.label, value })),
         },
         { name: "notes", label: "Notes internes", type: "textarea" },
       ]}
@@ -144,7 +150,9 @@ export default function EnrollmentsPage() {
           notes: values.notes,
         })
       }
-      nameOf={(enrollment) => `${enrollment.student.lastName} ${enrollment.student.firstName} — ${enrollment.classroom.name}`}
+      nameOf={(enrollment) =>
+        `${enrollment.student.lastName} ${enrollment.student.firstName} — ${enrollment.classroom.name}`
+      }
     />
   );
 }

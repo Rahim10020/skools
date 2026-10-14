@@ -1,3 +1,5 @@
+import { ROLES } from "../../lib/roles";
+import type { StudentRow } from "../../types/api";
 import { API } from "../../lib/api-endpoints";
 import { KEYS } from "../../lib/query-keys";
 import { ROUTES } from "../../lib/routes";
@@ -31,7 +33,7 @@ interface MyChild {
   id: string;
   relation: "FATHER" | "MOTHER" | "GUARDIAN" | "OTHER";
   isPrimary: boolean;
-  student: { id: string; firstName: string; lastName: string; matricule: string | null };
+  student: StudentRow;
 }
 
 const RELATION_LABELS: Record<MyChild["relation"], string> = {
@@ -61,7 +63,7 @@ export default function ProfilPage() {
   const childrenQuery = useQuery({
     queryKey: KEYS.myChildren,
     queryFn: async () => (await api.get<MyChild[]>(API.myChildren)).data,
-    enabled: role === "PARENT",
+    enabled: role === ROLES.PARENT,
   });
 
   const handleLogout = async () => {
@@ -71,11 +73,16 @@ export default function ProfilPage() {
   };
 
   const me = meQuery.data ?? null;
-  const establishment = me?.establishments.find((e) => e.establishment.id === establishmentId);
+  const establishment = me?.establishments.find(
+    (e) => e.establishment.id === establishmentId,
+  );
 
   return (
     <div>
-      <PageHeader title="Mon profil" description="Vos informations de compte." />
+      <PageHeader
+        title="Mon profil"
+        description="Vos informations de compte."
+      />
 
       {meQuery.isError ? (
         <ErrorState
@@ -95,34 +102,48 @@ export default function ProfilPage() {
                 <h2 className="text-sb20 text-(--skools-text-primary)">
                   {me.firstName} {me.lastName}
                 </h2>
-                <p className="text-r14 text-(--skools-text-muted)">{me.email}</p>
+                <p className="text-r14 text-(--skools-text-muted)">
+                  {me.email}
+                </p>
               </div>
             </div>
             <div className="mt-p6 flex flex-wrap gap-x-p6 gap-y-p3">
               <div>
                 <p className="text-r12 text-(--skools-text-muted)">Rôle</p>
-                <Badge variant="neutral" className="mt-p1">{roleLabel(role)}</Badge>
+                <Badge variant="neutral" className="mt-p1">
+                  {roleLabel(role)}
+                </Badge>
               </div>
               <div>
-                <p className="text-r12 text-(--skools-text-muted)">Établissement</p>
+                <p className="text-r12 text-(--skools-text-muted)">
+                  Établissement
+                </p>
                 <p className="mt-p1 text-m14 text-(--skools-text-primary)">
                   {establishment?.establishment.name ?? "Aucun"}
                 </p>
               </div>
               <div>
                 <p className="text-r12 text-(--skools-text-muted)">Téléphone</p>
-                <p className="mt-p1 text-m14 text-(--skools-text-primary)">{me.phone || "—"}</p>
+                <p className="mt-p1 text-m14 text-(--skools-text-primary)">
+                  {me.phone || "—"}
+                </p>
               </div>
               <div>
-                <p className="text-r12 text-(--skools-text-muted)">Membre depuis</p>
-                <p className="mt-p1 text-m14 text-(--skools-text-primary)">{memberSince(me.createdAt)}</p>
+                <p className="text-r12 text-(--skools-text-muted)">
+                  Membre depuis
+                </p>
+                <p className="mt-p1 text-m14 text-(--skools-text-primary)">
+                  {memberSince(me.createdAt)}
+                </p>
               </div>
             </div>
           </Card>
 
-          {role === "PARENT" && (
+          {role === ROLES.PARENT && (
             <Card className="p-p6">
-              <h2 className="text-sb16 text-(--skools-text-primary)">Mes enfants</h2>
+              <h2 className="text-sb16 text-(--skools-text-primary)">
+                Mes enfants
+              </h2>
               <div className="mt-p4 flex flex-col gap-p3">
                 {childrenQuery.isPending ? (
                   <Skeleton className="h-[48px] rounded-r2" count={2} />
@@ -142,10 +163,14 @@ export default function ProfilPage() {
                         </p>
                         <p className="text-r12 text-(--skools-text-muted)">
                           {RELATION_LABELS[child.relation]}
-                          {child.student.matricule ? ` · ${child.student.matricule}` : ""}
+                          {child.student.matricule
+                            ? ` · ${child.student.matricule}`
+                            : ""}
                         </p>
                       </div>
-                      {child.isPrimary && <Badge variant="success">Principal</Badge>}
+                      {child.isPrimary && (
+                        <Badge variant="success">Principal</Badge>
+                      )}
                     </div>
                   ))
                 )}
@@ -154,7 +179,11 @@ export default function ProfilPage() {
           )}
 
           <div>
-            <Button fullWidth={false} variant="secondary" onClick={handleLogout}>
+            <Button
+              fullWidth={false}
+              variant="secondary"
+              onClick={handleLogout}
+            >
               Déconnexion
             </Button>
           </div>

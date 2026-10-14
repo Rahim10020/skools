@@ -1,3 +1,4 @@
+import { ROLES } from "../../lib/roles";
 import { API } from "../../lib/api-endpoints";
 import { KEYS } from "../../lib/query-keys";
 import { z } from "zod";
@@ -30,7 +31,7 @@ export default function AcademicYearsPage() {
   // CENSEUR : supervision en lecture seule (matrice), écritures refusées 403.
   return (
     <CrudPage<AcademicYear>
-      readOnly={role === "CENSEUR"}
+      readOnly={role === ROLES.CENSEUR}
       title="Années scolaires"
       description="Définissez les années scolaires et désignez l'année en cours."
       itemLabel="année scolaire"

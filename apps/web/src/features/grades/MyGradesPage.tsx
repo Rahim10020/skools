@@ -1,3 +1,4 @@
+import type { PersonRef } from "../../types/api";
 import { API } from "../../lib/api-endpoints";
 import { KEYS } from "../../lib/query-keys";
 import { useQuery } from "@tanstack/react-query";
@@ -30,12 +31,6 @@ interface StudentGrade {
   };
 }
 
-interface MeStudent {
-  id: string;
-  firstName: string;
-  lastName: string;
-}
-
 function formatScore(grade: StudentGrade): string {
   if (grade.isAbsent) return "Absent";
   if (grade.score === null) return "—";
@@ -49,7 +44,7 @@ function formatScore(grade: StudentGrade): string {
 export default function MyGradesPage() {
   const meQuery = useQuery({
     queryKey: KEYS.studentsMe,
-    queryFn: async () => (await api.get<MeStudent>(API.studentsMe)).data,
+    queryFn: async () => (await api.get<PersonRef>(API.studentsMe)).data,
   });
 
   const studentId = meQuery.data?.id ?? "";

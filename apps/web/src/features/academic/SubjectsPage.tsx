@@ -1,3 +1,4 @@
+import { ROLES } from "../../lib/roles";
 import { API } from "../../lib/api-endpoints";
 import { KEYS } from "../../lib/query-keys";
 import { z } from "zod";
@@ -23,7 +24,7 @@ export default function SubjectsPage() {
   // CENSEUR : supervision en lecture seule (matrice), écritures refusées 403.
   return (
     <CrudPage<Subject>
-      readOnly={role === "CENSEUR"}
+      readOnly={role === ROLES.CENSEUR}
       title="Matières"
       description="Les matières enseignées dans l'établissement."
       itemLabel="matière"

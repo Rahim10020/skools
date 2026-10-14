@@ -6,17 +6,18 @@
  * Paths : lib/routes.ts (aucun littéral ici).
  */
 import { ROUTES } from "./routes";
+import { ROLES } from "./roles";
 
 export const ROLE_LABELS_FR: Record<string, string> = {
-  SUPER_ADMIN: "Super Admin",
-  DIRECTOR: "Directeur",
-  ADMIN: "Admin",
-  CENSEUR: "Censeur",
-  BIBLIOTECAIRE: "Bibliothécaire",
-  SURVEILLANT: "Surveillant",
-  TEACHER: "Enseignant",
-  STUDENT: "Élève",
-  PARENT: "Parent",
+  [ROLES.SUPER_ADMIN]: "Super Admin",
+  [ROLES.DIRECTOR]: "Directeur",
+  [ROLES.ADMIN]: "Admin",
+  [ROLES.CENSEUR]: "Censeur",
+  [ROLES.BIBLIOTECAIRE]: "Bibliothécaire",
+  [ROLES.SURVEILLANT]: "Surveillant",
+  [ROLES.TEACHER]: "Enseignant",
+  [ROLES.STUDENT]: "Élève",
+  [ROLES.PARENT]: "Parent",
 };
 
 export function roleLabel(role: string | null | undefined): string {

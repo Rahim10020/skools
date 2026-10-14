@@ -1,3 +1,5 @@
+import type { IdName } from "../../types/api";
+import { ROLES } from "../../lib/roles";
 import { API } from "../../lib/api-endpoints";
 import { KEYS } from "../../lib/query-keys";
 import { z } from "zod";
@@ -13,11 +15,6 @@ interface Series {
   level: { id: string; name: string } | null;
 }
 
-interface LevelOption {
-  id: string;
-  name: string;
-}
-
 const schema = z.object({
   name: z.string().min(1, "Nom requis (Ex : A, C, D, S, L)"),
   levelId: z.string().optional(),
@@ -28,12 +25,12 @@ export default function SeriesPage() {
   // CENSEUR : supervision en lecture seule (matrice), écritures refusées 403.
   const levelsQuery = useQuery({
     queryKey: KEYS.levels,
-    queryFn: async () => (await api.get<LevelOption[]>(API.levels)).data,
+    queryFn: async () => (await api.get<IdName[]>(API.levels)).data,
   });
 
   return (
     <CrudPage<Series>
-      readOnly={role === "CENSEUR"}
+      readOnly={role === ROLES.CENSEUR}
       title="Séries"
       description="Les séries rattachées aux niveaux (A, C, D, S, L…)."
       itemLabel="série"

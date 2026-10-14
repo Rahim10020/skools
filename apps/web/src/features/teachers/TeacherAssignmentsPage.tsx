@@ -1,3 +1,5 @@
+import type { IdName, PersonRef } from "../../types/api";
+import { ROLES } from "../../lib/roles";
 import { API, apiPath } from "../../lib/api-endpoints";
 import { KEYS } from "../../lib/query-keys";
 import { useState } from "react";
@@ -24,17 +26,6 @@ import { EmptyState, ErrorState } from "../../components/ui/empty-state";
 import { Skeleton } from "../../components/ui/skeleton";
 import { toast } from "../../components/ui/toast";
 
-interface IdName {
-  id: string;
-  name: string;
-}
-
-interface TeacherOption {
-  id: string;
-  firstName: string;
-  lastName: string;
-}
-
 interface TeacherAssignment {
   id: string;
   teacher: { id: string; firstName: string; lastName: string };
@@ -46,22 +37,30 @@ interface TeacherAssignment {
 export default function TeacherAssignmentsPage() {
   const queryClient = useQueryClient();
   const role = useAuthStore((state) => state.role);
-  const isTeacher = role === "TEACHER";
+  const isTeacher = role === ROLES.TEACHER;
   const [teacherId, setTeacherId] = useState("");
   const [subjectId, setSubjectId] = useState("");
   const [classroomId, setClassroomId] = useState("");
   const [academicYearId, setAcademicYearId] = useState("");
   const [formError, setFormError] = useState<string | null>(null);
-  const [removeTarget, setRemoveTarget] = useState<TeacherAssignment | null>(null);
+  const [removeTarget, setRemoveTarget] = useState<TeacherAssignment | null>(
+    null,
+  );
 
   const assignmentsQuery = useQuery({
-    queryKey: isTeacher ? KEYS.teacherAssignmentsMe : KEYS.teacherAssignmentsAll,
+    queryKey: isTeacher
+      ? KEYS.teacherAssignmentsMe
+      : KEYS.teacherAssignmentsAll,
     queryFn: async () =>
-      (await api.get<TeacherAssignment[]>(isTeacher ? API.teacherAssignmentsMe : API.teacherAssignments)).data,
+      (
+        await api.get<TeacherAssignment[]>(
+          isTeacher ? API.teacherAssignmentsMe : API.teacherAssignments,
+        )
+      ).data,
   });
   const teachersQuery = useQuery({
     queryKey: KEYS.teachers,
-    queryFn: async () => (await api.get<TeacherOption[]>(API.teachers)).data,
+    queryFn: async () => (await api.get<PersonRef[]>(API.teachers)).data,
     // Enseignant : vue « Mes classes » en lecture seule (pas d'accès aux référentiels).
     enabled: !isTeacher,
   });
@@ -82,8 +81,12 @@ export default function TeacherAssignmentsPage() {
   });
 
   const createMutation = useMutation({
-    mutationFn: async (data: { teacherId: string; subjectId: string; classroomId: string; academicYearId: string }) =>
-      (await api.post(API.teacherAssignments, data)).data,
+    mutationFn: async (data: {
+      teacherId: string;
+      subjectId: string;
+      classroomId: string;
+      academicYearId: string;
+    }) => (await api.post(API.teacherAssignments, data)).data,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: KEYS.teacherAssignments });
       toast.success("Affectation enregistrée");
@@ -97,7 +100,8 @@ export default function TeacherAssignmentsPage() {
   });
 
   const removeMutation = useMutation({
-    mutationFn: async (id: string) => (await api.delete(apiPath.withId(API.teacherAssignments, id))).data,
+    mutationFn: async (id: string) =>
+      (await api.delete(apiPath.withId(API.teacherAssignments, id))).data,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: KEYS.teacherAssignments });
       toast.success("Affectation retirée");
@@ -109,11 +113,18 @@ export default function TeacherAssignmentsPage() {
   const handleCreate = (event: React.FormEvent) => {
     event.preventDefault();
     if (!teacherId || !subjectId || !classroomId || !academicYearId) {
-      setFormError("Sélectionnez un enseignant, une matière, une classe et une année scolaire.");
+      setFormError(
+        "Sélectionnez un enseignant, une matière, une classe et une année scolaire.",
+      );
       return;
     }
     setFormError(null);
-    createMutation.mutate({ teacherId, subjectId, classroomId, academicYearId });
+    createMutation.mutate({
+      teacherId,
+      subjectId,
+      classroomId,
+      academicYearId,
+    });
   };
 
   const assignments = assignmentsQuery.data ?? [];
@@ -132,70 +143,90 @@ export default function TeacherAssignmentsPage() {
       <div className="flex flex-col gap-p6">
         {!isTeacher && (
           <Card className="p-p4">
-          <h2 className="text-sb16 text-(--skools-text-primary)">Nouvelle affectation</h2>
-          <form onSubmit={handleCreate} className="mt-p4 grid grid-cols-1 gap-p4 md:grid-cols-2" noValidate>
-            <div className="flex flex-col gap-p1">
-              <span className="text-m12 text-(--skools-text-primary)">Enseignant</span>
-              <Select
-                label="Choisir…"
-                value={teacherId}
-                onChange={setTeacherId}
-                options={(teachersQuery.data ?? []).map((teacher) => ({
-                  label: `${teacher.lastName} ${teacher.firstName}`,
-                  value: teacher.id,
-                }))}
-              />
-            </div>
-            <div className="flex flex-col gap-p1">
-              <span className="text-m12 text-(--skools-text-primary)">Matière</span>
-              <Select
-                label="Choisir…"
-                value={subjectId}
-                onChange={setSubjectId}
-                options={(subjectsQuery.data ?? []).map((subject) => ({
-                  label: subject.name,
-                  value: subject.id,
-                }))}
-              />
-            </div>
-            <div className="flex flex-col gap-p1">
-              <span className="text-m12 text-(--skools-text-primary)">Classe</span>
-              <Select
-                label="Choisir…"
-                value={classroomId}
-                onChange={setClassroomId}
-                options={(classroomsQuery.data ?? []).map((classroom) => ({
-                  label: classroom.name,
-                  value: classroom.id,
-                }))}
-              />
-            </div>
-            <div className="flex flex-col gap-p1">
-              <span className="text-m12 text-(--skools-text-primary)">Année scolaire</span>
-              <Select
-                label="Choisir…"
-                value={academicYearId}
-                onChange={setAcademicYearId}
-                options={(yearsQuery.data ?? []).map((year) => ({ label: year.name, value: year.id }))}
-              />
-            </div>
-            {formError && (
-              <p role="alert" className="text-r14 text-(--common-red) md:col-span-2">
-                {formError}
-              </p>
-            )}
-            <div className="md:col-span-2">
-              <Button
-                type="submit"
-                fullWidth={false}
-                variant={createMutation.isPending ? "loading" : "primary"}
-                disabled={createMutation.isPending}
-              >
-                Affecter
-              </Button>
-            </div>
-          </form>
-        </Card>
+            <h2 className="text-sb16 text-(--skools-text-primary)">
+              Nouvelle affectation
+            </h2>
+            <form
+              onSubmit={handleCreate}
+              className="mt-p4 grid grid-cols-1 gap-p4 md:grid-cols-2"
+              noValidate
+            >
+              <div className="flex flex-col gap-p1">
+                <span className="text-m12 text-(--skools-text-primary)">
+                  Enseignant
+                </span>
+                <Select
+                  label="Choisir…"
+                  value={teacherId}
+                  onChange={setTeacherId}
+                  options={(teachersQuery.data ?? []).map((teacher) => ({
+                    label: `${teacher.lastName} ${teacher.firstName}`,
+                    value: teacher.id,
+                  }))}
+                />
+              </div>
+              <div className="flex flex-col gap-p1">
+                <span className="text-m12 text-(--skools-text-primary)">
+                  Matière
+                </span>
+                <Select
+                  label="Choisir…"
+                  value={subjectId}
+                  onChange={setSubjectId}
+                  options={(subjectsQuery.data ?? []).map((subject) => ({
+                    label: subject.name,
+                    value: subject.id,
+                  }))}
+                />
+              </div>
+              <div className="flex flex-col gap-p1">
+                <span className="text-m12 text-(--skools-text-primary)">
+                  Classe
+                </span>
+                <Select
+                  label="Choisir…"
+                  value={classroomId}
+                  onChange={setClassroomId}
+                  options={(classroomsQuery.data ?? []).map((classroom) => ({
+                    label: classroom.name,
+                    value: classroom.id,
+                  }))}
+                />
+              </div>
+              <div className="flex flex-col gap-p1">
+                <span className="text-m12 text-(--skools-text-primary)">
+                  Année scolaire
+                </span>
+                <Select
+                  label="Choisir…"
+                  value={academicYearId}
+                  onChange={setAcademicYearId}
+                  options={(yearsQuery.data ?? []).map((year) => ({
+                    label: year.name,
+                    value: year.id,
+                  }))}
+                />
+              </div>
+              {formError && (
+                <p
+                  role="alert"
+                  className="text-r14 text-(--common-red) md:col-span-2"
+                >
+                  {formError}
+                </p>
+              )}
+              <div className="md:col-span-2">
+                <Button
+                  type="submit"
+                  fullWidth={false}
+                  variant={createMutation.isPending ? "loading" : "primary"}
+                  disabled={createMutation.isPending}
+                >
+                  Affecter
+                </Button>
+              </div>
+            </form>
+          </Card>
         )}
 
         {assignmentsQuery.isError ? (
@@ -209,7 +240,11 @@ export default function TeacherAssignmentsPage() {
           <Skeleton className="h-[200px] rounded-r2" />
         ) : assignments.length === 0 ? (
           <EmptyState
-            title={isTeacher ? "Aucune classe assignée" : "Aucune affectation pour le moment"}
+            title={
+              isTeacher
+                ? "Aucune classe assignée"
+                : "Aucune affectation pour le moment"
+            }
             description={
               isTeacher
                 ? "Votre direction ne vous a encore assigné aucune classe. Contactez-la."
@@ -237,10 +272,13 @@ export default function TeacherAssignmentsPage() {
                   <TableRow key={assignment.id}>
                     {!isTeacher && (
                       <TableCellPrimary>
-                        {assignment.teacher.lastName} {assignment.teacher.firstName}
+                        {assignment.teacher.lastName}{" "}
+                        {assignment.teacher.firstName}
                       </TableCellPrimary>
                     )}
-                    <TableCellPrimary>{assignment.subject.name}</TableCellPrimary>
+                    <TableCellPrimary>
+                      {assignment.subject.name}
+                    </TableCellPrimary>
                     <TableCell>{assignment.classroom.name}</TableCell>
                     <TableCell>
                       <span className="inline-flex items-center gap-p2">
@@ -282,11 +320,13 @@ export default function TeacherAssignmentsPage() {
         {removeTarget && (
           <Modal.Content labelledBy="remove-assignment-title">
             <Modal.Header>
-              <Modal.Title id="remove-assignment-title">Retirer cette affectation ?</Modal.Title>
+              <Modal.Title id="remove-assignment-title">
+                Retirer cette affectation ?
+              </Modal.Title>
               <Modal.Description>
-                {removeTarget.teacher.firstName} {removeTarget.teacher.lastName} —{" "}
-                {removeTarget.subject.name} en {removeTarget.classroom.name}. Pour la modifier,
-                retirez-la puis recréez-la.
+                {removeTarget.teacher.firstName} {removeTarget.teacher.lastName}{" "}
+                — {removeTarget.subject.name} en {removeTarget.classroom.name}.
+                Pour la modifier, retirez-la puis recréez-la.
               </Modal.Description>
             </Modal.Header>
             <Modal.Footer>

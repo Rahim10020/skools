@@ -1,3 +1,5 @@
+import type { IdName } from "../../types/api";
+import { ROLES } from "../../lib/roles";
 import { API } from "../../lib/api-endpoints";
 import { KEYS } from "../../lib/query-keys";
 import { z } from "zod";
@@ -32,11 +34,6 @@ interface Exam {
   classroom: { id: string; name: string } | null;
 }
 
-interface IdName {
-  id: string;
-  name: string;
-}
-
 const EXAM_TYPE_LABELS: Record<ExamType, string> = {
   INTERROGATION: "Interrogation",
   DEVOIR: "Devoir",
@@ -61,7 +58,7 @@ const schema = z.object({
 export default function ExamsPage() {
   const role = useAuthStore((state) => state.role);
   // Seul DIRECTOR crée des examens ; CENSEUR supervise, TEACHER consulte (matrice).
-  const canWrite = role === "DIRECTOR";
+  const canWrite = role === ROLES.DIRECTOR;
   const yearsQuery = useQuery({
     queryKey: KEYS.academicYears,
     queryFn: async () => (await api.get<IdName[]>(API.academicYears)).data,
@@ -70,17 +67,17 @@ export default function ExamsPage() {
     queryKey: KEYS.subjects,
     queryFn: async () => (await api.get<IdName[]>(API.subjects)).data,
     // Référentiels inaccessibles à TEACHER (formulaire masqué en lecture seule).
-    enabled: role !== "TEACHER",
+    enabled: role !== ROLES.TEACHER,
   });
   const periodsQuery = useQuery({
     queryKey: KEYS.periods,
     queryFn: async () => (await api.get<IdName[]>(API.periods)).data,
-    enabled: role !== "TEACHER",
+    enabled: role !== ROLES.TEACHER,
   });
   const classroomsQuery = useQuery({
     queryKey: KEYS.classrooms,
     queryFn: async () => (await api.get<IdName[]>(API.classrooms)).data,
-    enabled: role !== "TEACHER",
+    enabled: role !== ROLES.TEACHER,
   });
 
   const toOptions = (data: IdName[] | undefined) =>
@@ -98,10 +95,15 @@ export default function ExamsPage() {
       columns={[
         { header: "Examen", primary: true, render: (exam) => exam.name },
         { header: "Matière", render: (exam) => exam.subject.name },
-        { header: "Classe", render: (exam) => exam.classroom?.name ?? "Toutes" },
+        {
+          header: "Classe",
+          render: (exam) => exam.classroom?.name ?? "Toutes",
+        },
         {
           header: "Type",
-          render: (exam) => <Badge variant="neutral">{EXAM_TYPE_LABELS[exam.type]}</Badge>,
+          render: (exam) => (
+            <Badge variant="neutral">{EXAM_TYPE_LABELS[exam.type]}</Badge>
+          ),
         },
         { header: "Date", render: (exam) => formatDateFr(exam.examDate) },
         { header: "Note max", render: (exam) => exam.maxScore },
@@ -117,7 +119,13 @@ export default function ExamsPage() {
         },
       ]}
       fields={[
-        { name: "name", label: "Nom", type: "text", placeholder: "Ex : Devoir n°1", required: true },
+        {
+          name: "name",
+          label: "Nom",
+          type: "text",
+          placeholder: "Ex : Devoir n°1",
+          required: true,
+        },
         {
           name: "academicYearId",
           label: "Année scolaire",
@@ -150,13 +158,23 @@ export default function ExamsPage() {
           type: "select",
           required: true,
           disableSelectSearch: true,
-          options: (Object.entries(EXAM_TYPE_LABELS) as Array<[ExamType, string]>).map(
-            ([value, label]) => ({ label, value }),
-          ),
+          options: (
+            Object.entries(EXAM_TYPE_LABELS) as Array<[ExamType, string]>
+          ).map(([value, label]) => ({ label, value })),
         },
         { name: "examDate", label: "Date (optionnel)", type: "date" },
-        { name: "maxScore", label: "Note maximale", type: "number", placeholder: "20" },
-        { name: "coefficient", label: "Coefficient", type: "number", placeholder: "1" },
+        {
+          name: "maxScore",
+          label: "Note maximale",
+          type: "number",
+          placeholder: "20",
+        },
+        {
+          name: "coefficient",
+          label: "Coefficient",
+          type: "number",
+          placeholder: "1",
+        },
         { name: "isPublished", label: "Publié (visible)", type: "checkbox" },
       ]}
       schema={schema}
@@ -178,7 +196,8 @@ export default function ExamsPage() {
           academicYearId: values.academicYearId,
           subjectId: values.subjectId,
           periodId: values.periodId === "" ? undefined : values.periodId,
-          classroomId: values.classroomId === "" ? undefined : values.classroomId,
+          classroomId:
+            values.classroomId === "" ? undefined : values.classroomId,
           type: values.type,
           examDate: values.examDate === "" ? undefined : values.examDate,
           maxScore: toOptionalNumber(values.maxScore),

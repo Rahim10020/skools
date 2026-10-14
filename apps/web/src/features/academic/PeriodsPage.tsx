@@ -1,3 +1,5 @@
+import type { AcademicYearRef } from "../../types/api";
+import { ROLES } from "../../lib/roles";
 import { API } from "../../lib/api-endpoints";
 import { KEYS } from "../../lib/query-keys";
 import { z } from "zod";
@@ -23,11 +25,6 @@ interface Period {
   academicYear: { id: string; name: string; isCurrent?: boolean };
 }
 
-interface AcademicYearOption {
-  id: string;
-  name: string;
-}
-
 const schema = z.object({
   academicYearId: z.string().min(1, "Année scolaire requise"),
   name: z.string().min(2, "Nom requis (Ex : Trimestre 1)"),
@@ -42,12 +39,12 @@ export default function PeriodsPage() {
   const yearsQuery = useQuery({
     queryKey: KEYS.academicYears,
     queryFn: async () =>
-      (await api.get<AcademicYearOption[]>(API.academicYears)).data,
+      (await api.get<AcademicYearRef[]>(API.academicYears)).data,
   });
 
   return (
     <CrudPage<Period>
-      readOnly={role === "CENSEUR"}
+      readOnly={role === ROLES.CENSEUR}
       title="Périodes"
       description="Les périodes d'évaluation de chaque année (trimestres, semestres)."
       itemLabel="période"

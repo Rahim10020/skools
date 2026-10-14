@@ -1,3 +1,5 @@
+import type { AcademicYearRef } from "../types/api";
+import { ROLES } from "../lib/roles";
 import { API } from "../lib/api-endpoints";
 import { KEYS } from "../lib/query-keys";
 import { useQuery } from "@tanstack/react-query";
@@ -5,12 +7,6 @@ import api from "../lib/api";
 import { useAuthStore } from "../stores/auth-store";
 import { useAcademicYearStore } from "../stores/academic-year-store";
 import { Select } from "./ui/select";
-
-interface AcademicYearOption {
-  id: string;
-  name: string;
-  isCurrent: boolean;
-}
 
 /**
  * Sélecteur d'année scolaire active (matrice, règles header 2/6).
@@ -26,11 +22,11 @@ export function ActiveYearSelector({ collapsed }: { collapsed: boolean }) {
   const yearsQuery = useQuery({
     queryKey: KEYS.academicYears,
     queryFn: async () =>
-      (await api.get<AcademicYearOption[]>(API.academicYears)).data,
-    enabled: !!establishmentId && role !== "SUPER_ADMIN",
+      (await api.get<AcademicYearRef[]>(API.academicYears)).data,
+    enabled: !!establishmentId && role !== ROLES.SUPER_ADMIN,
   });
 
-  if (!establishmentId || role === "SUPER_ADMIN" || collapsed) return null;
+  if (!establishmentId || role === ROLES.SUPER_ADMIN || collapsed) return null;
 
   const years = yearsQuery.data ?? [];
   const effectiveYearId =

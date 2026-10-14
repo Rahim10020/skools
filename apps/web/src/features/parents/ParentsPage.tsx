@@ -1,9 +1,13 @@
+import { canManageSchool } from "../../lib/roles";
 import { API } from "../../lib/api-endpoints";
 import { KEYS } from "../../lib/query-keys";
 import { z } from "zod";
 import { CrudPage } from "../../components/crud/CrudPage";
 import { useAuthStore } from "../../stores/auth-store";
-import { omitEmptyStrings, optionalUuidString } from "../../components/crud/crud-helpers";
+import {
+  omitEmptyStrings,
+  optionalUuidString,
+} from "../../components/crud/crud-helpers";
 
 interface Parent {
   id: string;
@@ -33,7 +37,7 @@ export default function ParentsPage() {
   // Lecture seule hors DIRECTOR/ADMIN (matrice : CENSEUR, SURVEILLANT consultent).
   return (
     <CrudPage<Parent>
-      readOnly={role !== "DIRECTOR" && role !== "ADMIN"}
+      readOnly={!canManageSchool(role)}
       title="Parents"
       description="Les parents et tuteurs, à lier aux élèves depuis la page dédiée."
       itemLabel="parent"

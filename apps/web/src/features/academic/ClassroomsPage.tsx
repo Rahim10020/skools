@@ -1,3 +1,5 @@
+import type { IdName } from "../../types/api";
+import { ROLES } from "../../lib/roles";
 import { API } from "../../lib/api-endpoints";
 import { KEYS } from "../../lib/query-keys";
 import { z } from "zod";
@@ -20,11 +22,6 @@ interface Classroom {
   academicYear: { id: string; name: string };
   level: { id: string; name: string };
   series: { id: string; name: string } | null;
-}
-
-interface IdName {
-  id: string;
-  name: string;
 }
 
 const schema = z.object({
@@ -56,7 +53,7 @@ export default function ClassroomsPage() {
 
   return (
     <CrudPage<Classroom>
-      readOnly={role === "CENSEUR"}
+      readOnly={role === ROLES.CENSEUR}
       title="Classes"
       description="Les classes de l'établissement, par année, niveau et série."
       itemLabel="classe"

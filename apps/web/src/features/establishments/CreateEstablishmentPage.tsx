@@ -1,3 +1,4 @@
+import { ROLES } from "../../lib/roles";
 import { API } from "../../lib/api-endpoints";
 import { ROUTES } from "../../lib/routes";
 import { Controller, useForm } from "react-hook-form";
@@ -19,7 +20,10 @@ const schema = z.object({
   slug: z
     .string()
     .min(2, "Minimum 2 caractères")
-    .regex(/^[a-z0-9-]+$/, "Uniquement des lettres minuscules, chiffres et tirets"),
+    .regex(
+      /^[a-z0-9-]+$/,
+      "Uniquement des lettres minuscules, chiffres et tirets",
+    ),
   type: z.enum(["PRIMARY", "COLLEGE", "LYCEE", "MIXED"]).optional(),
 });
 
@@ -69,21 +73,32 @@ export default function CreateEstablishmentPage() {
 
   const onSubmit = async (data: FormData) => {
     if (!user) {
-      setError("root", { message: "Session perdue. Veuillez vous reconnecter." });
+      setError("root", {
+        message: "Session perdue. Veuillez vous reconnecter.",
+      });
       return;
     }
     try {
-      const response = await api.post<CreateEstablishmentResponse>(API.establishments, {
-        name: data.name,
-        slug: data.slug,
-        ...(data.type ? { type: data.type } : {}),
-      });
+      const response = await api.post<CreateEstablishmentResponse>(
+        API.establishments,
+        {
+          name: data.name,
+          slug: data.slug,
+          ...(data.type ? { type: data.type } : {}),
+        },
+      );
       const { id, accessToken, refreshToken } = response.data;
 
       // Contrat : la création régénère les tokens (rôle DIRECTOR forcé côté API).
       // Les anciens tokens doivent être remplacés, pas conservés.
       queryClient.clear();
-      setAuth({ user, accessToken, refreshToken, establishmentId: id, role: "DIRECTOR" });
+      setAuth({
+        user,
+        accessToken,
+        refreshToken,
+        establishmentId: id,
+        role: ROLES.DIRECTOR,
+      });
 
       navigate(ROUTES.dashboard);
     } catch (error) {
@@ -96,18 +111,31 @@ export default function CreateEstablishmentPage() {
       <Card className="p-p6">
         <div className="flex flex-col gap-p5">
           <div className="text-center">
-            <h1 className="text-sb20 text-(--skools-text-primary)">Créer votre établissement</h1>
+            <h1 className="text-sb20 text-(--skools-text-primary)">
+              Créer votre établissement
+            </h1>
             <p className="mt-p1 text-r14 text-(--skools-text-muted)">
-              Pour commencer à utiliser Skools, créez votre établissement scolaire.
+              Pour commencer à utiliser Skools, créez votre établissement
+              scolaire.
             </p>
           </div>
 
-          <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-p4" noValidate>
+          <form
+            onSubmit={handleSubmit(onSubmit)}
+            className="flex flex-col gap-p4"
+            noValidate
+          >
             <Controller
               name="name"
               control={control}
-              render={({ field: { value, onChange, onBlur, name }, fieldState }) => (
-                <AuthField label="Nom de l'établissement" error={fieldState.error?.message}>
+              render={({
+                field: { value, onChange, onBlur, name },
+                fieldState,
+              }) => (
+                <AuthField
+                  label="Nom de l'établissement"
+                  error={fieldState.error?.message}
+                >
                   <Input
                     label="Ex : Lycée Moderne de Cocody"
                     name={name}
@@ -115,7 +143,8 @@ export default function CreateEstablishmentPage() {
                     onBlur={onBlur}
                     onChange={(v) => {
                       onChange(v);
-                      if (!slugTouched) setValue("slug", slugify(v), { shouldValidate: false });
+                      if (!slugTouched)
+                        setValue("slug", slugify(v), { shouldValidate: false });
                     }}
                     error={!!fieldState.error}
                   />
@@ -126,8 +155,14 @@ export default function CreateEstablishmentPage() {
             <Controller
               name="slug"
               control={control}
-              render={({ field: { value, onChange, onBlur, name }, fieldState }) => (
-                <AuthField label="Identifiant (slug)" error={fieldState.error?.message}>
+              render={({
+                field: { value, onChange, onBlur, name },
+                fieldState,
+              }) => (
+                <AuthField
+                  label="Identifiant (slug)"
+                  error={fieldState.error?.message}
+                >
                   <Input
                     label="Ex : lycee-moderne-cocody"
                     name={name}
@@ -148,12 +183,17 @@ export default function CreateEstablishmentPage() {
               name="type"
               control={control}
               render={({ field: { value, onChange }, fieldState }) => (
-                <AuthField label="Type d'établissement (optionnel)" error={fieldState.error?.message}>
+                <AuthField
+                  label="Type d'établissement (optionnel)"
+                  error={fieldState.error?.message}
+                >
                   <Select
                     label="Non précisé"
                     options={TYPE_OPTIONS}
                     value={value ?? ""}
-                    onChange={(v) => onChange(v === "" ? undefined : (v as FormData["type"]))}
+                    onChange={(v) =>
+                      onChange(v === "" ? undefined : (v as FormData["type"]))
+                    }
                     disableSearch
                     error={!!fieldState.error}
                   />
@@ -163,7 +203,11 @@ export default function CreateEstablishmentPage() {
 
             <AuthRootError message={errors.root?.message} />
 
-            <Button type="submit" variant={isSubmitting ? "loading" : "primary"} disabled={isSubmitting}>
+            <Button
+              type="submit"
+              variant={isSubmitting ? "loading" : "primary"}
+              disabled={isSubmitting}
+            >
               {isSubmitting ? "Création…" : "Créer mon établissement"}
             </Button>
           </form>

@@ -1,3 +1,4 @@
+import { canManageSchool } from "../../lib/roles";
 import { API } from "../../lib/api-endpoints";
 import { KEYS } from "../../lib/query-keys";
 import { z } from "zod";
@@ -35,14 +36,15 @@ const schema = z.object({
   userId: optionalUuidString(),
 });
 
-const fullName = (student: Student) => `${student.lastName} ${student.firstName}`;
+const fullName = (student: Student) =>
+  `${student.lastName} ${student.firstName}`;
 
 export default function StudentsPage() {
   const role = useAuthStore((state) => state.role);
   // Lecture seule hors DIRECTOR/ADMIN (matrice : CENSEUR, SURVEILLANT consultent).
   return (
     <CrudPage<Student>
-      readOnly={role !== "DIRECTOR" && role !== "ADMIN"}
+      readOnly={!canManageSchool(role)}
       title="Élèves"
       description="Les dossiers des élèves de l'établissement."
       itemLabel="élève"
@@ -52,14 +54,22 @@ export default function StudentsPage() {
       columns={[
         { header: "Élève", primary: true, render: fullName },
         { header: "Matricule", render: (student) => student.matricule || "—" },
-        { header: "Naissance", render: (student) => formatDateFr(student.dateOfBirth) },
+        {
+          header: "Naissance",
+          render: (student) => formatDateFr(student.dateOfBirth),
+        },
         { header: "Téléphone", render: (student) => student.phone || "—" },
       ]}
       fields={[
         { name: "firstName", label: "Prénom", type: "text", required: true },
         { name: "lastName", label: "Nom", type: "text", required: true },
         { name: "matricule", label: "Matricule", type: "text" },
-        { name: "gender", label: "Genre", type: "text", placeholder: "Ex : Féminin, Masculin" },
+        {
+          name: "gender",
+          label: "Genre",
+          type: "text",
+          placeholder: "Ex : Féminin, Masculin",
+        },
         { name: "dateOfBirth", label: "Date de naissance", type: "date" },
         { name: "placeOfBirth", label: "Lieu de naissance", type: "text" },
         { name: "phone", label: "Téléphone", type: "text" },

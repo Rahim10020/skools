@@ -1,3 +1,5 @@
+import type { IdName, PersonRef } from "../../types/api";
+import { ROLES } from "../../lib/roles";
 import { API, apiPath } from "../../lib/api-endpoints";
 import { KEYS } from "../../lib/query-keys";
 import { useState } from "react";
@@ -34,17 +36,6 @@ interface Schedule {
   academicYear: { id: string; name: string };
 }
 
-interface IdName {
-  id: string;
-  name: string;
-}
-
-interface TeacherOption {
-  id: string;
-  firstName: string;
-  lastName: string;
-}
-
 const DAY_LABELS: Record<DayOfWeek, string> = {
   MONDAY: "Lundi",
   TUESDAY: "Mardi",
@@ -66,7 +57,15 @@ const schema = z.object({
   subjectId: z.string().min(1, "Matière requise"),
   teacherId: z.string().optional(),
   academicYearId: z.string().min(1, "Année scolaire requise"),
-  dayOfWeek: z.enum(["MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY", "SUNDAY"]),
+  dayOfWeek: z.enum([
+    "MONDAY",
+    "TUESDAY",
+    "WEDNESDAY",
+    "THURSDAY",
+    "FRIDAY",
+    "SATURDAY",
+    "SUNDAY",
+  ]),
   startTime: z.string().regex(TIME_PATTERN, "Heure invalide (HH:mm)"),
   endTime: z.string().regex(TIME_PATTERN, "Heure invalide (HH:mm)"),
   room: z.string().optional(),
@@ -75,9 +74,13 @@ const schema = z.object({
 export default function SchedulesPage() {
   const [filterClassroomId, setFilterClassroomId] = useState("");
   const role = useAuthStore((state) => state.role);
-  const isTeacher = role === "TEACHER";
+  const isTeacher = role === ROLES.TEACHER;
   // Consultation seule : enseignant (ses classes), surveillant, élève et parent.
-  const isReadOnly = isTeacher || role === "SURVEILLANT" || role === "STUDENT" || role === "PARENT";
+  const isReadOnly =
+    isTeacher ||
+    role === ROLES.SURVEILLANT ||
+    role === ROLES.STUDENT ||
+    role === ROLES.PARENT;
 
   const classroomsQuery = useQuery({
     queryKey: KEYS.classrooms,
@@ -92,7 +95,7 @@ export default function SchedulesPage() {
   });
   const teachersQuery = useQuery({
     queryKey: KEYS.teachers,
-    queryFn: async () => (await api.get<TeacherOption[]>(API.teachers)).data,
+    queryFn: async () => (await api.get<PersonRef[]>(API.teachers)).data,
     enabled: !isReadOnly,
   });
   const yearsQuery = useQuery({
@@ -107,9 +110,9 @@ export default function SchedulesPage() {
   return (
     <CrudPage<Schedule>
       title={
-        role === "STUDENT" || isTeacher
+        role === ROLES.STUDENT || isTeacher
           ? "Mon emploi du temps"
-          : role === "PARENT"
+          : role === ROLES.PARENT
             ? "Emploi du temps"
             : "Emplois du temps"
       }
@@ -123,7 +126,11 @@ export default function SchedulesPage() {
       createLabel="Nouveau créneau"
       queryKey={KEYS.schedules(filterClassroomId)}
       endpoint={API.schedules}
-      listPath={filterClassroomId ? apiPath.schedulesByClassroom(filterClassroomId) : API.schedules}
+      listPath={
+        filterClassroomId
+          ? apiPath.schedulesByClassroom(filterClassroomId)
+          : API.schedules
+      }
       toolbarExtra={
         isReadOnly ? undefined : (
           <div className="max-w-md">
@@ -137,14 +144,23 @@ export default function SchedulesPage() {
         )
       }
       columns={[
-        { header: "Jour", primary: true, render: (slot) => DAY_LABELS[slot.dayOfWeek] ?? slot.dayOfWeek },
-        { header: "Horaires", render: (slot) => `${slot.startTime} – ${slot.endTime}` },
+        {
+          header: "Jour",
+          primary: true,
+          render: (slot) => DAY_LABELS[slot.dayOfWeek] ?? slot.dayOfWeek,
+        },
+        {
+          header: "Horaires",
+          render: (slot) => `${slot.startTime} – ${slot.endTime}`,
+        },
         { header: "Matière", render: (slot) => slot.subject.name },
         { header: "Classe", render: (slot) => slot.classroom.name },
         {
           header: "Enseignant",
           render: (slot) =>
-            slot.teacher ? `${slot.teacher.lastName} ${slot.teacher.firstName}` : "—",
+            slot.teacher
+              ? `${slot.teacher.lastName} ${slot.teacher.firstName}`
+              : "—",
         },
         { header: "Salle", render: (slot) => slot.room || "—" },
       ]}
@@ -189,7 +205,12 @@ export default function SchedulesPage() {
         },
         { name: "startTime", label: "Début", type: "time", required: true },
         { name: "endTime", label: "Fin", type: "time", required: true },
-        { name: "room", label: "Salle (optionnel)", type: "text", placeholder: "Ex : Salle 12" },
+        {
+          name: "room",
+          label: "Salle (optionnel)",
+          type: "text",
+          placeholder: "Ex : Salle 12",
+        },
       ]}
       schema={schema}
       toDefaults={(slot) => ({

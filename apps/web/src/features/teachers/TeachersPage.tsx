@@ -1,9 +1,13 @@
+import { canManageSchool } from "../../lib/roles";
 import { API } from "../../lib/api-endpoints";
 import { KEYS } from "../../lib/query-keys";
 import { z } from "zod";
 import { CrudPage } from "../../components/crud/CrudPage";
 import { useAuthStore } from "../../stores/auth-store";
-import { omitEmptyStrings, optionalUuidString } from "../../components/crud/crud-helpers";
+import {
+  omitEmptyStrings,
+  optionalUuidString,
+} from "../../components/crud/crud-helpers";
 
 interface Teacher {
   id: string;
@@ -30,14 +34,15 @@ const schema = z.object({
   userId: optionalUuidString(),
 });
 
-const fullName = (teacher: Teacher) => `${teacher.lastName} ${teacher.firstName}`;
+const fullName = (teacher: Teacher) =>
+  `${teacher.lastName} ${teacher.firstName}`;
 
 export default function TeachersPage() {
   const role = useAuthStore((state) => state.role);
   // Lecture seule hors DIRECTOR/ADMIN (matrice : CENSEUR, SURVEILLANT consultent).
   return (
     <CrudPage<Teacher>
-      readOnly={role !== "DIRECTOR" && role !== "ADMIN"}
+      readOnly={!canManageSchool(role)}
       title="Enseignants"
       description="Les enseignants de l'établissement et leurs spécialités."
       itemLabel="enseignant"
@@ -54,10 +59,25 @@ export default function TeachersPage() {
         { name: "firstName", label: "Prénom", type: "text", required: true },
         { name: "lastName", label: "Nom", type: "text", required: true },
         { name: "matricule", label: "Matricule", type: "text" },
-        { name: "gender", label: "Genre", type: "text", placeholder: "Ex : Féminin, Masculin" },
+        {
+          name: "gender",
+          label: "Genre",
+          type: "text",
+          placeholder: "Ex : Féminin, Masculin",
+        },
         { name: "phone", label: "Téléphone", type: "text" },
-        { name: "email", label: "Email", type: "text", placeholder: "Ex : awa.diallo@ecole.sn" },
-        { name: "specialty", label: "Spécialité", type: "text", placeholder: "Ex : Mathématiques" },
+        {
+          name: "email",
+          label: "Email",
+          type: "text",
+          placeholder: "Ex : awa.diallo@ecole.sn",
+        },
+        {
+          name: "specialty",
+          label: "Spécialité",
+          type: "text",
+          placeholder: "Ex : Mathématiques",
+        },
         { name: "address", label: "Adresse", type: "text" },
         {
           name: "userId",

@@ -1,3 +1,5 @@
+import type { PersonRef } from "../../types/api";
+import { ROLES } from "../../lib/roles";
 import { API } from "../../lib/api-endpoints";
 import { KEYS } from "../../lib/query-keys";
 import { useQuery } from "@tanstack/react-query";
@@ -30,25 +32,19 @@ interface AttendanceHistoryItem {
   classroom: { id: string; name: string };
 }
 
-interface MeStudent {
-  id: string;
-  firstName: string;
-  lastName: string;
-}
-
 /**
  * « Mes absences » (STUDENT) / « Absences » (PARENT) : historique des
  * présences via GET /attendances/student (périmètre vérifié serveur).
  */
 export default function MyAbsencesPage() {
   const role = useAuthStore((state) => state.role);
-  const isParent = role === "PARENT";
+  const isParent = role === ROLES.PARENT;
   const childId = useEffectiveChildId(isParent);
   const childrenQuery = useMyChildren(isParent);
 
   const meQuery = useQuery({
     queryKey: KEYS.studentsMe,
-    queryFn: async () => (await api.get<MeStudent>(API.studentsMe)).data,
+    queryFn: async () => (await api.get<PersonRef>(API.studentsMe)).data,
     enabled: !isParent,
   });
 

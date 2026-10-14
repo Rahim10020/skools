@@ -1,3 +1,5 @@
+import type { StudentRow, EnrollmentRow } from "../../types/api";
+import { ROLES } from "../../lib/roles";
 import { API, apiPath } from "../../lib/api-endpoints";
 import { KEYS } from "../../lib/query-keys";
 import { useState } from "react";
@@ -7,18 +9,8 @@ import { useAuthStore } from "../../stores/auth-store";
 import { PageHeader } from "../../layouts/PageHeader";
 import { Button } from "../../components/ui/button";
 import { Card } from "../../components/ui/card";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableCellPrimary,
-  TableContainer,
-  TableHeader,
-  TableHeaderCell,
-  TableRow,
-} from "../../components/ui/table";
+import { GradesTable } from "./GradesTable";
 import { Select } from "../../components/ui/select";
-import { Checkbox } from "../../components/ui/checkbox";
 import { EmptyState, ErrorState } from "../../components/ui/empty-state";
 import { Skeleton } from "../../components/ui/skeleton";
 import { toast } from "../../components/ui/toast";
@@ -33,13 +25,6 @@ interface ExamOption {
   classroom: { id: string; name: string } | null;
 }
 
-interface StudentRow {
-  id: string;
-  firstName: string;
-  lastName: string;
-  matricule: string | null;
-}
-
 interface ExistingGrade {
   id: string;
   examId: string;
@@ -47,12 +32,6 @@ interface ExistingGrade {
   score: number | null;
   appreciation: string | null;
   isAbsent: boolean;
-}
-
-interface EnrollmentRow {
-  classroomId: string;
-  isActive: boolean;
-  student: StudentRow | null;
 }
 
 /**
@@ -68,13 +47,15 @@ interface EnrollmentRow {
 export default function GradesPage() {
   const queryClient = useQueryClient();
   const role = useAuthStore((state) => state.role);
-  const isTeacher = role === "TEACHER";
+  const isTeacher = role === ROLES.TEACHER;
   // CENSEUR supervise en lecture seule (matrice) ; saisie réservée à DIRECTOR/TEACHER.
-  const readOnly = role === "CENSEUR";
+  const readOnly = role === ROLES.CENSEUR;
   const [selectedExamId, setSelectedExamId] = useState("");
   const [scores, setScores] = useState<Record<string, string>>({});
   const [absents, setAbsents] = useState<Record<string, boolean>>({});
-  const [appreciations, setAppreciations] = useState<Record<string, string>>({});
+  const [appreciations, setAppreciations] = useState<Record<string, string>>(
+    {},
+  );
   const [submitError, setSubmitError] = useState<string | null>(null);
 
   const examsQuery = useQuery({
@@ -95,19 +76,24 @@ export default function GradesPage() {
     queryKey: KEYS.gradesByExam(selectedExamId),
     queryFn: async () => {
       if (!selectedExamId) return [];
-      return (await api.get<ExistingGrade[]>(apiPath.gradesByExam(selectedExamId))).data;
+      return (
+        await api.get<ExistingGrade[]>(apiPath.gradesByExam(selectedExamId))
+      ).data;
     },
     enabled: !!selectedExamId,
   });
 
-  const selectedExam = (examsQuery.data ?? []).find((exam) => exam.id === selectedExamId) ?? null;
+  const selectedExam =
+    (examsQuery.data ?? []).find((exam) => exam.id === selectedExamId) ?? null;
   const maxScore = selectedExam?.maxScore ?? 20;
 
   // Périmètre de saisie : les inscrits actifs de la classe si l'examen est mono-classe,
   // sinon tous les élèves (examen multi-classes). Pour TEACHER, /enrollments et
   // /exams sont déjà filtrés serveur par assignation.
   const studentsInScope = (() => {
-    const enrolled = (enrollmentsQuery.data ?? []).filter((e) => e.isActive && e.student);
+    const enrolled = (enrollmentsQuery.data ?? []).filter(
+      (e) => e.isActive && e.student,
+    );
     if (!selectedExam?.classroomId) {
       if (isTeacher) return enrolled.map((e) => e.student as StudentRow);
       return studentsQuery.data ?? [];
@@ -117,8 +103,13 @@ export default function GradesPage() {
         .filter((e) => e.classroomId === selectedExam.classroomId)
         .map((e) => (e.student as StudentRow).id),
     );
-    if (isTeacher) return enrolled.map((e) => e.student as StudentRow).filter((s) => enrolledIds.has(s.id));
-    return (studentsQuery.data ?? []).filter((student) => enrolledIds.has(student.id));
+    if (isTeacher)
+      return enrolled
+        .map((e) => e.student as StudentRow)
+        .filter((s) => enrolledIds.has(s.id));
+    return (studentsQuery.data ?? []).filter((student) =>
+      enrolledIds.has(student.id),
+    );
   })();
 
   // CORRECTIF n°1 : resynchronise le formulaire à chaque relecture serveur.
@@ -136,7 +127,9 @@ export default function GradesPage() {
       for (const grade of serverGrades) {
         // CORRECTIF n°2 : score 0 préservé (toString() explicite, pas de ||).
         nextScores[grade.studentId] =
-          grade.score === null || grade.score === undefined ? "" : String(grade.score);
+          grade.score === null || grade.score === undefined
+            ? ""
+            : String(grade.score);
         nextAbsents[grade.studentId] = grade.isAbsent;
         nextAppreciations[grade.studentId] = grade.appreciation ?? "";
       }
@@ -165,7 +158,9 @@ export default function GradesPage() {
     },
     onSuccess: async () => {
       // CORRECTIF n°3 : invalidation + relecture attendue (preuve de persistance).
-      await queryClient.invalidateQueries({ queryKey: KEYS.gradesByExam(selectedExamId) });
+      await queryClient.invalidateQueries({
+        queryKey: KEYS.gradesByExam(selectedExamId),
+      });
       await gradesQuery.refetch();
       setSubmitError(null);
       toast.success("Notes enregistrées avec succès");
@@ -265,73 +260,34 @@ export default function GradesPage() {
               }
             />
           ) : (
-            <TableContainer>
-              <Table>
-                <TableHeader>
-                  <tr>
-                    <TableHeaderCell>Élève</TableHeaderCell>
-                    <TableHeaderCell>Matricule</TableHeaderCell>
-                    <TableHeaderCell>Note / {maxScore}</TableHeaderCell>
-                    <TableHeaderCell>Absent</TableHeaderCell>
-                    <TableHeaderCell>Appréciation</TableHeaderCell>
-                  </tr>
-                </TableHeader>
-                <TableBody>
-                  {studentsInScope.map((student) => (
-                    <TableRow key={student.id}>
-                      <TableCellPrimary>
-                        {student.lastName} {student.firstName}
-                      </TableCellPrimary>
-                      <TableCell>{student.matricule || "—"}</TableCell>
-                      <TableCell>
-                        <input
-                          type="number"
-                          step="0.25"
-                          min="0"
-                          max={maxScore}
-                          aria-label={`Note de ${student.firstName} ${student.lastName}`}
-                          value={scores[student.id] ?? ""}
-                          onChange={(e) => handleScoreChange(student.id, e.target.value)}
-                          disabled={readOnly || absents[student.id] || saveMutation.isPending}
-                          className="w-24 rounded-(--radius-r1) border border-(--skools-border-subtle) bg-(--skools-elevated-bg) px-2 py-1 text-r14 text-(--skools-text-primary) outline-none disabled:opacity-50"
-                        />
-                      </TableCell>
-                      <TableCell>
-                        <Checkbox
-                          checked={absents[student.id] || false}
-                          onChange={(checked) => handleAbsentChange(student.id, checked)}
-                          id={`absent-${student.id}`}
-                          disabled={readOnly || saveMutation.isPending}
-                        />
-                      </TableCell>
-                      <TableCell>
-                        <input
-                          type="text"
-                          maxLength={280}
-                          aria-label={`Appréciation pour ${student.firstName} ${student.lastName}`}
-                          placeholder="—"
-                          value={appreciations[student.id] ?? ""}
-                          onChange={(e) =>
-                            setAppreciations((prev) => ({ ...prev, [student.id]: e.target.value }))
-                          }
-                          disabled={readOnly || saveMutation.isPending}
-                          className="w-40 rounded-(--radius-r1) border border-(--skools-border-subtle) bg-(--skools-elevated-bg) px-2 py-1 text-r14 text-(--skools-text-primary) outline-none disabled:opacity-50"
-                        />
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-
-              <div className="px-p6 py-4 border-t border-(--skools-border-subtle)">
+            <>
+              <GradesTable
+                students={studentsInScope}
+                scores={scores}
+                absents={absents}
+                appreciations={appreciations}
+                maxScore={maxScore}
+                readOnly={readOnly}
+                disabled={saveMutation.isPending}
+                onScoreChange={handleScoreChange}
+                onAbsentChange={handleAbsentChange}
+                onAppreciationChange={(studentId, value) =>
+                  setAppreciations((prev) => ({ ...prev, [studentId]: value }))
+                }
+              />
+              <div className="mt-p4">
                 {readOnly ? (
                   <p className="text-r14 text-(--skools-text-muted)">
-                    Lecture seule : la saisie est réservée à la direction et aux enseignants.
+                    Lecture seule : la saisie est réservée à la direction et aux
+                    enseignants.
                   </p>
                 ) : (
                   <>
                     {submitError && (
-                      <p role="alert" className="text-r14 text-(--common-red) mb-p3">
+                      <p
+                        role="alert"
+                        className="text-r14 text-(--common-red) mb-p3"
+                      >
                         {submitError}
                       </p>
                     )}
@@ -341,12 +297,14 @@ export default function GradesPage() {
                       disabled={saveMutation.isPending}
                       onClick={handleSave}
                     >
-                      {saveMutation.isPending ? "Enregistrement…" : "Enregistrer les notes"}
+                      {saveMutation.isPending
+                        ? "Enregistrement…"
+                        : "Enregistrer les notes"}
                     </Button>
                   </>
                 )}
               </div>
-            </TableContainer>
+            </>
           )}
         </div>
       )}

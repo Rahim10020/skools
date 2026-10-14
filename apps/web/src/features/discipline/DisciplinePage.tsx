@@ -1,3 +1,5 @@
+import type { StudentRow } from "../../types/api";
+import { ROLES } from "../../lib/roles";
 import { API, apiPath } from "../../lib/api-endpoints";
 import { KEYS } from "../../lib/query-keys";
 import { z } from "zod";
@@ -10,10 +12,7 @@ import { Skeleton } from "../../components/ui/skeleton";
 import api from "../../lib/api";
 import { useAuthStore } from "../../stores/auth-store";
 import { ChildSelector } from "../../components/ChildSelector";
-import {
-  useEffectiveChildId,
-  useMyChildren,
-} from "../../lib/my-children";
+import { useEffectiveChildId, useMyChildren } from "../../lib/my-children";
 import {
   formatDateFr,
   omitEmptyStrings,
@@ -41,14 +40,12 @@ interface DisciplineRecord {
   incidentDate: string;
   resolution: string | null;
   resolvedAt: string | null;
-  student: { id: string; firstName: string; lastName: string; matricule: string | null };
-}
-
-interface StudentOption {
-  id: string;
-  firstName: string;
-  lastName: string;
-  matricule: string | null;
+  student: {
+    id: string;
+    firstName: string;
+    lastName: string;
+    matricule: string | null;
+  };
 }
 
 const TYPE_OPTIONS: Array<{ label: string; value: DisciplineType }> = [
@@ -71,7 +68,10 @@ const TYPE_LABELS: Record<DisciplineType, string> = {
   OTHER: "Autre",
 };
 
-const STATUS_META: Record<DisciplineStatus, { label: string; variant: BadgeVariant }> = {
+const STATUS_META: Record<
+  DisciplineStatus,
+  { label: string; variant: BadgeVariant }
+> = {
   PENDING: { label: "En attente", variant: "warning" },
   ACTIVE: { label: "En cours", variant: "default" },
   RESOLVED: { label: "Résolue", variant: "success" },
@@ -79,12 +79,22 @@ const STATUS_META: Record<DisciplineStatus, { label: string; variant: BadgeVaria
 };
 
 const STATUS_OPTIONS = (
-  Object.entries(STATUS_META) as Array<[DisciplineStatus, (typeof STATUS_META)[DisciplineStatus]]>
+  Object.entries(STATUS_META) as Array<
+    [DisciplineStatus, (typeof STATUS_META)[DisciplineStatus]]
+  >
 ).map(([value, meta]) => ({ label: meta.label, value }));
 
 const schema = z.object({
   studentId: z.string().min(1, "Élève requis"),
-  type: z.enum(["WARNING", "REPRIMAND", "DETENTION", "SUSPENSION", "EXPULSION", "OBSERVATION", "OTHER"]),
+  type: z.enum([
+    "WARNING",
+    "REPRIMAND",
+    "DETENTION",
+    "SUSPENSION",
+    "EXPULSION",
+    "OBSERVATION",
+    "OTHER",
+  ]),
   title: z.string().min(3, "Titre requis (3 caractères minimum)"),
   description: z.string().optional(),
   incidentDate: z.string().min(1, "Date de l'incident requise"),
@@ -95,23 +105,22 @@ const schema = z.object({
 
 export default function DisciplinePage() {
   const role = useAuthStore((state) => state.role);
-  const isParent = role === "PARENT";
-  const isStudent = role === "STUDENT";
+  const isParent = role === ROLES.PARENT;
+  const isStudent = role === ROLES.STUDENT;
   const isFamily = isParent || isStudent;
   const childId = useEffectiveChildId(isParent);
   const childrenQuery = useMyChildren(isParent);
 
   const studentsQuery = useQuery({
     queryKey: KEYS.students,
-    queryFn: async () => (await api.get<StudentOption[]>(API.students)).data,
+    queryFn: async () => (await api.get<StudentRow[]>(API.students)).data,
     // Famille : pas d'accès à la liste globale (matrice).
     enabled: !isFamily,
   });
 
   const meQuery = useQuery({
     queryKey: KEYS.studentsMe,
-    queryFn: async () =>
-      (await api.get<{ id: string }>(API.studentsMe)).data,
+    queryFn: async () => (await api.get<{ id: string }>(API.studentsMe)).data,
     enabled: isStudent,
   });
 
@@ -163,10 +172,24 @@ export default function DisciplinePage() {
       type: "select" as const,
       required: true,
       disableSelectSearch: true,
-      options: TYPE_OPTIONS.map((option) => ({ label: option.label, value: option.value as string })),
+      options: TYPE_OPTIONS.map((option) => ({
+        label: option.label,
+        value: option.value as string,
+      })),
     },
-    { name: "title", label: "Titre", type: "text" as const, placeholder: "Ex : Retard répété en cours", required: true },
-    { name: "incidentDate", label: "Date de l'incident", type: "date" as const, required: true },
+    {
+      name: "title",
+      label: "Titre",
+      type: "text" as const,
+      placeholder: "Ex : Retard répété en cours",
+      required: true,
+    },
+    {
+      name: "incidentDate",
+      label: "Date de l'incident",
+      type: "date" as const,
+      required: true,
+    },
     { name: "description", label: "Description", type: "textarea" as const },
   ];
 
@@ -183,20 +206,28 @@ export default function DisciplinePage() {
       createLabel="Nouvelle fiche"
       queryKey={isFamily ? KEYS.discipline(familyStudentId) : KEYS.discipline()}
       endpoint={API.discipline}
-      listPath={isFamily ? apiPath.disciplineByStudent(familyStudentId) : undefined}
+      listPath={
+        isFamily ? apiPath.disciplineByStudent(familyStudentId) : undefined
+      }
       toolbarExtra={isParent ? <ChildSelector /> : undefined}
       columns={[
         {
           header: "Élève",
           primary: true,
-          render: (record) => `${record.student.lastName} ${record.student.firstName}`,
+          render: (record) =>
+            `${record.student.lastName} ${record.student.firstName}`,
         },
         { header: "Fiche", render: (record) => record.title },
         {
           header: "Type",
-          render: (record) => <Badge variant="neutral">{TYPE_LABELS[record.type]}</Badge>,
+          render: (record) => (
+            <Badge variant="neutral">{TYPE_LABELS[record.type]}</Badge>
+          ),
         },
-        { header: "Incident le", render: (record) => formatDateFr(record.incidentDate) },
+        {
+          header: "Incident le",
+          render: (record) => formatDateFr(record.incidentDate),
+        },
         {
           header: "Statut",
           render: (record) => {
@@ -213,10 +244,17 @@ export default function DisciplinePage() {
           label: "Statut",
           type: "select" as const,
           disableSelectSearch: true,
-          options: STATUS_OPTIONS.map((option) => ({ label: option.label, value: option.value as string })),
+          options: STATUS_OPTIONS.map((option) => ({
+            label: option.label,
+            value: option.value as string,
+          })),
         },
         { name: "resolution", label: "Résolution", type: "textarea" as const },
-        { name: "resolvedAt", label: "Date de résolution", type: "date" as const },
+        {
+          name: "resolvedAt",
+          label: "Date de résolution",
+          type: "date" as const,
+        },
       ]}
       schema={schema}
       toDefaults={(record) => ({
@@ -241,12 +279,15 @@ export default function DisciplinePage() {
             ? {
                 status: values.status,
                 resolution: values.resolution,
-                resolvedAt: values.resolvedAt === "" ? undefined : values.resolvedAt,
+                resolvedAt:
+                  values.resolvedAt === "" ? undefined : values.resolvedAt,
               }
             : {}),
         })
       }
-      nameOf={(record) => `${record.title} — ${record.student.lastName} ${record.student.firstName}`}
+      nameOf={(record) =>
+        `${record.title} — ${record.student.lastName} ${record.student.firstName}`
+      }
     />
   );
 }

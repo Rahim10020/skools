@@ -1,3 +1,5 @@
+import type { StudentRow, IdName, EnrollmentRow } from "../../types/api";
+import { ROLES } from "../../lib/roles";
 import { API } from "../../lib/api-endpoints";
 import { KEYS } from "../../lib/query-keys";
 import { useState } from "react";
@@ -29,24 +31,6 @@ import {
   type AttendanceStatus,
 } from "./status-meta";
 
-interface StudentRow {
-  id: string;
-  firstName: string;
-  lastName: string;
-  matricule: string | null;
-}
-
-interface ClassroomOption {
-  id: string;
-  name: string;
-}
-
-interface EnrollmentRow {
-  classroomId: string;
-  isActive: boolean;
-  student: StudentRow | null;
-}
-
 interface ExistingAttendance {
   studentId: string;
   status: AttendanceStatus;
@@ -73,8 +57,8 @@ export default function AttendancesPage() {
   const queryClient = useQueryClient();
   const role = useAuthStore((state) => state.role);
   // ADMIN et CENSEUR consultent (matrice) ; appel réservé à DIRECTOR/TEACHER/SURVEILLANT.
-  const readOnly = role === "ADMIN" || role === "CENSEUR";
-  const isTeacher = role === "TEACHER";
+  const readOnly = role === ROLES.ADMIN || role === ROLES.CENSEUR;
+  const isTeacher = role === ROLES.TEACHER;
   const [selectedClassroomId, setSelectedClassroomId] = useState("");
   const [selectedDate, setSelectedDate] = useState(todayLocal);
   const [statuses, setStatuses] = useState<Record<string, AttendanceStatus>>(
@@ -85,7 +69,7 @@ export default function AttendancesPage() {
   const classroomsQuery = useQuery({
     queryKey: KEYS.classrooms,
     queryFn: async () =>
-      (await api.get<ClassroomOption[]>(API.classrooms)).data,
+      (await api.get<IdName[]>(API.classrooms)).data,
     // Enseignant : classes issues de /teacher-assignments/me (403 sur /classrooms).
     enabled: !isTeacher,
   });
