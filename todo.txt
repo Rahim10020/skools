@@ -31,10 +31,6 @@ les classes dans lesquelles ils ont cours. je veux qu'on prepare ca aussi.
 les informations importantes (a faire exactement comme c'est fait au niveau 
 de epl, je parle bien sur de l'affichage)
 
-- la sidebar pour le role director contient beaucoup d'elements. j
-e veux que tu me propose une bonne organisation afin de ne pas tout 
-saturer visuellement
-
 - je veux coder les affichages des listes (listes des utilisateurs, des eleves, 
 des classes, des cycles, des niveux etc..) comme c'est fais dans gmail 
 (un checkbox a gauche, les options supprimer et modfier qui ne sont visibles 
