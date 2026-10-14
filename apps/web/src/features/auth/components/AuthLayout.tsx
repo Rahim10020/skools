@@ -43,15 +43,7 @@ export function AuthLayout({ children }: { children: ReactNode }) {
             <Wordmark />
           </div>
 
-          <div className="flex flex-1 flex-col items-center justify-center gap-p5 rounded-(--radius-r3) bg-(--primary) px-p10 text-center">
-            <BrandLogo size={64} />
-            <p className="text-sb24 text-(--common-white) leading-tight">
-              Pilotez votre établissement
-            </p>
-            <p className="max-w-[320px] text-r14 text-white/70">
-              Scolarité, pédagogie et vie scolaire réunies dans un seul espace.
-            </p>
-          </div>
+          <div className="flex flex-1 flex-col items-center justify-center gap-p5 rounded-(--radius-r1) px-p10 text-center"></div>
         </div>
       </div>
     </div>
