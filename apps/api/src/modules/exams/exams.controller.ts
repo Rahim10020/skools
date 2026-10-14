@@ -32,13 +32,19 @@ export class ExamsController {
   @Get()
   @Roles(Role.DIRECTOR, Role.CENSEUR, Role.TEACHER)
   findAll(@Request() req: any) {
-    return this.examsService.findAll(req.user.establishmentId);
+    return this.examsService.findAll(req.user.establishmentId, {
+      id: req.user.id,
+      role: req.user.role,
+    });
   }
 
   @Get(':id')
   @Roles(Role.DIRECTOR, Role.CENSEUR, Role.TEACHER)
   findOne(@Param('id', ParseUUIDPipe) id: string, @Request() req: any) {
-    return this.examsService.findOne(id, req.user.establishmentId);
+    return this.examsService.findOne(id, req.user.establishmentId, {
+      id: req.user.id,
+      role: req.user.role,
+    });
   }
 
   @Patch(':id')

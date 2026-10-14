@@ -54,6 +54,8 @@ export interface CrudSchema {
 export interface CrudPageProps<T> {
   title: string;
   description?: string;
+  /** Lecture seule : masque le bouton de création et les actions (matrice : rôles en consultation). */
+  readOnly?: boolean;
   /** Libellé singulier pour les messages ("année scolaire"). */
   itemLabel: string;
   /** Libellé du bouton de création ("Nouvelle année"). */
@@ -288,6 +290,7 @@ const defaultIdOf = <T,>(item: T): string => (item as unknown as { id: string })
 export function CrudPage<T>({
   title,
   description,
+  readOnly = false,
   itemLabel,
   createLabel,
   emptyDescription,
@@ -348,9 +351,11 @@ export function CrudPage<T>({
         title={title}
         description={description}
         actions={
-          <Button fullWidth={false} icon={<PlusIcon className="size-full" />} onClick={() => setEditing(null)}>
-            {createLabel}
-          </Button>
+          readOnly ? undefined : (
+            <Button fullWidth={false} icon={<PlusIcon className="size-full" />} onClick={() => setEditing(null)}>
+              {createLabel}
+            </Button>
+          )
         }
       />
 
@@ -396,9 +401,11 @@ export function CrudPage<T>({
                 {columns.map((column) => (
                   <TableHeaderCell key={column.header}>{column.header}</TableHeaderCell>
                 ))}
-                <TableHeaderCell>
-                  <span className="sr-only">Actions</span>
-                </TableHeaderCell>
+                {!readOnly && (
+                  <TableHeaderCell>
+                    <span className="sr-only">Actions</span>
+                  </TableHeaderCell>
+                )}
               </tr>
             </TableHeader>
             <TableBody>
@@ -413,26 +420,28 @@ export function CrudPage<T>({
                         <TableCell key={column.header}>{column.render(item)}</TableCell>
                       ),
                     )}
-                    <TableCell>
-                      <div className="flex justify-end gap-p3">
-                        <button
-                          type="button"
-                          aria-label={`Modifier ${name}`}
-                          onClick={() => setEditing(item)}
-                          className="text-r12 font-medium text-(--common-blue) hover:underline"
-                        >
-                          Modifier
-                        </button>
-                        <button
-                          type="button"
-                          aria-label={`Supprimer ${name}`}
-                          onClick={() => setDeleteTarget(item)}
-                          className="text-r12 font-medium text-(--common-red) hover:underline"
-                        >
-                          Supprimer
-                        </button>
-                      </div>
-                    </TableCell>
+                    {!readOnly && (
+                      <TableCell>
+                        <div className="flex justify-end gap-p3">
+                          <button
+                            type="button"
+                            aria-label={`Modifier ${name}`}
+                            onClick={() => setEditing(item)}
+                            className="text-r12 font-medium text-(--common-blue) hover:underline"
+                          >
+                            Modifier
+                          </button>
+                          <button
+                            type="button"
+                            aria-label={`Supprimer ${name}`}
+                            onClick={() => setDeleteTarget(item)}
+                            className="text-r12 font-medium text-(--common-red) hover:underline"
+                          >
+                            Supprimer
+                          </button>
+                        </div>
+                      </TableCell>
+                    )}
                   </TableRow>
                 );
               })}

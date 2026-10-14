@@ -2,10 +2,16 @@ import {
   Injectable,
   NotFoundException,
   BadRequestException,
+  ForbiddenException,
 } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service.js';
 import { CreateExamDto } from './dto/create-exam.dto.js';
 import { UpdateExamDto } from './dto/update-exam.dto.js';
+import {
+  examInScope,
+  resolveTeacherScope,
+} from '../../common/helpers/teacher-scope.js';
+import type { RequestActor } from '../../common/types/request-actor.js';
 
 @Injectable()
 export class ExamsService {
@@ -60,8 +66,8 @@ export class ExamsService {
     });
   }
 
-  async findAll(establishmentId: string) {
-    return this.prisma.exam.findMany({
+  async findAll(establishmentId: string, actor?: RequestActor) {
+    const exams = await this.prisma.exam.findMany({
       where: { establishmentId, isActive: true },
       include: {
         subject: { select: { id: true, name: true } },
@@ -71,9 +77,20 @@ export class ExamsService {
       },
       orderBy: { examDate: 'desc' },
     });
+
+    // Périmètre enseignant : ses matières/classes uniquement.
+    const scope = await resolveTeacherScope(this.prisma, establishmentId, actor);
+    if (!scope) return exams;
+    return exams.filter((exam) =>
+      examInScope(scope, {
+        subjectId: exam.subjectId,
+        classroomId: exam.classroomId,
+        academicYearId: exam.academicYearId,
+      }),
+    );
   }
 
-  async findOne(id: string, establishmentId: string) {
+  async findOne(id: string, establishmentId: string, actor?: RequestActor) {
     const exam = await this.prisma.exam.findFirst({
       where: { id, establishmentId },
       include: {
@@ -85,6 +102,18 @@ export class ExamsService {
     });
 
     if (!exam) throw new NotFoundException('Examen introuvable');
+
+    const scope = await resolveTeacherScope(this.prisma, establishmentId, actor);
+    if (
+      scope &&
+      !examInScope(scope, {
+        subjectId: exam.subjectId,
+        classroomId: exam.classroomId,
+        academicYearId: exam.academicYearId,
+      })
+    ) {
+      throw new ForbiddenException('Examen hors de votre périmètre');
+    }
     return exam;
   }
 

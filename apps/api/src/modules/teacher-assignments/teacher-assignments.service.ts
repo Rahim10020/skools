@@ -6,6 +6,11 @@ import {
 } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service.js';
 import { CreateTeacherAssignmentDto } from './dto/create-teacher-assignment.dto.js';
+import {
+  listTeacherAssignments,
+  resolveTeacherId,
+} from '../../common/helpers/teacher-scope.js';
+import type { RequestActor } from '../../common/types/request-actor.js';
 
 @Injectable()
 export class TeacherAssignmentsService {
@@ -63,7 +68,11 @@ export class TeacherAssignmentsService {
     });
   }
 
-  async findAll(establishmentId: string) {
+  async findAll(establishmentId: string, actor?: RequestActor) {
+    // Périmètre enseignant : ses affectations uniquement.
+    if (actor?.role === 'TEACHER') {
+      return this.findMine(actor.id, establishmentId);
+    }
     return this.prisma.teacherAssignment.findMany({
       where: { establishmentId, isActive: true },
       include: {
@@ -74,6 +83,16 @@ export class TeacherAssignmentsService {
       },
       orderBy: { createdAt: 'desc' },
     });
+  }
+
+  /** Affectations du compte enseignant connecté (« Mes classes »). */
+  async findMine(userId: string, establishmentId: string) {
+    const teacherId = await resolveTeacherId(
+      this.prisma,
+      userId,
+      establishmentId,
+    );
+    return listTeacherAssignments(this.prisma, teacherId, establishmentId);
   }
 
   async remove(id: string, establishmentId: string) {

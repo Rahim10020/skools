@@ -9,6 +9,10 @@ import { CreateAttendanceDto } from './dto/create-attendance.dto.js';
 import { BulkAttendanceDto } from './dto/bulk-attendance.dto.js';
 import { AttendanceStatus } from '@prisma/client';
 import type { RequestActor } from '../../common/types/request-actor.js';
+import {
+  assertClassroomAssigned,
+  resolveTeacherScope,
+} from '../../common/helpers/teacher-scope.js';
 
 @Injectable()
 export class AttendancesService {
@@ -18,6 +22,7 @@ export class AttendancesService {
     establishmentId: string,
     userId: string,
     dto: CreateAttendanceDto,
+    actor?: RequestActor,
   ) {
     const student = await this.prisma.student.findFirst({
       where: { id: dto.studentId, establishmentId, isActive: true },
@@ -28,6 +33,10 @@ export class AttendancesService {
       where: { id: dto.classroomId, establishmentId, isActive: true },
     });
     if (!classroom) throw new BadRequestException('Classe invalide');
+
+    // Périmètre enseignant : appel restreint à ses classes.
+    const scope = await resolveTeacherScope(this.prisma, establishmentId, actor);
+    if (scope) assertClassroomAssigned(scope, dto.classroomId);
 
     return this.prisma.attendance.upsert({
       where: {
@@ -61,11 +70,15 @@ export class AttendancesService {
     establishmentId: string,
     userId: string,
     dto: BulkAttendanceDto,
+    actor?: RequestActor,
   ) {
     const classroom = await this.prisma.classroom.findFirst({
       where: { id: dto.classroomId, establishmentId, isActive: true },
     });
     if (!classroom) throw new BadRequestException('Classe invalide');
+
+    const scope = await resolveTeacherScope(this.prisma, establishmentId, actor);
+    if (scope) assertClassroomAssigned(scope, dto.classroomId);
 
     const results = [];
 
@@ -122,6 +135,16 @@ export class AttendancesService {
       if (studentIds.length === 0 || !enrolled) {
         throw new ForbiddenException('Accès refusé');
       }
+    }
+
+    // Périmètre enseignant : appel restreint à ses classes.
+    if (actor?.role === 'TEACHER') {
+      const scope = await resolveTeacherScope(
+        this.prisma,
+        establishmentId,
+        actor,
+      );
+      if (scope) assertClassroomAssigned(scope, classroomId);
     }
 
     return this.prisma.attendance.findMany({

@@ -32,6 +32,11 @@ function todayFr() {
   return formatted.charAt(0).toUpperCase() + formatted.slice(1);
 }
 
+interface MyAssignment {
+  classroom: { id: string; name: string };
+  subject: { id: string; name: string };
+}
+
 interface Shortcut {
   to: string;
   label: string;
@@ -63,36 +68,52 @@ export default function DashboardPage() {
   }, [establishmentId, navigate]);
 
   const enabled = !!establishmentId;
+  const isTeacher = role === "TEACHER";
   const studentsQuery = useQuery({
     queryKey: ["students"],
     queryFn: async () => (await api.get<unknown[]>("/students")).data,
-    enabled,
+    // Enseignant : pas d'accès aux listes globales (matrice) — stats via ses assignations.
+    enabled: enabled && !isTeacher,
   });
   const teachersQuery = useQuery({
     queryKey: ["teachers"],
     queryFn: async () => (await api.get<unknown[]>("/teachers")).data,
-    enabled,
+    enabled: enabled && !isTeacher,
   });
   const classroomsQuery = useQuery({
     queryKey: ["classrooms"],
     queryFn: async () => (await api.get<unknown[]>("/classrooms")).data,
-    enabled,
+    enabled: enabled && !isTeacher,
   });
   const examsQuery = useQuery({
     queryKey: ["exams"],
     queryFn: async () => (await api.get<unknown[]>("/exams")).data,
+    // /exams est filtré serveur par assignation pour TEACHER.
     enabled,
+  });
+  const myAssignmentsQuery = useQuery({
+    queryKey: ["teacher-assignments", "me"],
+    queryFn: async () => (await api.get<MyAssignment[]>("/teacher-assignments/me")).data,
+    enabled: enabled && isTeacher,
   });
   const meQuery = useQuery({
     queryKey: ["me"],
     queryFn: async () => (await api.get<MeResponse>("/auth/me")).data,
   });
 
-  const isLoading =
-    studentsQuery.isPending || teachersQuery.isPending || classroomsQuery.isPending || examsQuery.isPending;
-  const failedQuery = [studentsQuery, teachersQuery, classroomsQuery, examsQuery].find((q) => q.isError);
+  const isLoading = isTeacher
+    ? myAssignmentsQuery.isPending || examsQuery.isPending
+    : studentsQuery.isPending || teachersQuery.isPending || classroomsQuery.isPending || examsQuery.isPending;
+  const failedQuery = isTeacher
+    ? [myAssignmentsQuery, examsQuery].find((q) => q.isError)
+    : [studentsQuery, teachersQuery, classroomsQuery, examsQuery].find((q) => q.isError);
 
   const retryAll = () => {
+    if (isTeacher) {
+      void myAssignmentsQuery.refetch();
+      void examsQuery.refetch();
+      return;
+    }
     void studentsQuery.refetch();
     void teachersQuery.refetch();
     void classroomsQuery.refetch();
@@ -103,12 +124,21 @@ export default function DashboardPage() {
     meQuery.data?.establishments.find((e) => e.establishment.id === establishmentId)
       ?.establishment.name ?? null;
 
-  const stats = [
-    { label: "Élèves", value: studentsQuery.data?.length ?? 0, to: "/students" },
-    { label: "Enseignants", value: teachersQuery.data?.length ?? 0, to: "/teachers" },
-    { label: "Classes", value: classroomsQuery.data?.length ?? 0, to: "/classrooms" },
-    { label: "Examens", value: examsQuery.data?.length ?? 0, to: "/exams" },
-  ];
+  const myClasses = new Set((myAssignmentsQuery.data ?? []).map((a) => a.classroom.id));
+  const mySubjects = new Set((myAssignmentsQuery.data ?? []).map((a) => a.subject.id));
+
+  const stats = isTeacher
+    ? [
+        { label: "Mes classes", value: myClasses.size, to: "/teacher-assignments" },
+        { label: "Mes matières", value: mySubjects.size, to: "/teacher-assignments" },
+        { label: "Examens", value: examsQuery.data?.length ?? 0, to: "/exams" },
+      ]
+    : [
+        { label: "Élèves", value: studentsQuery.data?.length ?? 0, to: "/students" },
+        { label: "Enseignants", value: teachersQuery.data?.length ?? 0, to: "/teachers" },
+        { label: "Classes", value: classroomsQuery.data?.length ?? 0, to: "/classrooms" },
+        { label: "Examens", value: examsQuery.data?.length ?? 0, to: "/exams" },
+      ];
   const isEmpty = !isLoading && !failedQuery && stats.every((s) => s.value === 0);
   const shortcuts = role === "TEACHER" ? TEACHER_SHORTCUTS : STAFF_SHORTCUTS;
 

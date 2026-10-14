@@ -8,6 +8,12 @@ import { PrismaService } from '../../prisma/prisma.service.js';
 import { CreateEnrollmentDto } from './dto/create-enrollment.dto.js';
 import { UpdateEnrollmentDto } from './dto/update-enrollment.dto.js';
 import { EnrollmentStatus } from '@prisma/client';
+import {
+  assignedClassroomIds,
+  assertClassroomAssigned,
+  resolveTeacherScope,
+} from '../../common/helpers/teacher-scope.js';
+import type { RequestActor } from '../../common/types/request-actor.js';
 
 @Injectable()
 export class EnrollmentsService {
@@ -72,9 +78,18 @@ export class EnrollmentsService {
     });
   }
 
-  async findAll(establishmentId: string) {
+  async findAll(establishmentId: string, actor?: RequestActor) {
+    // Périmètre enseignant : inscrits de ses classes (registre d'appel/notes).
+    let classroomIds: string[] | undefined;
+    const scope = await resolveTeacherScope(this.prisma, establishmentId, actor);
+    if (scope) classroomIds = [...assignedClassroomIds(scope)];
+
     return this.prisma.enrollment.findMany({
-      where: { establishmentId, isActive: true },
+      where: {
+        establishmentId,
+        isActive: true,
+        ...(classroomIds ? { classroomId: { in: classroomIds } } : {}),
+      },
       include: {
         student: {
           select: {
@@ -91,7 +106,7 @@ export class EnrollmentsService {
     });
   }
 
-  async findOne(id: string, establishmentId: string) {
+  async findOne(id: string, establishmentId: string, actor?: RequestActor) {
     const enrollment = await this.prisma.enrollment.findFirst({
       where: { id, establishmentId },
       include: {
@@ -104,6 +119,9 @@ export class EnrollmentsService {
     if (!enrollment) {
       throw new NotFoundException('Inscription introuvable');
     }
+
+    const scope = await resolveTeacherScope(this.prisma, establishmentId, actor);
+    if (scope) assertClassroomAssigned(scope, enrollment.classroomId);
 
     return enrollment;
   }

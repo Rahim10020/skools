@@ -27,6 +27,7 @@ export class AttendancesController {
       req.user.establishmentId,
       req.user.id,
       dto,
+      { id: req.user.id, role: req.user.role },
     );
   }
 
@@ -37,6 +38,7 @@ export class AttendancesController {
       req.user.establishmentId,
       req.user.id,
       dto,
+      { id: req.user.id, role: req.user.role },
     );
   }
 

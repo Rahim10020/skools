@@ -30,15 +30,21 @@ export class EnrollmentsController {
   }
 
   @Get()
-  @Roles(Role.DIRECTOR, Role.ADMIN, Role.CENSEUR)
+  @Roles(Role.DIRECTOR, Role.ADMIN, Role.CENSEUR, Role.TEACHER)
   findAll(@Request() req: any) {
-    return this.enrollmentsService.findAll(req.user.establishmentId);
+    return this.enrollmentsService.findAll(req.user.establishmentId, {
+      id: req.user.id,
+      role: req.user.role,
+    });
   }
 
   @Get(':id')
-  @Roles(Role.DIRECTOR, Role.ADMIN, Role.CENSEUR)
+  @Roles(Role.DIRECTOR, Role.ADMIN, Role.CENSEUR, Role.TEACHER)
   findOne(@Param('id', ParseUUIDPipe) id: string, @Request() req: any) {
-    return this.enrollmentsService.findOne(id, req.user.establishmentId);
+    return this.enrollmentsService.findOne(id, req.user.establishmentId, {
+      id: req.user.id,
+      role: req.user.role,
+    });
   }
 
   @Patch(':id')

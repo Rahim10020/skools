@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import api, { getErrorMessage } from "../../lib/api";
+import { useAuthStore } from "../../stores/auth-store";
 import { PageHeader } from "../../layouts/PageHeader";
 import { Button } from "../../components/ui/button";
 import { Card } from "../../components/ui/card";
@@ -63,6 +64,8 @@ interface EnrollmentRow {
  */
 export default function GradesPage() {
   const queryClient = useQueryClient();
+  const role = useAuthStore((state) => state.role);
+  const isTeacher = role === "TEACHER";
   const [selectedExamId, setSelectedExamId] = useState("");
   const [scores, setScores] = useState<Record<string, string>>({});
   const [absents, setAbsents] = useState<Record<string, boolean>>({});
@@ -75,6 +78,8 @@ export default function GradesPage() {
   const studentsQuery = useQuery({
     queryKey: ["students"],
     queryFn: async () => (await api.get<StudentRow[]>("/students")).data,
+    // Enseignant : registre via /enrollments (filtre serveur par assignation), pas la liste globale.
+    enabled: !isTeacher,
   });
   const enrollmentsQuery = useQuery({
     queryKey: ["enrollments"],
@@ -93,16 +98,21 @@ export default function GradesPage() {
   const maxScore = selectedExam?.maxScore ?? 20;
 
   // Périmètre de saisie : les inscrits actifs de la classe si l'examen est mono-classe,
-  // sinon tous les élèves (examen multi-classes).
+  // sinon tous les élèves (examen multi-classes). Pour TEACHER, /enrollments et
+  // /exams sont déjà filtrés serveur par assignation.
   const studentsInScope = (() => {
-    const all = studentsQuery.data ?? [];
-    if (!selectedExam?.classroomId) return all;
+    const enrolled = (enrollmentsQuery.data ?? []).filter((e) => e.isActive && e.student);
+    if (!selectedExam?.classroomId) {
+      if (isTeacher) return enrolled.map((e) => e.student as StudentRow);
+      return studentsQuery.data ?? [];
+    }
     const enrolledIds = new Set(
-      (enrollmentsQuery.data ?? [])
-        .filter((e) => e.classroomId === selectedExam.classroomId && e.isActive && e.student)
+      enrolled
+        .filter((e) => e.classroomId === selectedExam.classroomId)
         .map((e) => (e.student as StudentRow).id),
     );
-    return all.filter((student) => enrolledIds.has(student.id));
+    if (isTeacher) return enrolled.map((e) => e.student as StudentRow).filter((s) => enrolledIds.has(s.id));
+    return (studentsQuery.data ?? []).filter((student) => enrolledIds.has(student.id));
   })();
 
   // CORRECTIF n°1 : resynchronise le formulaire à chaque relecture serveur.
@@ -191,6 +201,10 @@ export default function GradesPage() {
   };
 
   const existingCount = (gradesQuery.data ?? []).length;
+  // Requête désactivée (enabled: false) reste en `pending` : ne pas bloquer dessus.
+  const rosterPending = isTeacher
+    ? enrollmentsQuery.isPending
+    : studentsQuery.isPending || enrollmentsQuery.isPending;
 
   return (
     <div>
@@ -227,7 +241,7 @@ export default function GradesPage() {
                 void gradesQuery.refetch();
               }}
             />
-          ) : gradesQuery.isPending || studentsQuery.isPending ? (
+          ) : gradesQuery.isPending || rosterPending ? (
             <Skeleton className="h-[240px] rounded-r2" />
           ) : studentsInScope.length === 0 ? (
             <EmptyState

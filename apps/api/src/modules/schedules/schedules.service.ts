@@ -2,10 +2,16 @@ import {
   Injectable,
   NotFoundException,
   BadRequestException,
+  ForbiddenException,
 } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service.js';
 import { CreateScheduleDto } from './dto/create-schedule.dto.js';
 import { UpdateScheduleDto } from './dto/update-schedule.dto.js';
+import {
+  assignedClassroomIds,
+  resolveTeacherScope,
+} from '../../common/helpers/teacher-scope.js';
+import type { RequestActor } from '../../common/types/request-actor.js';
 
 @Injectable()
 export class SchedulesService {
@@ -61,12 +67,18 @@ export class SchedulesService {
     });
   }
 
-  async findAll(establishmentId: string, classroomId?: string) {
+  async findAll(establishmentId: string, classroomId?: string, actor?: RequestActor) {
+    // Périmètre enseignant : créneaux de ses classes (« Mon emploi du temps »).
+    let allowedClassrooms: string[] | undefined;
+    const scope = await resolveTeacherScope(this.prisma, establishmentId, actor);
+    if (scope) allowedClassrooms = [...assignedClassroomIds(scope)];
+
     return this.prisma.schedule.findMany({
       where: {
         establishmentId,
         isActive: true,
         ...(classroomId ? { classroomId } : {}),
+        ...(allowedClassrooms ? { classroomId: { in: allowedClassrooms } } : {}),
       },
       include: {
         classroom: { select: { id: true, name: true } },
@@ -78,7 +90,7 @@ export class SchedulesService {
     });
   }
 
-  async findOne(id: string, establishmentId: string) {
+  async findOne(id: string, establishmentId: string, actor?: RequestActor) {
     const schedule = await this.prisma.schedule.findFirst({
       where: { id, establishmentId },
       include: {
@@ -90,6 +102,11 @@ export class SchedulesService {
     });
 
     if (!schedule) throw new NotFoundException('Créneau introuvable');
+
+    const scope = await resolveTeacherScope(this.prisma, establishmentId, actor);
+    if (scope && !assignedClassroomIds(scope).has(schedule.classroomId)) {
+      throw new ForbiddenException('Créneau hors de votre périmètre');
+    }
     return schedule;
   }
 

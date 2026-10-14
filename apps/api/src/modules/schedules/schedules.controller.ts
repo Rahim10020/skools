@@ -41,7 +41,10 @@ export class SchedulesController {
     Role.PARENT,
   )
   findAll(@Request() req: any, @Query('classroomId') classroomId?: string) {
-    return this.schedulesService.findAll(req.user.establishmentId, classroomId);
+    return this.schedulesService.findAll(req.user.establishmentId, classroomId, {
+      id: req.user.id,
+      role: req.user.role,
+    });
   }
 
   @Get(':id')
@@ -55,7 +58,10 @@ export class SchedulesController {
     Role.PARENT,
   )
   findOne(@Param('id', ParseUUIDPipe) id: string, @Request() req: any) {
-    return this.schedulesService.findOne(id, req.user.establishmentId);
+    return this.schedulesService.findOne(id, req.user.establishmentId, {
+      id: req.user.id,
+      role: req.user.role,
+    });
   }
 
   @Patch(':id')

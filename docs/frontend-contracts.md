@@ -46,18 +46,18 @@
 - `parents` CRUD : `firstName (≥2), lastName (≥2), phone?, email?, address?, profession?, userId? UUID` (+ `GET /parents/me` rôle PARENT, mêmes garde-fous, rôle attendu PARENT).
 - `user-establishments` (DIRECTOR) : `GET /` (membres actifs), `POST /` (`email, role` sauf SUPER_ADMIN ; 404 compte inconnu, 409 déjà dans un établissement), `PATCH /:id` (`role`, sauf soi-même), `DELETE /:id` (sauf soi-même).
 - `POST /parent-students` : `parentId UUID, studentId UUID, relation?: FATHER\|MOTHER\|GUARDIAN\|OTHER, isPrimary?`. `GET /parent-students/student/:studentId`, `GET /parent-students/parent/:parentId`, `DELETE /:id` (id de la **liaison**). 409 si déjà liés. Pas de PATCH (unlink + re-link).
-- `POST /teacher-assignments` : `teacherId, subjectId, classroomId, academicYearId` (tous UUID requis). `GET /`, `DELETE /:id`. 409 si doublon, 400 si FK hors établissement. Pas de PATCH/GET :id.
-- `POST /enrollments` : `studentId, classroomId, academicYearId (UUID), status?: PENDING\|APPROVED\|REJECTED\|WITHDRAWN, notes?`. CRUD complet. 409 doublon (student+year). Pas de filtre query — filtrer côté client.
+- `POST /teacher-assignments` : `teacherId, subjectId, classroomId, academicYearId` (tous UUID requis). `GET /` (TEACHER → ses affectations uniquement), `GET /teacher-assignments/me` (TEACHER, « Mes classes », 404 si pas de dossier lié), `DELETE /:id`. 409 si doublon, 400 si FK hors établissement. Pas de PATCH/GET :id.
+- `POST /enrollments` : `studentId, classroomId, academicYearId (UUID), status?: PENDING\|APPROVED\|REJECTED\|WITHDRAWN, notes?`. CRUD complet. `GET /` et `GET /:id` ouverts à TEACHER filtrés à ses classes assignées (registre d'appel/notes). 409 doublon (student+year). Pas de filtre query — filtrer côté client.
 
 ## Évaluations (JWT)
 
-- `exams` CRUD : `academicYearId UUID, subjectId UUID, name (≥2), periodId?, classroomId? (null = multi), type?: INTERROGATION\|DEVOIR\|COMPOSITION\|EXAMEN\|AUTRE (défaut DEVOIR), examDate? ISO, maxScore? (défaut 20), coefficient? (défaut 1), isPublished? (défaut false)`. Pas de filtre query.
+- `exams` CRUD : `academicYearId UUID, subjectId UUID, name (≥2), periodId?, classroomId? (null = multi), type?: INTERROGATION\|DEVOIR\|COMPOSITION\|EXAMEN\|AUTRE (défaut DEVOIR), examDate? ISO, maxScore? (défaut 20), coefficient? (défaut 1), isPublished? (défaut false)`. `GET /` et `GET /:id` filtrés serveur pour TEACHER (tuple matière+classe+année assigné ; examen multi-classes si matière+année assignées, 403 sinon). Pas de filtre query.
 - `grades` :
-  - `POST /grades` : `examId, studentId, score? (≥0), appreciation?, isAbsent?` (`isAbsent=true` force `score=null`). 409 si note existante.
-  - `POST /grades/bulk` : `{ examId, grades: [{ examId (!), studentId, score?, appreciation?, isAbsent? }] }` — **`examId` par item OBLIGATOIRE** (hérité de CreateGradeDto, `forbidNonWhitelisted` → 400 si absent) même si le service ne lit que le top-level. Upsert (update si existe).
-  - `GET /grades` / `GET /grades?examId=<uuid>` (tri nom/prénom ; inconnu → `[]`). **Pas de `GET /:id`.**
-  - `PATCH /grades/:id` : ne lit que `score/appreciation/isAbsent` (ignore `examId/studentId`). 404 si introuvable.
-  - `DELETE /grades/:id`.
+  - `POST /grades` : `examId, studentId, score? (≥0), appreciation?, isAbsent?` (`isAbsent=true` force `score=null`). 409 si note existante. TEACHER : 403 si examen hors assignation.
+  - `POST /grades/bulk` : `{ examId, grades: [{ examId (!), studentId, score?, appreciation?, isAbsent? }] }` — **`examId` par item OBLIGATOIRE** (hérité de CreateGradeDto, `forbidNonWhitelisted` → 400 si absent) même si le service ne lit que le top-level. Upsert (update si existe). TEACHER : 403 si examen hors assignation.
+  - `GET /grades` / `GET /grades?examId=<uuid>` (tri nom/prénom ; inconnu → `[]`). TEACHER : restreint aux examens de son périmètre (hors périmètre → 403). **Pas de `GET /:id`.**
+  - `PATCH /grades/:id` : ne lit que `score/appreciation/isAbsent` (ignore `examId/studentId`). 404 si introuvable. TEACHER : 403 si examen hors assignation.
+  - `DELETE /grades/:id` (même périmètre TEACHER).
 - `report-cards` (lecture seule) : `GET /report-cards/student?studentId=&academicYearId=&periodId?` → `{ student, classroom\|null, academicYear\|null, subjects:[{subjectId,subjectName,subjectCode,average\|null (/20, 2 déc),gradesCount,details}], generalAverage\|null }` (404 élève hors établissement). `GET /report-cards/classroom?classroomId=&academicYearId=` → `[{student, generalAverage, subjectsCount}]` trié desc (classe inconnue → `[]`, pas 404).
 
 ## Vie scolaire (JWT)
@@ -65,8 +65,8 @@
 - `attendances` :
   - `POST /attendances` : `studentId, classroomId, date ISO, status? (défaut PRESENT), notes?` — upsert sur `(studentId, date)`.
   - `POST /attendances/bulk` : `{ classroomId, date ISO, attendances: [{ studentId, status (requis), notes? }] }` — upsert en boucle, élèves non vérifiés, `[]` → 200 `[]`.
-  - `GET /attendances?classroomId=&date=` — **les deux requis, sans validation : sans `date` → 500**. Toujours envoyer les deux. **Pas de `?studentId=`, pas de PATCH/DELETE.**
-- `schedules` CRUD : `classroomId, subjectId, academicYearId, dayOfWeek: MONDAY..SUNDAY, startTime/endTime `HH:mm` (regex stricte), teacherId?, room?`. `GET /schedules?classroomId=` optionnel.
+  - `GET /attendances?classroomId=&date=` — **les deux requis, sans validation : sans `date` → 500**. Toujours envoyer les deux. TEACHER : 403 si classe non assignée. **Pas de `?studentId=`, pas de PATCH/DELETE.**
+- `schedules` CRUD : `classroomId, subjectId, academicYearId, dayOfWeek: MONDAY..SUNDAY, startTime/endTime `HH:mm` (regex stricte), teacherId?, room?`. `GET /schedules?classroomId=` optionnel. TEACHER : `GET /` et `GET /:id` restreints aux classes assignées (« Mon emploi du temps »).
 - `discipline` CRUD + `GET /discipline?studentId=` optionnel : `studentId, type: WARNING\|REPRIMAND\|DETENTION\|SUSPENSION\|EXPULSION\|OBSERVATION\|OTHER, title (≥3), incidentDate ISO, description?, status?: PENDING\|ACTIVE\|RESOLVED\|CANCELLED`. PATCH accepte en plus `resolution?, resolvedAt?`. `reportedById` injecté serveur.
 
 ## Incohérences connues (ne pas contourner silencieusement)

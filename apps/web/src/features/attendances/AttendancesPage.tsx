@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import api, { getErrorMessage } from "../../lib/api";
+import { useAuthStore } from "../../stores/auth-store";
 import { PageHeader } from "../../layouts/PageHeader";
 import { Button } from "../../components/ui/button";
 import { Card } from "../../components/ui/card";
@@ -68,8 +69,14 @@ function todayLocal(): string {
  * ajustement pendant le rendu sur (classe, date, données serveur) : sélection
  * inchangée + saisie en cours = jamais écrasée ; relecture après save = réaffichée.
  */
+interface MyAssignment {
+  classroom: { id: string; name: string };
+}
+
 export default function AttendancesPage() {
   const queryClient = useQueryClient();
+  const role = useAuthStore((state) => state.role);
+  const isTeacher = role === "TEACHER";
   const [selectedClassroomId, setSelectedClassroomId] = useState("");
   const [selectedDate, setSelectedDate] = useState(todayLocal);
   const [statuses, setStatuses] = useState<Record<string, AttendanceStatus>>({});
@@ -78,6 +85,13 @@ export default function AttendancesPage() {
   const classroomsQuery = useQuery({
     queryKey: ["classrooms"],
     queryFn: async () => (await api.get<ClassroomOption[]>("/classrooms")).data,
+    // Enseignant : classes issues de /teacher-assignments/me (403 sur /classrooms).
+    enabled: !isTeacher,
+  });
+  const myAssignmentsQuery = useQuery({
+    queryKey: ["teacher-assignments", "me"],
+    queryFn: async () => (await api.get<MyAssignment[]>("/teacher-assignments/me")).data,
+    enabled: isTeacher,
   });
   const enrollmentsQuery = useQuery({
     queryKey: ["enrollments"],
@@ -138,10 +152,16 @@ export default function AttendancesPage() {
   }));
   const recordedCount = (serverAttendances ?? []).length;
 
+  // Options de classe : assignations dédupliquées pour TEACHER, référentiel sinon.
+  const classroomOptions = isTeacher
+    ? [...new Map((myAssignmentsQuery.data ?? []).map((a) => [a.classroom.id, a.classroom])).values()]
+    : (classroomsQuery.data ?? []);
+  const classroomPending = isTeacher ? myAssignmentsQuery.isPending : classroomsQuery.isPending;
+
   return (
     <div>
       <PageHeader
-        title="Présences"
+        title={isTeacher ? "Faire l'appel" : "Présences"}
         description={
           selectedClassroomId && recordedCount > 0
             ? `${recordedCount} relevé(s) enregistré(s) pour cette date.`
@@ -150,14 +170,21 @@ export default function AttendancesPage() {
       />
 
       <Card className="p-p4">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-p4">
+        {isTeacher && !classroomPending && classroomOptions.length === 0 ? (
+          <EmptyState
+            title="Aucune classe assignée"
+            description="Votre direction ne vous a encore assigné aucune classe. Contactez-la."
+          />
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-p4">
           <div className="flex flex-col gap-p1">
             <span className="text-m12 text-(--skools-text-primary)">Classe</span>
             <Select
               label="Choisir une classe…"
               value={selectedClassroomId}
               onChange={setSelectedClassroomId}
-              options={(classroomsQuery.data ?? []).map((classroom) => ({
+              loading={classroomPending}
+              options={classroomOptions.map((classroom) => ({
                 label: classroom.name,
                 value: classroom.id,
               }))}
@@ -172,7 +199,8 @@ export default function AttendancesPage() {
               onChange={setSelectedDate}
             />
           </div>
-        </div>
+          </div>
+        )}
       </Card>
 
       {selectedClassroomId && (

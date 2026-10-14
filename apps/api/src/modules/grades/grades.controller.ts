@@ -28,21 +28,28 @@ export class GradesController {
 
   @Post()
   create(@Body() dto: CreateGradeDto, @Request() req: any) {
-    return this.gradesService.create(req.user.establishmentId, dto);
+    return this.gradesService.create(req.user.establishmentId, dto, {
+      id: req.user.id,
+      role: req.user.role,
+    });
   }
 
   @Post('bulk')
   bulkCreate(@Body() dto: BulkGradesDto, @Request() req: any) {
-    return this.gradesService.bulkCreate(req.user.establishmentId, dto);
+    return this.gradesService.bulkCreate(req.user.establishmentId, dto, {
+      id: req.user.id,
+      role: req.user.role,
+    });
   }
 
   @Get()
   @Roles(Role.DIRECTOR, Role.CENSEUR, Role.TEACHER)
   findAll(@Request() req: any, @Query('examId') examId?: string) {
+    const actor = { id: req.user.id, role: req.user.role };
     if (examId) {
-      return this.gradesService.findByExam(examId, req.user.establishmentId);
+      return this.gradesService.findByExam(examId, req.user.establishmentId, actor);
     }
-    return this.gradesService.findAll(req.user.establishmentId);
+    return this.gradesService.findAll(req.user.establishmentId, actor);
   }
 
   @Patch(':id')
@@ -51,11 +58,17 @@ export class GradesController {
     @Body() dto: UpdateGradeDto,
     @Request() req: any,
   ) {
-    return this.gradesService.update(id, req.user.establishmentId, dto);
+    return this.gradesService.update(id, req.user.establishmentId, dto, {
+      id: req.user.id,
+      role: req.user.role,
+    });
   }
 
   @Delete(':id')
   remove(@Param('id', ParseUUIDPipe) id: string, @Request() req: any) {
-    return this.gradesService.remove(id, req.user.establishmentId);
+    return this.gradesService.remove(id, req.user.establishmentId, {
+      id: req.user.id,
+      role: req.user.role,
+    });
   }
 }

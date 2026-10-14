@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import api, { getErrorMessage } from "../../lib/api";
+import { useAuthStore } from "../../stores/auth-store";
 import { PageHeader } from "../../layouts/PageHeader";
 import { Button } from "../../components/ui/button";
 import { Card } from "../../components/ui/card";
@@ -42,6 +43,8 @@ interface TeacherAssignment {
 
 export default function TeacherAssignmentsPage() {
   const queryClient = useQueryClient();
+  const role = useAuthStore((state) => state.role);
+  const isTeacher = role === "TEACHER";
   const [teacherId, setTeacherId] = useState("");
   const [subjectId, setSubjectId] = useState("");
   const [classroomId, setClassroomId] = useState("");
@@ -50,8 +53,9 @@ export default function TeacherAssignmentsPage() {
   const [removeTarget, setRemoveTarget] = useState<TeacherAssignment | null>(null);
 
   const assignmentsQuery = useQuery({
-    queryKey: ["teacher-assignments"],
-    queryFn: async () => (await api.get<TeacherAssignment[]>("/teacher-assignments")).data,
+    queryKey: ["teacher-assignments", isTeacher ? "me" : "all"],
+    queryFn: async () =>
+      (await api.get<TeacherAssignment[]>(isTeacher ? "/teacher-assignments/me" : "/teacher-assignments")).data,
   });
   const teachersQuery = useQuery({
     queryKey: ["teachers"],
@@ -110,12 +114,17 @@ export default function TeacherAssignmentsPage() {
   return (
     <div>
       <PageHeader
-        title="Affectations"
-        description="Qui enseigne quelle matière, dans quelle classe, pour quelle année. Sans modification : retirer puis recréer."
+        title={isTeacher ? "Mes classes" : "Affectations"}
+        description={
+          isTeacher
+            ? "Vos classes et matières assignées pour l'année en cours."
+            : "Qui enseigne quelle matière, dans quelle classe, pour quelle année. Sans modification : retirer puis recréer."
+        }
       />
 
       <div className="flex flex-col gap-p6">
-        <Card className="p-p4">
+        {!isTeacher && (
+          <Card className="p-p4">
           <h2 className="text-sb16 text-(--skools-text-primary)">Nouvelle affectation</h2>
           <form onSubmit={handleCreate} className="mt-p4 grid grid-cols-1 gap-p4 md:grid-cols-2" noValidate>
             <div className="flex flex-col gap-p1">
@@ -180,6 +189,7 @@ export default function TeacherAssignmentsPage() {
             </div>
           </form>
         </Card>
+        )}
 
         {assignmentsQuery.isError ? (
           <ErrorState
@@ -192,30 +202,38 @@ export default function TeacherAssignmentsPage() {
           <Skeleton className="h-[200px] rounded-r2" />
         ) : assignments.length === 0 ? (
           <EmptyState
-            title="Aucune affectation pour le moment"
-            description="Créez la première affectation avec le formulaire ci-dessus."
+            title={isTeacher ? "Aucune classe assignée" : "Aucune affectation pour le moment"}
+            description={
+              isTeacher
+                ? "Votre direction ne vous a encore assigné aucune classe. Contactez-la."
+                : "Créez la première affectation avec le formulaire ci-dessus."
+            }
           />
         ) : (
           <TableContainer>
             <Table>
               <TableHeader>
                 <tr>
-                  <TableHeaderCell>Enseignant</TableHeaderCell>
+                  {!isTeacher && <TableHeaderCell>Enseignant</TableHeaderCell>}
                   <TableHeaderCell>Matière</TableHeaderCell>
                   <TableHeaderCell>Classe</TableHeaderCell>
                   <TableHeaderCell>Année scolaire</TableHeaderCell>
-                  <TableHeaderCell>
-                    <span className="sr-only">Actions</span>
-                  </TableHeaderCell>
+                  {!isTeacher && (
+                    <TableHeaderCell>
+                      <span className="sr-only">Actions</span>
+                    </TableHeaderCell>
+                  )}
                 </tr>
               </TableHeader>
               <TableBody>
                 {assignments.map((assignment) => (
                   <TableRow key={assignment.id}>
-                    <TableCellPrimary>
-                      {assignment.teacher.lastName} {assignment.teacher.firstName}
-                    </TableCellPrimary>
-                    <TableCell>{assignment.subject.name}</TableCell>
+                    {!isTeacher && (
+                      <TableCellPrimary>
+                        {assignment.teacher.lastName} {assignment.teacher.firstName}
+                      </TableCellPrimary>
+                    )}
+                    <TableCellPrimary>{assignment.subject.name}</TableCellPrimary>
                     <TableCell>{assignment.classroom.name}</TableCell>
                     <TableCell>
                       <span className="inline-flex items-center gap-p2">
@@ -225,18 +243,20 @@ export default function TeacherAssignmentsPage() {
                         )}
                       </span>
                     </TableCell>
-                    <TableCell>
-                      <div className="flex justify-end">
-                        <button
-                          type="button"
-                          aria-label={`Retirer l'affectation de ${assignment.teacher.firstName} ${assignment.teacher.lastName}`}
-                          onClick={() => setRemoveTarget(assignment)}
-                          className="text-r12 font-medium text-(--common-red) hover:underline"
-                        >
-                          Retirer
-                        </button>
-                      </div>
-                    </TableCell>
+                    {!isTeacher && (
+                      <TableCell>
+                        <div className="flex justify-end">
+                          <button
+                            type="button"
+                            aria-label={`Retirer l'affectation de ${assignment.teacher.firstName} ${assignment.teacher.lastName}`}
+                            onClick={() => setRemoveTarget(assignment)}
+                            className="text-r12 font-medium text-(--common-red) hover:underline"
+                          >
+                            Retirer
+                          </button>
+                        </div>
+                      </TableCell>
+                    )}
                   </TableRow>
                 ))}
               </TableBody>

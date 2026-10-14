@@ -3,21 +3,40 @@ import {
   NotFoundException,
   BadRequestException,
   ConflictException,
+  ForbiddenException,
 } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service.js';
 import { CreateGradeDto } from './dto/create-grade.dto.js';
 import { UpdateGradeDto } from './dto/update-grade.dto.js';
 import { BulkGradesDto } from './dto/bulk-grades.dto.js';
+import {
+  examInScope,
+  resolveTeacherScope,
+} from '../../common/helpers/teacher-scope.js';
+import type { RequestActor } from '../../common/types/request-actor.js';
 
 @Injectable()
 export class GradesService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async create(establishmentId: string, dto: CreateGradeDto) {
+  /** 403 si l'examen est hors du périmètre enseignant (TEACHER uniquement). */
+  private async assertExamInTeacherScope(
+    establishmentId: string,
+    exam: { subjectId: string; classroomId: string | null; academicYearId: string },
+    actor?: RequestActor,
+  ) {
+    const scope = await resolveTeacherScope(this.prisma, establishmentId, actor);
+    if (scope && !examInScope(scope, exam)) {
+      throw new ForbiddenException('Examen hors de votre périmètre');
+    }
+  }
+
+  async create(establishmentId: string, dto: CreateGradeDto, actor?: RequestActor) {
     const exam = await this.prisma.exam.findFirst({
       where: { id: dto.examId, establishmentId, isActive: true },
     });
     if (!exam) throw new BadRequestException('Examen invalide');
+    await this.assertExamInTeacherScope(establishmentId, exam, actor);
 
     const student = await this.prisma.student.findFirst({
       where: { id: dto.studentId, establishmentId, isActive: true },
@@ -61,11 +80,12 @@ export class GradesService {
     });
   }
 
-  async bulkCreate(establishmentId: string, dto: BulkGradesDto) {
+  async bulkCreate(establishmentId: string, dto: BulkGradesDto, actor?: RequestActor) {
     const exam = await this.prisma.exam.findFirst({
       where: { id: dto.examId, establishmentId, isActive: true },
     });
     if (!exam) throw new BadRequestException('Examen invalide');
+    await this.assertExamInTeacherScope(establishmentId, exam, actor);
 
     const results = [];
 
@@ -108,7 +128,14 @@ export class GradesService {
     return results;
   }
 
-  async findByExam(examId: string, establishmentId: string) {
+  async findByExam(examId: string, establishmentId: string, actor?: RequestActor) {
+    const exam = await this.prisma.exam.findFirst({
+      where: { id: examId, establishmentId },
+    });
+    // Examen inconnu → [] (contrat existant) ; hors périmètre → 403.
+    if (exam) {
+      await this.assertExamInTeacherScope(establishmentId, exam, actor);
+    }
     return this.prisma.grade.findMany({
       where: { examId, establishmentId },
       include: {
@@ -128,9 +155,21 @@ export class GradesService {
     });
   }
 
-  async findAll(establishmentId: string) {
+  async findAll(establishmentId: string, actor?: RequestActor) {
+    const scope = await resolveTeacherScope(this.prisma, establishmentId, actor);
+    // Restriction aux examens du périmètre (aucune note hors assignation).
+    let examIds: string[] | undefined;
+    if (scope) {
+      const exams = await this.prisma.exam.findMany({
+        where: { establishmentId, isActive: true },
+        select: { id: true, subjectId: true, classroomId: true, academicYearId: true },
+      });
+      examIds = exams
+        .filter((exam) => examInScope(scope, exam))
+        .map((exam) => exam.id);
+    }
     return this.prisma.grade.findMany({
-      where: { establishmentId },
+      where: { establishmentId, ...(examIds ? { examId: { in: examIds } } : {}) },
       include: {
         student: { select: { id: true, firstName: true, lastName: true } },
         exam: { select: { id: true, name: true, maxScore: true } },
@@ -139,11 +178,13 @@ export class GradesService {
     });
   }
 
-  async update(id: string, establishmentId: string, dto: UpdateGradeDto) {
+  async update(id: string, establishmentId: string, dto: UpdateGradeDto, actor?: RequestActor) {
     const grade = await this.prisma.grade.findFirst({
       where: { id, establishmentId },
+      include: { exam: true },
     });
     if (!grade) throw new NotFoundException('Note introuvable');
+    await this.assertExamInTeacherScope(establishmentId, grade.exam, actor);
 
     return this.prisma.grade.update({
       where: { id },
@@ -155,11 +196,13 @@ export class GradesService {
     });
   }
 
-  async remove(id: string, establishmentId: string) {
+  async remove(id: string, establishmentId: string, actor?: RequestActor) {
     const grade = await this.prisma.grade.findFirst({
       where: { id, establishmentId },
+      include: { exam: true },
     });
     if (!grade) throw new NotFoundException('Note introuvable');
+    await this.assertExamInTeacherScope(establishmentId, grade.exam, actor);
 
     return this.prisma.grade.delete({ where: { id } });
   }

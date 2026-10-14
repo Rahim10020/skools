@@ -32,7 +32,20 @@ export class TeacherAssignmentsController {
   @Get()
   @Roles(Role.DIRECTOR, Role.CENSEUR, Role.TEACHER)
   findAll(@Request() req: any) {
-    return this.teacherAssignmentsService.findAll(req.user.establishmentId);
+    return this.teacherAssignmentsService.findAll(req.user.establishmentId, {
+      id: req.user.id,
+      role: req.user.role,
+    });
+  }
+
+  /** Raccourci explicite « Mes classes » pour le rôle TEACHER. */
+  @Get('me')
+  @Roles(Role.TEACHER)
+  findMine(@Request() req: any) {
+    return this.teacherAssignmentsService.findMine(
+      req.user.id,
+      req.user.establishmentId,
+    );
   }
 
   @Delete(':id')

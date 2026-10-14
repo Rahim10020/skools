@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { CrudPage } from "../../components/crud/CrudPage";
 import { Select } from "../../components/ui/select";
 import api from "../../lib/api";
+import { useAuthStore } from "../../stores/auth-store";
 import { omitEmptyStrings } from "../../components/crud/crud-helpers";
 
 type DayOfWeek =
@@ -71,22 +72,29 @@ const schema = z.object({
 
 export default function SchedulesPage() {
   const [filterClassroomId, setFilterClassroomId] = useState("");
+  const role = useAuthStore((state) => state.role);
+  const isTeacher = role === "TEACHER";
 
   const classroomsQuery = useQuery({
     queryKey: ["classrooms"],
     queryFn: async () => (await api.get<IdName[]>("/classrooms")).data,
+    // Enseignant : créneaux déjà filtrés serveur ; noms inclus dans la réponse.
+    enabled: !isTeacher,
   });
   const subjectsQuery = useQuery({
     queryKey: ["subjects"],
     queryFn: async () => (await api.get<IdName[]>("/subjects")).data,
+    enabled: !isTeacher,
   });
   const teachersQuery = useQuery({
     queryKey: ["teachers"],
     queryFn: async () => (await api.get<TeacherOption[]>("/teachers")).data,
+    enabled: !isTeacher,
   });
   const yearsQuery = useQuery({
     queryKey: ["academic-years"],
     queryFn: async () => (await api.get<IdName[]>("/academic-years")).data,
+    enabled: !isTeacher,
   });
 
   const toOptions = (data: IdName[] | undefined) =>
@@ -94,22 +102,29 @@ export default function SchedulesPage() {
 
   return (
     <CrudPage<Schedule>
-      title="Emplois du temps"
-      description="Les créneaux de cours par classe : jour, horaires, matière, enseignant, salle."
+      title={isTeacher ? "Mon emploi du temps" : "Emplois du temps"}
+      description={
+        isTeacher
+          ? "Vos créneaux de cours : jour, horaires, matière, classe, salle."
+          : "Les créneaux de cours par classe : jour, horaires, matière, enseignant, salle."
+      }
+      readOnly={isTeacher}
       itemLabel="créneau"
       createLabel="Nouveau créneau"
       queryKey={["schedules", filterClassroomId]}
       endpoint="/schedules"
       listPath={filterClassroomId ? `/schedules?classroomId=${filterClassroomId}` : "/schedules"}
       toolbarExtra={
-        <div className="max-w-md">
-          <Select
-            label="Filtrer par classe : Toutes"
-            value={filterClassroomId}
-            onChange={setFilterClassroomId}
-            options={toOptions(classroomsQuery.data)}
-          />
-        </div>
+        isTeacher ? undefined : (
+          <div className="max-w-md">
+            <Select
+              label="Filtrer par classe : Toutes"
+              value={filterClassroomId}
+              onChange={setFilterClassroomId}
+              options={toOptions(classroomsQuery.data)}
+            />
+          </div>
+        )
       }
       columns={[
         { header: "Jour", primary: true, render: (slot) => DAY_LABELS[slot.dayOfWeek] ?? slot.dayOfWeek },
