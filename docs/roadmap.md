@@ -35,10 +35,10 @@
 - [ ] Emprunts & retours : modèle + CRUD + UI.
 - [ ] Élèves en consultation limitée pour les emprunts.
 
-## 5. Notifications (cloche)
+## 5. Notifications (cloche) — FAIT (lot 6, testé live)
 
-- [ ] Backend : modèle + endpoints (notifications par événement : note publiée, incident, inscription…).
-- [ ] Frontend : cloche dans la sidebar/header avec compteur + panneau.
+- [x] Backend : modèle `Notification` + endpoints (`GET /`, `/unread-count`, `PATCH /:id/read`, `POST /read-all`, migration `add_notifications`), émission (fiche disciplinaire → élève+parents, inscription → élève+parents, notes bulk examen publié → élèves+parents, ajout membre → bienvenue).
+- [x] Frontend : cloche sidebar + header mobile avec compteur + panneau (lus/non-lus, navigation via `link`, scrutation 60 s). SUPER_ADMIN exclu (pas de périmètre établissement).
 
 ## 6. Rôles : finitions — FAIT sauf badge (lot 5)
 

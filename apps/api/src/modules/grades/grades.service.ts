@@ -17,10 +17,14 @@ import {
   assertStudentVisible,
 } from '../../common/helpers/family-scope.js';
 import type { RequestActor } from '../../common/types/request-actor.js';
+import { NotificationsService } from '../notifications/notifications.service.js';
 
 @Injectable()
 export class GradesService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly notificationsService: NotificationsService,
+  ) {}
 
   /** 403 si l'examen est hors du périmètre enseignant (TEACHER uniquement). */
   private async assertExamInTeacherScope(
@@ -86,6 +90,7 @@ export class GradesService {
   async bulkCreate(establishmentId: string, dto: BulkGradesDto, actor?: RequestActor) {
     const exam = await this.prisma.exam.findFirst({
       where: { id: dto.examId, establishmentId, isActive: true },
+      include: { subject: { select: { name: true } } },
     });
     if (!exam) throw new BadRequestException('Examen invalide');
     await this.assertExamInTeacherScope(establishmentId, exam, actor);
@@ -126,6 +131,28 @@ export class GradesService {
         });
         results.push(created);
       }
+    }
+
+    // Examen publié : notifie les élèves notés et leurs parents (comptes liés).
+    if (exam.isPublished) {
+      const studentIds = [...new Set(dto.grades.map((g) => g.studentId))];
+      const students = await this.prisma.student.findMany({
+        where: { id: { in: studentIds }, establishmentId },
+        select: { id: true, userId: true },
+      });
+      const links = await this.prisma.parentStudent.findMany({
+        where: { studentId: { in: studentIds } },
+        include: { parent: { select: { userId: true } } },
+      });
+      await this.notificationsService.notify(establishmentId,
+        [...students.map((s) => s.userId), ...links.map((l) => l.parent.userId)],
+        {
+          type: 'NOTE',
+          title: `Nouvelles notes — ${exam.name}`,
+          message: exam.subject.name,
+          link: '/report-cards',
+        },
+      );
     }
 
     return results;

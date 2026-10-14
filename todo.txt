@@ -16,3 +16,8 @@ le rendu, `0` préservé, toasts. Persistance backend vérifiée (upsert).
 - Module bibliothèque.
 - Badges sidebar (ex. Discipline (3)).
 - Accessibilité / responsive fin.
+
+
+Reste roadmap : espace SUPER_ADMIN, bibliothèque, 
+paramètres pédagogiques/système, badge sidebar, rate limiting, 
+tests, a11y. Dis go + le lot (ex. go bibliothèque).

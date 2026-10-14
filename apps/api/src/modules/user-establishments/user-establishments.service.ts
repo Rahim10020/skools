@@ -8,6 +8,7 @@ import { Role } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service.js';
 import { AddMemberDto } from './dto/add-member.dto.js';
 import { UpdateMemberRoleDto } from './dto/update-member-role.dto.js';
+import { NotificationsService } from '../notifications/notifications.service.js';
 
 const MEMBER_SELECT = {
   id: true,
@@ -25,7 +26,10 @@ const MEMBER_SELECT = {
  */
 @Injectable()
 export class UserEstablishmentsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly notificationsService: NotificationsService,
+  ) {}
 
   async findMembers(establishmentId: string) {
     return this.prisma.userEstablishment.findMany({
@@ -56,10 +60,23 @@ export class UserEstablishmentsService {
       );
     }
 
-    return this.prisma.userEstablishment.create({
+    const membership = await this.prisma.userEstablishment.create({
       data: { userId: user.id, establishmentId, role: dto.role },
       select: MEMBER_SELECT,
     });
+
+    const establishment = await this.prisma.establishment.findUnique({
+      where: { id: establishmentId },
+      select: { name: true },
+    });
+    await this.notificationsService.notify(establishmentId, [user.id], {
+      type: 'MEMBRE',
+      title: `Bienvenue — ${establishment?.name ?? 'votre établissement'}`,
+      message: `Votre rôle : ${dto.role}`,
+      link: '/dashboard',
+    });
+
+    return membership;
   }
 
   async updateRole(

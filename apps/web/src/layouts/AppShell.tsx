@@ -3,7 +3,9 @@ import { Outlet } from "react-router-dom";
 import { Sidebar } from "../components/layout/Sidebar";
 import { Wordmark } from "../components/Wordmark";
 import { ThemeToggle } from "../components/ThemeToggle";
+import { NotificationsBell } from "../features/notifications/NotificationsBell";
 import { Toaster } from "../components/ui/toaster";
+import { useAuthStore } from "../stores/auth-store";
 
 function HamburgerGlyph() {
   return (
@@ -24,6 +26,7 @@ function HamburgerGlyph() {
 
 export function AppShell() {
   const [mobileOpen, setMobileOpen] = useState(false);
+  const role = useAuthStore((state) => state.role);
 
   return (
     <div
@@ -49,6 +52,7 @@ export function AppShell() {
         </button>
         <Wordmark />
         <span className="flex-1" />
+        {role !== "SUPER_ADMIN" && <NotificationsBell />}
         <ThemeToggle />
       </header>
 

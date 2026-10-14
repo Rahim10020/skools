@@ -10,10 +10,14 @@ import { UpdateDisciplineDto } from './dto/update-discipline.dto.js';
 import { DisciplineStatus } from '@prisma/client';
 import type { RequestActor } from '../../common/types/request-actor.js';
 import { assertStudentVisible } from '../../common/helpers/family-scope.js';
+import { NotificationsService } from '../notifications/notifications.service.js';
 
 @Injectable()
 export class DisciplineService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly notificationsService: NotificationsService,
+  ) {}
 
   async create(
     establishmentId: string,
@@ -25,7 +29,7 @@ export class DisciplineService {
     });
     if (!student) throw new BadRequestException('Élève invalide');
 
-    return this.prisma.disciplineRecord.create({
+    const record = await this.prisma.disciplineRecord.create({
       data: {
         establishmentId,
         studentId: dto.studentId,
@@ -50,6 +54,23 @@ export class DisciplineService {
         },
       },
     });
+
+    // Notifie l'élève et ses parents (comptes liés uniquement).
+    const links = await this.prisma.parentStudent.findMany({
+      where: { studentId: dto.studentId },
+      include: { parent: { select: { userId: true } } },
+    });
+    await this.notificationsService.notify(establishmentId,
+      [student.userId, ...links.map((l) => l.parent.userId)],
+      {
+        type: 'DISCIPLINE',
+        title: `Fiche disciplinaire — ${student.firstName} ${student.lastName}`,
+        message: dto.title,
+        link: '/discipline',
+      },
+    );
+
+    return record;
   }
 
   async findAll(establishmentId: string, studentId?: string, actor?: RequestActor) {

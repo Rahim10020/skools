@@ -42,7 +42,7 @@
 | `classrooms` | `academicYearId UUID, levelId UUID, seriesId?: UUID, name (≥1), capacity?: int ≥1` |
 | `periods` | `academicYearId UUID, name (≥2), startDate ISO, endDate ISO, order?` |
 
-> `periods` : `GET /` et `GET /:id` ouverts à tous les rôles d'établissement (filtre période des bulletins). Écritures DIRECTOR/ADMIN.
+> `academic-years` et `periods` : `GET /` et `GET /:id` ouverts à tous les rôles d'établissement (matrice règle 6 : sélecteur d'année visible sauf SUPER_ADMIN ; filtre période des bulletins). Écritures DIRECTOR/ADMIN (CENSEUR lit les années).
 
 ## Personnes (JWT)
 
@@ -74,21 +74,28 @@
   - `POST /attendances/bulk` : `{ classroomId, date ISO, attendances: [{ studentId, status (requis), notes? }] }` — upsert en boucle, élèves non vérifiés, `[]` → 200 `[]`.
   - `GET /attendances?classroomId=&date=` — **les deux requis, sans validation : sans `date` → 500**. Toujours envoyer les deux. TEACHER : 403 si classe non assignée. **Pas de `?studentId=`, pas de PATCH/DELETE.**
   - `GET /attendances/student?studentId=` (« Mes absences ») : STUDENT/PARENT (lui-même / ses enfants, 403 sinon), TEACHER (élève inscrit dans ses classes), staff. Inclut `classroom{name}`, tri date desc.
-- `academic-years` : `GET /` et `GET /:id` ouverts à tous les rôles d'établissement (matrice règle 6 : sélecteur d'année visible sauf SUPER_ADMIN). Écritures DIRECTOR/ADMIN, lecture CENSEUR comme avant.
 - `schedules` CRUD : `classroomId, subjectId, academicYearId, dayOfWeek: MONDAY..SUNDAY, startTime/endTime `HH:mm` (regex stricte), teacherId?, room?`. `GET /schedules?classroomId=` optionnel. TEACHER : `GET /` et `GET /:id` restreints aux classes assignées (« Mon emploi du temps »). STUDENT/PARENT : restreints aux classes d'inscription (lui-même / ses enfants, 403 si `classroomId` hors périmètre).
 - `enrollments` : `GET /` et `GET /:id` ouverts à TEACHER (ses classes), STUDENT (siennes), PARENT (ses enfants). Écritures DIRECTOR/ADMIN.
 - `discipline` CRUD + `GET /discipline?studentId=` optionnel : `studentId, type: WARNING\|REPRIMAND\|DETENTION\|SUSPENSION\|EXPULSION\|OBSERVATION\|OTHER, title (≥3), incidentDate ISO, description?, status?: PENDING\|ACTIVE\|RESOLVED\|CANCELLED`. PATCH accepte en plus `resolution?, resolvedAt?`. `reportedById` injecté serveur.
+
+## Notifications (JWT, tous les rôles d'établissement sauf SUPER_ADMIN)
+
+- `GET /notifications` → 50 dernières du compte (ordre desc) : `{ id, type: NOTE\|ABSENCE\|DISCIPLINE\|INSCRIPTION\|MEMBRE\|INFO, title, message\|null, link\|null, readAt\|null, createdAt }`.
+- `GET /notifications/unread-count` → `{ count }` (scrutation cloche, 60 s côté UI).
+- `PATCH /notifications/:id/read` → marque lue (404 si autre compte/établissement).
+- `POST /notifications/read-all` → marque tout lu.
+- Émission serveur : discipline → élève + parents liés ; inscription → élève + parents ; notes bulk (examen publié) → élèves notés + parents ; ajout membre → bienvenue. Comptes sans `userId` lié = pas de notification (silencieux).
 
 ## Incohérences connues (ne pas contourner silencieusement)
 
 1. `BulkGradesDto` exige `examId` redondant par item (§ Évaluations).
 2. `GET /attendances` sans `date` → 500, pas 400.
 3. `PATCH /grades/:id` ignore `examId/studentId`.
-4. Inexistants → 404 Nest (pas métier) : `GET /grades/:id`, `PATCH /teacher-assignments/:id`, `PATCH /parent-students`, `PATCH|DELETE /attendances`, tout `POST|PATCH|DELETE /report-cards`, `GET /attendances?studentId=`.
+4. Inexistants → 404 Nest (pas métier) : `GET /grades/:id`, `PATCH /teacher-assignments/:id`, `PATCH /parent-students`, `PATCH|DELETE /attendances`, tout `POST|PATCH|DELETE /report-cards`, `GET /attendances?studentId=` (l'historique est `GET /attendances/student?studentId=`).
 5. `GET /report-cards/student` : `periodId` invalide → 200 `[]`, pas 400 (incohérent avec `studentId/academicYearId` stricts).
 6. CORS : origines via `FRONTEND_URL` (liste séparée par virgules) — mettre à jour au déploiement.
 7. `JWT_SECRET` obligatoire : le boot API refuse sans lui (fail-fast §8).
-7. `POST /establishments` accède à `authService['generateTokens']` (privé) — fragile, ne pas en dépendre au-delà du contrat de réponse.
+8. `POST /establishments` accède à `authService['generateTokens']` (privé) — fragile, ne pas en dépendre au-delà du contrat de réponse.
 
 ## Diagnostic bug notes/présences (todo.txt) — verdict Phase 0 : bug UI, pas backend
 

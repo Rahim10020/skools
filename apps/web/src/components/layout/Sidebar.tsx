@@ -14,6 +14,7 @@ import { ThemeToggle } from "../ThemeToggle";
 import { Wordmark } from "../Wordmark";
 import { ActiveYearSelector } from "../ActiveYearSelector";
 import { ChildSelector } from "../ChildSelector";
+import { NotificationsBell } from "../../features/notifications/NotificationsBell";
 import { Icon } from "../icons/Icon";
 import { ChevronBackIcon } from "../icons/ChevronBackIcon";
 import { LogOutIcon } from "../icons/LogOutIcon";
@@ -264,6 +265,7 @@ export function Sidebar({
             <p className="text-m12 text-(--skools-text-primary) truncate">{fullName}</p>
               {role && <p className="text-r11 text-(--skools-text-muted) truncate">{roleLabel(role)}</p>}
           </div>
+          {role !== "SUPER_ADMIN" && <NotificationsBell collapsed={collapsed} />}
           <ThemeToggle />
         </div>
         <span className={collapsed ? "lg:hidden" : ""}>

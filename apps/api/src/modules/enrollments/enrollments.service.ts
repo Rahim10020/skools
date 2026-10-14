@@ -18,10 +18,14 @@ import {
   resolveVisibleStudentIds,
 } from '../../common/helpers/family-scope.js';
 import type { RequestActor } from '../../common/types/request-actor.js';
+import { NotificationsService } from '../notifications/notifications.service.js';
 
 @Injectable()
 export class EnrollmentsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly notificationsService: NotificationsService,
+  ) {}
 
   async create(establishmentId: string, dto: CreateEnrollmentDto) {
     // Vérifie que l'élève existe dans l'établissement
@@ -57,7 +61,7 @@ export class EnrollmentsService {
       );
     }
 
-    return this.prisma.enrollment.create({
+    const enrollment = await this.prisma.enrollment.create({
       data: {
         establishmentId,
         studentId: dto.studentId,
@@ -74,12 +78,30 @@ export class EnrollmentsService {
             firstName: true,
             lastName: true,
             matricule: true,
+            userId: true,
           },
         },
         classroom: { select: { id: true, name: true } },
         academicYear: { select: { id: true, name: true } },
       },
     });
+
+    // Notifie l'élève et ses parents (comptes liés uniquement).
+    const links = await this.prisma.parentStudent.findMany({
+      where: { studentId: dto.studentId },
+      include: { parent: { select: { userId: true } } },
+    });
+    await this.notificationsService.notify(establishmentId,
+      [enrollment.student.userId, ...links.map((l) => l.parent.userId)],
+      {
+        type: 'INSCRIPTION',
+        title: `Inscription — ${enrollment.student.firstName} ${enrollment.student.lastName}`,
+        message: `${enrollment.classroom.name} · ${enrollment.academicYear.name}`,
+        link: '/schedules',
+      },
+    );
+
+    return enrollment;
   }
 
   async findAll(establishmentId: string, actor?: RequestActor) {

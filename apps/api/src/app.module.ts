@@ -25,6 +25,7 @@ import { SchedulesModule } from './modules/schedules/schedules.module.js';
 import { ReportCardsModule } from './modules/report-cards/report-cards.module.js';
 import { DisciplineModule } from './modules/discipline/discipline.module.js';
 import { UserEstablishmentsModule } from './modules/user-establishments/user-establishments.module.js';
+import { NotificationsModule } from './modules/notifications/notifications.module.js';
 
 @Module({
   imports: [
@@ -53,6 +54,7 @@ import { UserEstablishmentsModule } from './modules/user-establishments/user-est
     ReportCardsModule,
     DisciplineModule,
     UserEstablishmentsModule,
+    NotificationsModule,
     AuthModule,
   ],
   controllers: [AppController],

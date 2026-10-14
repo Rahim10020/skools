@@ -64,6 +64,7 @@ model Establishment {
   classrooms          Classroom[]
   subjects            Subject[]
   periods             Period[]
+  notifications       Notification[]
 
   @@map("establishments")
 }
@@ -88,6 +89,7 @@ model User {
   refreshTokens  RefreshToken[]
   recordedAttendances Attendance[]
   reportedDisciplines DisciplineRecord[]
+  notifications  Notification[]
 
   @@map("users")
 }
@@ -560,4 +562,31 @@ model DisciplineRecord {
   reportedBy    User?         @relation(fields: [reportedById], references: [id], onDelete: SetNull)
 
   @@map("discipline_records")
+}
+
+enum NotificationType {
+  NOTE
+  ABSENCE
+  DISCIPLINE
+  INSCRIPTION
+  MEMBRE
+  INFO
+}
+
+model Notification {
+  id              String           @id @default(uuid())
+  establishmentId String           @map("establishment_id")
+  userId          String           @map("user_id") // destinataire
+  type            NotificationType
+  title           String
+  message         String?
+  link            String?          // route frontend (ex. /report-cards)
+  readAt          DateTime?        @map("read_at")
+  createdAt       DateTime         @default(now()) @map("created_at")
+
+  establishment Establishment @relation(fields: [establishmentId], references: [id], onDelete: Cascade)
+  user          User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, readAt])
+  @@map("notifications")
 }
