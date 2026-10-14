@@ -1,3 +1,5 @@
+import { API } from "../../lib/api-endpoints";
+import { KEYS } from "../../lib/query-keys";
 import { z } from "zod";
 import { useQuery } from "@tanstack/react-query";
 import { CrudPage } from "../../components/crud/CrudPage";
@@ -48,16 +50,16 @@ const schema = z.object({
 
 export default function EnrollmentsPage() {
   const studentsQuery = useQuery({
-    queryKey: ["students"],
-    queryFn: async () => (await api.get<StudentOption[]>("/students")).data,
+    queryKey: KEYS.students,
+    queryFn: async () => (await api.get<StudentOption[]>(API.students)).data,
   });
   const classroomsQuery = useQuery({
-    queryKey: ["classrooms"],
-    queryFn: async () => (await api.get<IdName[]>("/classrooms")).data,
+    queryKey: KEYS.classrooms,
+    queryFn: async () => (await api.get<IdName[]>(API.classrooms)).data,
   });
   const yearsQuery = useQuery({
-    queryKey: ["academic-years"],
-    queryFn: async () => (await api.get<IdName[]>("/academic-years")).data,
+    queryKey: KEYS.academicYears,
+    queryFn: async () => (await api.get<IdName[]>(API.academicYears)).data,
   });
 
   return (
@@ -66,8 +68,8 @@ export default function EnrollmentsPage() {
       description="L'affectation des élèves aux classes pour chaque année scolaire."
       itemLabel="inscription"
       createLabel="Nouvelle inscription"
-      queryKey={["enrollments"]}
-      endpoint="/enrollments"
+      queryKey={KEYS.enrollments}
+      endpoint={API.enrollments}
       columns={[
         {
           header: "Élève",

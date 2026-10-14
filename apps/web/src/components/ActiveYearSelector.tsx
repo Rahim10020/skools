@@ -1,3 +1,5 @@
+import { API } from "../lib/api-endpoints";
+import { KEYS } from "../lib/query-keys";
 import { useQuery } from "@tanstack/react-query";
 import api from "../lib/api";
 import { useAuthStore } from "../stores/auth-store";
@@ -22,8 +24,8 @@ export function ActiveYearSelector({ collapsed }: { collapsed: boolean }) {
   const setActiveYear = useAcademicYearStore((s) => s.setActiveYear);
 
   const yearsQuery = useQuery({
-    queryKey: ["academic-years"],
-    queryFn: async () => (await api.get<AcademicYearOption[]>("/academic-years")).data,
+    queryKey: KEYS.academicYears,
+    queryFn: async () => (await api.get<AcademicYearOption[]>(API.academicYears)).data,
     enabled: !!establishmentId && role !== "SUPER_ADMIN",
   });
 

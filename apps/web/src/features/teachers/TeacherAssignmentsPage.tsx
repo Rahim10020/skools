@@ -1,3 +1,5 @@
+import { API, apiPath } from "../../lib/api-endpoints";
+import { KEYS } from "../../lib/query-keys";
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import api, { getErrorMessage } from "../../lib/api";
@@ -53,37 +55,37 @@ export default function TeacherAssignmentsPage() {
   const [removeTarget, setRemoveTarget] = useState<TeacherAssignment | null>(null);
 
   const assignmentsQuery = useQuery({
-    queryKey: ["teacher-assignments", isTeacher ? "me" : "all"],
+    queryKey: isTeacher ? KEYS.teacherAssignmentsMe : KEYS.teacherAssignmentsAll,
     queryFn: async () =>
-      (await api.get<TeacherAssignment[]>(isTeacher ? "/teacher-assignments/me" : "/teacher-assignments")).data,
+      (await api.get<TeacherAssignment[]>(isTeacher ? API.teacherAssignmentsMe : API.teacherAssignments)).data,
   });
   const teachersQuery = useQuery({
-    queryKey: ["teachers"],
-    queryFn: async () => (await api.get<TeacherOption[]>("/teachers")).data,
+    queryKey: KEYS.teachers,
+    queryFn: async () => (await api.get<TeacherOption[]>(API.teachers)).data,
     // Enseignant : vue « Mes classes » en lecture seule (pas d'accès aux référentiels).
     enabled: !isTeacher,
   });
   const subjectsQuery = useQuery({
-    queryKey: ["subjects"],
-    queryFn: async () => (await api.get<IdName[]>("/subjects")).data,
+    queryKey: KEYS.subjects,
+    queryFn: async () => (await api.get<IdName[]>(API.subjects)).data,
     enabled: !isTeacher,
   });
   const classroomsQuery = useQuery({
-    queryKey: ["classrooms"],
-    queryFn: async () => (await api.get<IdName[]>("/classrooms")).data,
+    queryKey: KEYS.classrooms,
+    queryFn: async () => (await api.get<IdName[]>(API.classrooms)).data,
     enabled: !isTeacher,
   });
   const yearsQuery = useQuery({
-    queryKey: ["academic-years"],
-    queryFn: async () => (await api.get<IdName[]>("/academic-years")).data,
+    queryKey: KEYS.academicYears,
+    queryFn: async () => (await api.get<IdName[]>(API.academicYears)).data,
     enabled: !isTeacher,
   });
 
   const createMutation = useMutation({
     mutationFn: async (data: { teacherId: string; subjectId: string; classroomId: string; academicYearId: string }) =>
-      (await api.post("/teacher-assignments", data)).data,
+      (await api.post(API.teacherAssignments, data)).data,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["teacher-assignments"] });
+      queryClient.invalidateQueries({ queryKey: KEYS.teacherAssignments });
       toast.success("Affectation enregistrée");
       setTeacherId("");
       setSubjectId("");
@@ -95,9 +97,9 @@ export default function TeacherAssignmentsPage() {
   });
 
   const removeMutation = useMutation({
-    mutationFn: async (id: string) => (await api.delete(`/teacher-assignments/${id}`)).data,
+    mutationFn: async (id: string) => (await api.delete(apiPath.withId(API.teacherAssignments, id))).data,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["teacher-assignments"] });
+      queryClient.invalidateQueries({ queryKey: KEYS.teacherAssignments });
       toast.success("Affectation retirée");
       setRemoveTarget(null);
     },

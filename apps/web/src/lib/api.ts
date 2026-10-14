@@ -1,6 +1,8 @@
 import axios, { AxiosError } from "axios";
 import { useAuthStore } from "../stores/auth-store";
 import { navigateTo } from "./navigation";
+import { ROUTES } from "./routes";
+import { API } from "./api-endpoints";
 import type { ApiErrorShape, RefreshResponse } from "../types/api";
 
 export const API_BASE_URL =
@@ -36,9 +38,9 @@ api.interceptors.response.use(
 
     if (error.response?.status === 401 && originalRequest && !originalRequest._retry) {
       // Ne jamais boucler sur l'endpoint de refresh lui-même.
-      if (originalRequest.url?.includes("/auth/refresh")) {
+      if (originalRequest.url?.includes(API.authRefresh)) {
         useAuthStore.getState().logout();
-        navigateTo("/login");
+        navigateTo(ROUTES.login);
         return Promise.reject(error);
       }
       originalRequest._retry = true;
@@ -47,7 +49,7 @@ api.interceptors.response.use(
       if (refreshToken) {
         try {
           const { data } = await axios.post<RefreshResponse>(
-            `${API_BASE_URL}/auth/refresh`,
+            `${API_BASE_URL}${API.authRefresh}`,
             { refreshToken },
           );
 
@@ -67,11 +69,11 @@ api.interceptors.response.use(
           return api(originalRequest);
         } catch {
           useAuthStore.getState().logout();
-          navigateTo("/login");
+          navigateTo(ROUTES.login);
         }
       } else {
         useAuthStore.getState().logout();
-        navigateTo("/login");
+        navigateTo(ROUTES.login);
       }
     }
 
@@ -85,7 +87,7 @@ api.interceptors.response.use(
  */
 export async function requestServerLogout(refreshToken?: string) {
   try {
-    await api.post("/auth/logout", refreshToken ? { refreshToken } : {});
+    await api.post(API.authLogout, refreshToken ? { refreshToken } : {});
   } catch {
     // Best-effort : un réseau coupé ne doit pas bloquer la déconnexion locale.
   }

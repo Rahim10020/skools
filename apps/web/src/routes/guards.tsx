@@ -1,3 +1,4 @@
+import { ROUTES } from "../lib/routes";
 import { Navigate, Outlet, useLocation } from "react-router-dom";
 import { useAuthStore } from "../stores/auth-store";
 import { canAccess } from "../lib/permissions";
@@ -16,13 +17,13 @@ export function RequireAuth() {
   }
 
   if (!isAuthenticated()) {
-    return <Navigate to="/login" replace />;
+    return <Navigate to={ROUTES.login} replace />;
   }
 
   return <Outlet />;
 }
 
-const SETUP_FREE_PATHS = ["/dashboard", "/create-establishment", "/profil"];
+const SETUP_FREE_PATHS: string[] = [ROUTES.dashboard, ROUTES.createEstablishment, ROUTES.profil];
 
 /**
  * Les pages métier exigent un établissement courant.
@@ -33,7 +34,7 @@ export function RequireEstablishment() {
   const { pathname } = useLocation();
 
   if (!establishmentId && !SETUP_FREE_PATHS.includes(pathname)) {
-    return <Navigate to="/create-establishment" replace />;
+    return <Navigate to={ROUTES.createEstablishment} replace />;
   }
 
   return <Outlet />;
@@ -48,7 +49,7 @@ export function RequireRole() {
   const { pathname } = useLocation();
 
   if (!canAccess(pathname, role)) {
-    return <Navigate to="/dashboard" replace />;
+    return <Navigate to={ROUTES.dashboard} replace />;
   }
 
   return <Outlet />;

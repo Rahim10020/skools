@@ -1,7 +1,10 @@
+import { API, apiPath } from "../../lib/api-endpoints";
+import { KEYS } from "../../lib/query-keys";
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import api, { getErrorMessage } from "../../lib/api";
+import { isKnownRoute } from "../../lib/routes";
 import { BellIcon } from "../../components/icons/BellIcon";
 import { IconButton } from "../../components/ui/icon-button";
 import { EmptyState } from "../../components/ui/empty-state";
@@ -59,29 +62,29 @@ export function NotificationsBell({ collapsed = false }: { collapsed?: boolean }
   const rootRef = useRef<HTMLDivElement>(null);
 
   const listQuery = useQuery({
-    queryKey: ["notifications"],
-    queryFn: async () => (await api.get<AppNotification[]>("/notifications")).data,
+    queryKey: KEYS.notifications,
+    queryFn: async () => (await api.get<AppNotification[]>(API.notifications)).data,
     refetchInterval: 60_000,
     enabled: open,
   });
   const countQuery = useQuery({
-    queryKey: ["notifications", "unread-count"],
+    queryKey: KEYS.notificationsUnreadCount,
     queryFn: async () =>
-      (await api.get<{ count: number }>("/notifications/unread-count")).data,
+      (await api.get<{ count: number }>(API.notificationsUnreadCount)).data,
     refetchInterval: 60_000,
   });
 
   const invalidate = () => {
-    queryClient.invalidateQueries({ queryKey: ["notifications"] });
+    queryClient.invalidateQueries({ queryKey: KEYS.notifications });
   };
 
   const readMutation = useMutation({
-    mutationFn: async (id: string) => (await api.patch(`/notifications/${id}/read`)).data,
+    mutationFn: async (id: string) => (await api.patch(apiPath.notificationRead(id))).data,
     onSuccess: () => invalidate(),
   });
 
   const readAllMutation = useMutation({
-    mutationFn: async () => (await api.post("/notifications/read-all")).data,
+    mutationFn: async () => (await api.post(API.notificationsReadAll)).data,
     onSuccess: () => invalidate(),
   });
 
@@ -108,7 +111,8 @@ export function NotificationsBell({ collapsed = false }: { collapsed?: boolean }
   const handleOpen = (item: AppNotification) => {
     if (!item.readAt) readMutation.mutate(item.id);
     setOpen(false);
-    if (item.link) navigate(item.link);
+    // Garde-fou : un lien inconnu ne navigue jamais (pas de 404 silencieuse).
+    if (item.link && isKnownRoute(item.link)) navigate(item.link);
   };
 
   return (

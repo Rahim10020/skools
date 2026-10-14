@@ -1,3 +1,5 @@
+import { API } from "../../lib/api-endpoints";
+import { KEYS } from "../../lib/query-keys";
 import { useQuery } from "@tanstack/react-query";
 import api, { getErrorMessage } from "../../lib/api";
 import { PageHeader } from "../../layouts/PageHeader";
@@ -46,16 +48,16 @@ function formatScore(grade: StudentGrade): string {
  */
 export default function MyGradesPage() {
   const meQuery = useQuery({
-    queryKey: ["students", "me"],
-    queryFn: async () => (await api.get<MeStudent>("/students/me")).data,
+    queryKey: KEYS.studentsMe,
+    queryFn: async () => (await api.get<MeStudent>(API.studentsMe)).data,
   });
 
   const studentId = meQuery.data?.id ?? "";
   const gradesQuery = useQuery({
-    queryKey: ["grades", "student", studentId],
+    queryKey: KEYS.gradesByStudent(studentId),
     queryFn: async () =>
       (
-        await api.get<StudentGrade[]>("/grades", {
+        await api.get<StudentGrade[]>(API.grades, {
           params: { studentId },
         })
       ).data,

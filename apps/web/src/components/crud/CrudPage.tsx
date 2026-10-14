@@ -61,7 +61,7 @@ export interface CrudPageProps<T> {
   /** Libellé du bouton de création ("Nouvelle année"). */
   createLabel: string;
   emptyDescription?: string;
-  queryKey: string[];
+  queryKey: readonly string[];
   endpoint: string;
   /** URL de lecture (défaut : endpoint). Permet les query params de filtre (?classroomId=). */
   listPath?: string;

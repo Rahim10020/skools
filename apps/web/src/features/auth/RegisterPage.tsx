@@ -1,3 +1,5 @@
+import { API } from "../../lib/api-endpoints";
+import { ROUTES } from "../../lib/routes";
 import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -36,12 +38,12 @@ export default function RegisterPage() {
   });
 
   if (isAuthenticated()) {
-    return <Navigate to="/dashboard" replace />;
+    return <Navigate to={ROUTES.dashboard} replace />;
   }
 
   const onSubmit = async (data: RegisterForm) => {
     try {
-      const response = await api.post<RegisterResponse>("/auth/register", data);
+      const response = await api.post<RegisterResponse>(API.authRegister, data);
       const { user, accessToken, refreshToken } = response.data;
 
       // Contrat : register ne renvoie ni establishmentId ni role.
@@ -49,7 +51,7 @@ export default function RegisterPage() {
       setAuth({ user, accessToken, refreshToken, establishmentId: null, role: null });
 
       // Sans établissement : RequireEstablishment + Dashboard redirigent vers la création.
-      navigate("/dashboard");
+      navigate(ROUTES.dashboard);
     } catch (error) {
       setError("root", { message: getErrorMessage(error) });
     }
@@ -156,7 +158,7 @@ export default function RegisterPage() {
 
       <p className="text-center text-r14 text-(--skools-text-muted)">
         Déjà un compte ?{" "}
-        <Link to="/login" className="font-medium text-(--common-blue) hover:underline">
+        <Link to={ROUTES.login} className="font-medium text-(--common-blue) hover:underline">
           Se connecter
         </Link>
       </p>

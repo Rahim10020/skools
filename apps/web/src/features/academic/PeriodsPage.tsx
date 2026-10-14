@@ -1,3 +1,5 @@
+import { API } from "../../lib/api-endpoints";
+import { KEYS } from "../../lib/query-keys";
 import { z } from "zod";
 import { useQuery } from "@tanstack/react-query";
 import { CrudPage } from "../../components/crud/CrudPage";
@@ -38,8 +40,8 @@ export default function PeriodsPage() {
   const role = useAuthStore((state) => state.role);
   // CENSEUR : supervision en lecture seule (matrice), écritures refusées 403.
   const yearsQuery = useQuery({
-    queryKey: ["academic-years"],
-    queryFn: async () => (await api.get<AcademicYearOption[]>("/academic-years")).data,
+    queryKey: KEYS.academicYears,
+    queryFn: async () => (await api.get<AcademicYearOption[]>(API.academicYears)).data,
   });
 
   return (
@@ -49,8 +51,8 @@ export default function PeriodsPage() {
       description="Les périodes d'évaluation de chaque année (trimestres, semestres)."
       itemLabel="période"
       createLabel="Nouvelle période"
-      queryKey={["periods"]}
-      endpoint="/periods"
+      queryKey={KEYS.periods}
+      endpoint={API.periods}
       columns={[
         { header: "Période", primary: true, render: (period) => period.name },
         {

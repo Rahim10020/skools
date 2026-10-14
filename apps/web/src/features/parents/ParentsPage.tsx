@@ -1,3 +1,5 @@
+import { API } from "../../lib/api-endpoints";
+import { KEYS } from "../../lib/query-keys";
 import { z } from "zod";
 import { CrudPage } from "../../components/crud/CrudPage";
 import { useAuthStore } from "../../stores/auth-store";
@@ -36,8 +38,8 @@ export default function ParentsPage() {
       description="Les parents et tuteurs, à lier aux élèves depuis la page dédiée."
       itemLabel="parent"
       createLabel="Nouveau parent"
-      queryKey={["parents"]}
-      endpoint="/parents"
+      queryKey={KEYS.parents}
+      endpoint={API.parents}
       columns={[
         { header: "Parent", primary: true, render: fullName },
         { header: "Téléphone", render: (parent) => parent.phone || "—" },

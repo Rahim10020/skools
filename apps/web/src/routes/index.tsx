@@ -1,5 +1,6 @@
+import { ROUTES } from "../lib/routes";
 import { Suspense, lazy, useEffect } from "react";
-import { Routes, Route } from "react-router-dom";
+import { Routes, Route, Navigate } from "react-router-dom";
 import { useNavigate } from "react-router-dom";
 import { setNavigator } from "../lib/navigation";
 import { AppShell } from "../layouts/AppShell";
@@ -63,46 +64,49 @@ export function AppRoutes() {
       <AuthNavigator />
       <Suspense fallback={<RouteFallback />}>
         <Routes>
+          {/* Racine : toujours vers Vue d'ensemble (RequireAuth redirige vers /login si besoin). */}
+          <Route path={ROUTES.home} element={<Navigate to={ROUTES.dashboard} replace />} />
+
           {/* Routes publiques */}
           <Route element={<GuestLayout />}>
-            <Route path="/login" element={<LoginPage />} />
-            <Route path="/register" element={<RegisterPage />} />
+            <Route path={ROUTES.login} element={<LoginPage />} />
+            <Route path={ROUTES.register} element={<RegisterPage />} />
           </Route>
 
           {/* Routes protégées */}
           <Route element={<RequireAuth />}>
             <Route element={<AppShell />}>
-              <Route path="/dashboard" element={<DashboardPage />} />
-              <Route path="/create-establishment" element={<CreateEstablishmentPage />} />
+              <Route path={ROUTES.dashboard} element={<DashboardPage />} />
+              <Route path={ROUTES.createEstablishment} element={<CreateEstablishmentPage />} />
               <Route element={<RequireEstablishment />}>
                 <Route element={<RequireRole />}>
-                  <Route path="/academic-years" element={<AcademicYearsPage />} />
-                  <Route path="/classrooms" element={<ClassroomsPage />} />
-                  <Route path="/cycles" element={<CyclesPage />} />
-                  <Route path="/levels" element={<LevelsPage />} />
-                  <Route path="/series" element={<SeriesPage />} />
-                  <Route path="/subjects" element={<SubjectsPage />} />
-                  <Route path="/periods" element={<PeriodsPage />} />
-                  <Route path="/students" element={<StudentsPage />} />
-                  <Route path="/teachers" element={<TeachersPage />} />
-                  <Route path="/parents" element={<ParentsPage />} />
-                  <Route path="/enrollments" element={<EnrollmentsPage />} />
-                  <Route path="/exams" element={<ExamsPage />} />
-                  <Route path="/grades" element={<GradesPage />} />
-                  <Route path="/link-parents" element={<LinkParentStudentPage />} />
-                  <Route path="/teacher-assignments" element={<TeacherAssignmentsPage />} />
-                  <Route path="/attendances" element={<AttendancesPage />} />
-                  <Route path="/schedules" element={<SchedulesPage />} />
-                  <Route path="/report-cards" element={<ReportCardsPage />} />
-                  <Route path="/discipline" element={<DisciplinePage />} />
-                  <Route path="/my-children" element={<MyChildrenPage />} />
-                  <Route path="/my-grades" element={<MyGradesPage />} />
-                  <Route path="/my-absences" element={<MyAbsencesPage />} />
-                  <Route path="/users" element={<UsersPage />} />
-                  <Route path="/settings" element={<SettingsPage />} />
+                  <Route path={ROUTES.academicYears} element={<AcademicYearsPage />} />
+                  <Route path={ROUTES.classrooms} element={<ClassroomsPage />} />
+                  <Route path={ROUTES.cycles} element={<CyclesPage />} />
+                  <Route path={ROUTES.levels} element={<LevelsPage />} />
+                  <Route path={ROUTES.series} element={<SeriesPage />} />
+                  <Route path={ROUTES.subjects} element={<SubjectsPage />} />
+                  <Route path={ROUTES.periods} element={<PeriodsPage />} />
+                  <Route path={ROUTES.students} element={<StudentsPage />} />
+                  <Route path={ROUTES.teachers} element={<TeachersPage />} />
+                  <Route path={ROUTES.parents} element={<ParentsPage />} />
+                  <Route path={ROUTES.enrollments} element={<EnrollmentsPage />} />
+                  <Route path={ROUTES.exams} element={<ExamsPage />} />
+                  <Route path={ROUTES.grades} element={<GradesPage />} />
+                  <Route path={ROUTES.linkParents} element={<LinkParentStudentPage />} />
+                  <Route path={ROUTES.teacherAssignments} element={<TeacherAssignmentsPage />} />
+                  <Route path={ROUTES.attendances} element={<AttendancesPage />} />
+                  <Route path={ROUTES.schedules} element={<SchedulesPage />} />
+                  <Route path={ROUTES.reportCards} element={<ReportCardsPage />} />
+                  <Route path={ROUTES.discipline} element={<DisciplinePage />} />
+                  <Route path={ROUTES.myChildren} element={<MyChildrenPage />} />
+                  <Route path={ROUTES.myGrades} element={<MyGradesPage />} />
+                  <Route path={ROUTES.myAbsences} element={<MyAbsencesPage />} />
+                  <Route path={ROUTES.users} element={<UsersPage />} />
+                  <Route path={ROUTES.settings} element={<SettingsPage />} />
                 </Route>
               </Route>
-              <Route path="/profil" element={<ProfilPage />} />
+              <Route path={ROUTES.profil} element={<ProfilPage />} />
             </Route>
           </Route>
 

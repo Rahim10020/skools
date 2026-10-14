@@ -1,3 +1,5 @@
+import { API } from "../../lib/api-endpoints";
+import { KEYS } from "../../lib/query-keys";
 import { z } from "zod";
 import { CrudPage } from "../../components/crud/CrudPage";
 import { useAuthStore } from "../../stores/auth-store";
@@ -27,8 +29,8 @@ export default function CyclesPage() {
       description="Les grands cycles d'enseignement (Primaire, Collège, Lycée)."
       itemLabel="cycle"
       createLabel="Nouveau cycle"
-      queryKey={["cycles"]}
-      endpoint="/cycles"
+      queryKey={KEYS.cycles}
+      endpoint={API.cycles}
       columns={[
         { header: "Cycle", primary: true, render: (cycle) => cycle.name },
         { header: "Ordre", render: (cycle) => cycle.order ?? "—" },

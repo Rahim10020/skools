@@ -1,3 +1,5 @@
+import { API, apiPath } from "../../lib/api-endpoints";
+import { KEYS } from "../../lib/query-keys";
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import api, { getErrorMessage } from "../../lib/api";
@@ -41,10 +43,10 @@ function SettingsForm({ establishment }: { establishment: Establishment }) {
 
   const updateMutation = useMutation({
     mutationFn: async (data: { name: string; slug: string; type?: string; logoUrl?: string }) =>
-      (await api.patch(`/establishments/${establishment.id}`, data)).data,
+      (await api.patch(apiPath.withId(API.establishments, establishment.id), data)).data,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["establishment", establishment.id] });
-      queryClient.invalidateQueries({ queryKey: ["me"] });
+      queryClient.invalidateQueries({ queryKey: KEYS.establishment(establishment.id), });
+      queryClient.invalidateQueries({ queryKey: KEYS.me, });
       setFormError(null);
       toast.success("Paramètres enregistrés");
     },
@@ -127,10 +129,10 @@ export default function SettingsPage() {
   const establishmentId = useAuthStore((s) => s.establishmentId);
 
   const establishmentQuery = useQuery({
-    queryKey: ["establishment", establishmentId],
+    queryKey: KEYS.establishment(establishmentId),
     queryFn: async () => {
       if (!establishmentId) return null;
-      return (await api.get<Establishment>(`/establishments/${establishmentId}`)).data;
+      return (await api.get<Establishment>(apiPath.withId(API.establishments, establishmentId!))).data;
     },
     enabled: !!establishmentId,
   });

@@ -1,3 +1,5 @@
+import { API, apiPath } from "../../lib/api-endpoints";
+import { KEYS } from "../../lib/query-keys";
 import { useState, type FormEvent } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import api, { getErrorMessage } from "../../lib/api";
@@ -54,23 +56,23 @@ export default function UsersPage() {
   const [deleteTarget, setDeleteTarget] = useState<Member | null>(null);
 
   const members = useQuery({
-    queryKey: ["members"],
-    queryFn: async () => (await api.get<Member[]>("/user-establishments")).data,
+    queryKey: KEYS.members,
+    queryFn: async () => (await api.get<Member[]>(API.userEstablishments)).data,
   });
 
   const invalidate = () =>
-    queryClient.invalidateQueries({ queryKey: ["members"] });
+    queryClient.invalidateQueries({ queryKey: KEYS.members });
 
   const addMutation = useMutation({
-    mutationFn: async () => (await api.post("/user-establishments", { email: email.trim(), role })).data,
+    mutationFn: async () => (await api.post(API.userEstablishments, { email: email.trim(), role })).data,
   });
 
   const editMutation = useMutation({
-    mutationFn: async () => (await api.patch(`/user-establishments/${editing!.id}`, { role: editRole })).data,
+    mutationFn: async () => (await api.patch(apiPath.withId(API.userEstablishments, editing!.id), { role: editRole })).data,
   });
 
   const deleteMutation = useMutation({
-    mutationFn: async (id: string) => (await api.delete(`/user-establishments/${id}`)).data,
+    mutationFn: async (id: string) => (await api.delete(apiPath.withId(API.userEstablishments, id))).data,
   });
 
   const handleAdd = async (event: FormEvent) => {

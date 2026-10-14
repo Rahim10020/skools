@@ -1,3 +1,5 @@
+import { API, apiPath } from "../../lib/api-endpoints";
+import { KEYS } from "../../lib/query-keys";
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import api, { getErrorMessage } from "../../lib/api";
@@ -65,27 +67,27 @@ export default function LinkParentStudentPage() {
   const [unlinkTarget, setUnlinkTarget] = useState<ParentLink | null>(null);
 
   const studentsQuery = useQuery({
-    queryKey: ["students"],
-    queryFn: async () => (await api.get<PersonOption[]>("/students")).data,
+    queryKey: KEYS.students,
+    queryFn: async () => (await api.get<PersonOption[]>(API.students)).data,
   });
   const parentsQuery = useQuery({
-    queryKey: ["parents"],
-    queryFn: async () => (await api.get<PersonOption[]>("/parents")).data,
+    queryKey: KEYS.parents,
+    queryFn: async () => (await api.get<PersonOption[]>(API.parents)).data,
   });
   const linksQuery = useQuery({
-    queryKey: ["parent-students", selectedStudentId],
+    queryKey: KEYS.parentStudentsOfStudent(selectedStudentId),
     queryFn: async () => {
       if (!selectedStudentId) return [];
-      return (await api.get<ParentLink[]>(`/parent-students/student/${selectedStudentId}`)).data;
+      return (await api.get<ParentLink[]>(apiPath.parentStudentsOfStudent(selectedStudentId))).data;
     },
     enabled: !!selectedStudentId,
   });
 
   const linkMutation = useMutation({
     mutationFn: async (data: { parentId: string; studentId: string; relation: Relation; isPrimary: boolean }) =>
-      (await api.post("/parent-students", data)).data,
+      (await api.post(API.parentStudents, data)).data,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["parent-students", selectedStudentId] });
+      queryClient.invalidateQueries({ queryKey: KEYS.parentStudentsOfStudent(selectedStudentId) });
       toast.success("Parent lié avec succès");
       setParentId("");
       setRelation("");
@@ -96,9 +98,9 @@ export default function LinkParentStudentPage() {
   });
 
   const unlinkMutation = useMutation({
-    mutationFn: async (id: string) => (await api.delete(`/parent-students/${id}`)).data,
+    mutationFn: async (id: string) => (await api.delete(apiPath.withId(API.parentStudents, id))).data,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["parent-students", selectedStudentId] });
+      queryClient.invalidateQueries({ queryKey: KEYS.parentStudentsOfStudent(selectedStudentId) });
       toast.success("Lien supprimé avec succès");
       setUnlinkTarget(null);
     },

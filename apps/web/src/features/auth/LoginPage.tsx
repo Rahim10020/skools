@@ -1,3 +1,5 @@
+import { API } from "../../lib/api-endpoints";
+import { ROUTES } from "../../lib/routes";
 import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -34,19 +36,19 @@ export default function LoginPage() {
   });
 
   if (isAuthenticated()) {
-    return <Navigate to="/dashboard" replace />;
+    return <Navigate to={ROUTES.dashboard} replace />;
   }
 
   const onSubmit = async (data: LoginForm) => {
     try {
-      const response = await api.post<LoginResponse>("/auth/login", data);
+      const response = await api.post<LoginResponse>(API.authLogin, data);
       const { user, accessToken, refreshToken, establishmentId, role } = response.data;
 
       // Changement de session : purger le cache (données d'un autre compte/établissement).
       queryClient.clear();
       setAuth({ user, accessToken, refreshToken, establishmentId, role });
 
-      navigate("/dashboard");
+      navigate(ROUTES.dashboard);
     } catch (error) {
       setError("root", { message: getErrorMessage(error) });
     }
@@ -116,7 +118,7 @@ export default function LoginPage() {
       <p className="text-center text-r14 text-(--skools-text-muted)">
         Pas encore de compte ?{" "}
         <Link
-          to="/register"
+          to={ROUTES.register}
           className="font-medium text-(--common-blue) hover:underline"
         >
           S&apos;inscrire

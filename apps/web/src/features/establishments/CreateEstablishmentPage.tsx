@@ -1,3 +1,5 @@
+import { API } from "../../lib/api-endpoints";
+import { ROUTES } from "../../lib/routes";
 import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -71,7 +73,7 @@ export default function CreateEstablishmentPage() {
       return;
     }
     try {
-      const response = await api.post<CreateEstablishmentResponse>("/establishments", {
+      const response = await api.post<CreateEstablishmentResponse>(API.establishments, {
         name: data.name,
         slug: data.slug,
         ...(data.type ? { type: data.type } : {}),
@@ -83,7 +85,7 @@ export default function CreateEstablishmentPage() {
       queryClient.clear();
       setAuth({ user, accessToken, refreshToken, establishmentId: id, role: "DIRECTOR" });
 
-      navigate("/dashboard");
+      navigate(ROUTES.dashboard);
     } catch (error) {
       setError("root", { message: getErrorMessage(error) });
     }

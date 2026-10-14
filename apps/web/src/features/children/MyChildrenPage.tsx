@@ -1,3 +1,4 @@
+import { ROUTES } from "../../lib/routes";
 import { Link, useNavigate } from "react-router-dom";
 import { getErrorMessage } from "../../lib/api";
 import { useSelectedChildStore } from "../../stores/selected-child-store";
@@ -71,17 +72,17 @@ export default function MyChildrenPage() {
                 Matricule : {student.matricule || "—"} · Classe : {classroom?.name || "—"}
               </p>
               <div className="mt-p3 flex flex-wrap gap-p2">
-                <Button fullWidth={false} variant="secondary" onClick={() => goTo(student.id, "/report-cards")}>
+                <Button fullWidth={false} variant="secondary" onClick={() => goTo(student.id, ROUTES.reportCards)}>
                   <span className="inline-flex items-center gap-p1">
                     Notes & bulletin <ArrowForwardIcon className="size-4" />
                   </span>
                 </Button>
-                <Button fullWidth={false} variant="secondary" onClick={() => goTo(student.id, "/my-absences")}>
+                <Button fullWidth={false} variant="secondary" onClick={() => goTo(student.id, ROUTES.myAbsences)}>
                   <span className="inline-flex items-center gap-p1">
                     Absences <ArrowForwardIcon className="size-4" />
                   </span>
                 </Button>
-                <Button fullWidth={false} variant="secondary" onClick={() => goTo(student.id, "/discipline")}>
+                <Button fullWidth={false} variant="secondary" onClick={() => goTo(student.id, ROUTES.discipline)}>
                   <span className="inline-flex items-center gap-p1">
                     Discipline <ArrowForwardIcon className="size-4" />
                   </span>
@@ -93,7 +94,7 @@ export default function MyChildrenPage() {
       )}
 
       <p className="mt-p6 text-center text-r14 text-(--skools-text-muted)">
-        <Link to="/schedules" className="font-medium text-(--common-blue) hover:underline">
+        <Link to={ROUTES.schedules} className="font-medium text-(--common-blue) hover:underline">
           Voir les emplois du temps
         </Link>
       </p>

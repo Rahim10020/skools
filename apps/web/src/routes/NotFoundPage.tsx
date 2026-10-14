@@ -1,3 +1,4 @@
+import { ROUTES } from "../lib/routes";
 import { Link } from "react-router-dom";
 import { Button } from "../components/ui/button";
 import { Wordmark } from "../components/Wordmark";
@@ -10,7 +11,7 @@ export function NotFoundPage() {
       <p className="text-r14 text-(--skools-text-muted)">
         Cette page n&apos;existe pas ou a été déplacée.
       </p>
-      <Link to="/dashboard">
+      <Link to={ROUTES.dashboard}>
         <Button fullWidth={false}>Retour au tableau de bord</Button>
       </Link>
     </div>

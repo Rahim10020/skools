@@ -1,3 +1,5 @@
+import { API, apiPath } from "../../lib/api-endpoints";
+import { KEYS } from "../../lib/query-keys";
 import { z } from "zod";
 import { useQuery } from "@tanstack/react-query";
 import { CrudPage } from "../../components/crud/CrudPage";
@@ -100,16 +102,16 @@ export default function DisciplinePage() {
   const childrenQuery = useMyChildren(isParent);
 
   const studentsQuery = useQuery({
-    queryKey: ["students"],
-    queryFn: async () => (await api.get<StudentOption[]>("/students")).data,
+    queryKey: KEYS.students,
+    queryFn: async () => (await api.get<StudentOption[]>(API.students)).data,
     // Famille : pas d'accès à la liste globale (matrice).
     enabled: !isFamily,
   });
 
   const meQuery = useQuery({
-    queryKey: ["students", "me"],
+    queryKey: KEYS.studentsMe,
     queryFn: async () =>
-      (await api.get<{ id: string }>("/students/me")).data,
+      (await api.get<{ id: string }>(API.studentsMe)).data,
     enabled: isStudent,
   });
 
@@ -179,9 +181,9 @@ export default function DisciplinePage() {
       readOnly={isFamily}
       itemLabel="fiche disciplinaire"
       createLabel="Nouvelle fiche"
-      queryKey={isFamily ? ["discipline", familyStudentId] : ["discipline"]}
-      endpoint="/discipline"
-      listPath={isFamily ? `/discipline?studentId=${familyStudentId}` : undefined}
+      queryKey={isFamily ? KEYS.discipline(familyStudentId) : KEYS.discipline()}
+      endpoint={API.discipline}
+      listPath={isFamily ? apiPath.disciplineByStudent(familyStudentId) : undefined}
       toolbarExtra={isParent ? <ChildSelector /> : undefined}
       columns={[
         {

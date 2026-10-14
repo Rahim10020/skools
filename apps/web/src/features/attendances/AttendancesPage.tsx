@@ -1,3 +1,5 @@
+import { API } from "../../lib/api-endpoints";
+import { KEYS } from "../../lib/query-keys";
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import api, { getErrorMessage } from "../../lib/api";
@@ -79,26 +81,26 @@ export default function AttendancesPage() {
   const [submitError, setSubmitError] = useState<string | null>(null);
 
   const classroomsQuery = useQuery({
-    queryKey: ["classrooms"],
-    queryFn: async () => (await api.get<ClassroomOption[]>("/classrooms")).data,
+    queryKey: KEYS.classrooms,
+    queryFn: async () => (await api.get<ClassroomOption[]>(API.classrooms)).data,
     // Enseignant : classes issues de /teacher-assignments/me (403 sur /classrooms).
     enabled: !isTeacher,
   });
   const myAssignmentsQuery = useQuery({
-    queryKey: ["teacher-assignments", "me"],
-    queryFn: async () => (await api.get<MyAssignment[]>("/teacher-assignments/me")).data,
+    queryKey: KEYS.teacherAssignmentsMe,
+    queryFn: async () => (await api.get<MyAssignment[]>(API.teacherAssignmentsMe)).data,
     enabled: isTeacher,
   });
   const enrollmentsQuery = useQuery({
-    queryKey: ["enrollments"],
-    queryFn: async () => (await api.get<EnrollmentRow[]>("/enrollments")).data,
+    queryKey: KEYS.enrollments,
+    queryFn: async () => (await api.get<EnrollmentRow[]>(API.enrollments)).data,
   });
   const attendancesQuery = useQuery({
-    queryKey: ["attendances", selectedClassroomId, selectedDate],
+    queryKey: KEYS.attendances(selectedClassroomId, selectedDate),
     queryFn: async () => {
       if (!selectedClassroomId || !selectedDate) return [];
       return (
-        await api.get<ExistingAttendance[]>("/attendances", {
+        await api.get<ExistingAttendance[]>(API.attendances, {
           params: { classroomId: selectedClassroomId, date: selectedDate },
         })
       ).data;
@@ -123,7 +125,7 @@ export default function AttendancesPage() {
 
   const saveMutation = useMutation({
     mutationFn: async () =>
-      api.post("/attendances/bulk", {
+      api.post(API.attendancesBulk, {
         classroomId: selectedClassroomId,
         date: selectedDate,
         attendances: studentsInClass.map((student) => ({
@@ -133,7 +135,7 @@ export default function AttendancesPage() {
       }),
     onSuccess: async () => {
       await queryClient.invalidateQueries({
-        queryKey: ["attendances", selectedClassroomId, selectedDate],
+        queryKey: KEYS.attendances(selectedClassroomId, selectedDate),
       });
       await attendancesQuery.refetch();
       setSubmitError(null);

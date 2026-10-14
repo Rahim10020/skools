@@ -1,3 +1,5 @@
+import { API, apiPath } from "../../lib/api-endpoints";
+import { KEYS } from "../../lib/query-keys";
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import api, { getErrorMessage } from "../../lib/api";
@@ -76,24 +78,24 @@ export default function GradesPage() {
   const [submitError, setSubmitError] = useState<string | null>(null);
 
   const examsQuery = useQuery({
-    queryKey: ["exams"],
-    queryFn: async () => (await api.get<ExamOption[]>("/exams")).data,
+    queryKey: KEYS.exams,
+    queryFn: async () => (await api.get<ExamOption[]>(API.exams)).data,
   });
   const studentsQuery = useQuery({
-    queryKey: ["students"],
-    queryFn: async () => (await api.get<StudentRow[]>("/students")).data,
+    queryKey: KEYS.students,
+    queryFn: async () => (await api.get<StudentRow[]>(API.students)).data,
     // Enseignant : registre via /enrollments (filtre serveur par assignation), pas la liste globale.
     enabled: !isTeacher,
   });
   const enrollmentsQuery = useQuery({
-    queryKey: ["enrollments"],
-    queryFn: async () => (await api.get<EnrollmentRow[]>("/enrollments")).data,
+    queryKey: KEYS.enrollments,
+    queryFn: async () => (await api.get<EnrollmentRow[]>(API.enrollments)).data,
   });
   const gradesQuery = useQuery({
-    queryKey: ["grades", selectedExamId],
+    queryKey: KEYS.gradesByExam(selectedExamId),
     queryFn: async () => {
       if (!selectedExamId) return [];
-      return (await api.get<ExistingGrade[]>(`/grades?examId=${selectedExamId}`)).data;
+      return (await api.get<ExistingGrade[]>(apiPath.gradesByExam(selectedExamId))).data;
     },
     enabled: !!selectedExamId,
   });
@@ -159,11 +161,11 @@ export default function GradesPage() {
           isAbsent,
         };
       });
-      return api.post("/grades/bulk", { examId: selectedExamId, grades });
+      return api.post(API.gradesBulk, { examId: selectedExamId, grades });
     },
     onSuccess: async () => {
       // CORRECTIF n°3 : invalidation + relecture attendue (preuve de persistance).
-      await queryClient.invalidateQueries({ queryKey: ["grades", selectedExamId] });
+      await queryClient.invalidateQueries({ queryKey: KEYS.gradesByExam(selectedExamId) });
       await gradesQuery.refetch();
       setSubmitError(null);
       toast.success("Notes enregistrées avec succès");

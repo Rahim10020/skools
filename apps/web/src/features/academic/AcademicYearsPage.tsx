@@ -1,3 +1,5 @@
+import { API } from "../../lib/api-endpoints";
+import { KEYS } from "../../lib/query-keys";
 import { z } from "zod";
 import { CrudPage } from "../../components/crud/CrudPage";
 import { useAuthStore } from "../../stores/auth-store";
@@ -33,8 +35,8 @@ export default function AcademicYearsPage() {
       description="Définissez les années scolaires et désignez l'année en cours."
       itemLabel="année scolaire"
       createLabel="Nouvelle année"
-      queryKey={["academic-years"]}
-      endpoint="/academic-years"
+      queryKey={KEYS.academicYears}
+      endpoint={API.academicYears}
       columns={[
         { header: "Année", primary: true, render: (year) => year.name },
         { header: "Début", render: (year) => formatDateFr(year.startDate) },

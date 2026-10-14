@@ -1,3 +1,5 @@
+import { API } from "../../lib/api-endpoints";
+import { ROUTES } from "../../lib/routes";
 import { useEffect, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
@@ -33,8 +35,8 @@ interface MeEstablishments {
 
 /** Entrées de bas de sidebar (matrice : Profil partout, Paramètres restreint). */
 const BOTTOM_NAV: SidebarNavItem[] = [
-  { to: "/settings", label: "Paramètres", icon: SettingsNavIcon },
-  { to: "/profil", label: "Profil", icon: ProfilIcon },
+  { to: ROUTES.settings, label: "Paramètres", icon: SettingsNavIcon },
+  { to: ROUTES.profil, label: "Profil", icon: ProfilIcon },
 ];
 
 /**
@@ -145,7 +147,7 @@ export function Sidebar({
     await requestServerLogout(refreshToken ?? undefined);
     logout();
     onCloseMobile();
-    navigate("/login");
+    navigate(ROUTES.login);
   };
 
   const fullName = [user?.firstName, user?.lastName].filter(Boolean).join(" ") || "Utilisateur";
@@ -161,7 +163,7 @@ export function Sidebar({
 
   const meQuery = useQuery({
     queryKey: ["me"],
-    queryFn: async () => (await api.get<MeEstablishments>("/auth/me")).data,
+    queryFn: async () => (await api.get<MeEstablishments>(API.authMe)).data,
   });
   const establishmentName =
     meQuery.data?.establishments.find((e) => e.establishment.id === establishmentId)

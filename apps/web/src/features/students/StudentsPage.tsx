@@ -1,3 +1,5 @@
+import { API } from "../../lib/api-endpoints";
+import { KEYS } from "../../lib/query-keys";
 import { z } from "zod";
 import { CrudPage } from "../../components/crud/CrudPage";
 import { useAuthStore } from "../../stores/auth-store";
@@ -45,8 +47,8 @@ export default function StudentsPage() {
       description="Les dossiers des élèves de l'établissement."
       itemLabel="élève"
       createLabel="Nouvel élève"
-      queryKey={["students"]}
-      endpoint="/students"
+      queryKey={KEYS.students}
+      endpoint={API.students}
       columns={[
         { header: "Élève", primary: true, render: fullName },
         { header: "Matricule", render: (student) => student.matricule || "—" },

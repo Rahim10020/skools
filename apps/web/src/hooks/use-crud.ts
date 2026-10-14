@@ -4,10 +4,10 @@ import api from "../lib/api";
 /**
  * Ressource CRUD REST standard (GET liste / POST / PATCH /:id / DELETE /:id).
  * `listPath` permet d'ajouter des query params de filtre à la lecture
- * (ex. "/schedules?classroomId=…") ; les mutations utilisent `endpoint` nu.
+ * (ex. `apiPath.schedulesByClassroom(…)`) ; les mutations utilisent `endpoint` nu.
  * Les toasts et l'invalidation sont gérés par l'appelant (CrudPage).
  */
-export function useCrudResource<TList>(endpoint: string, queryKey: string[], listPath?: string) {
+export function useCrudResource<TList>(endpoint: string, queryKey: readonly string[], listPath?: string) {
   const queryClient = useQueryClient();
 
   const list = useQuery({

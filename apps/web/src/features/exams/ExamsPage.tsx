@@ -1,3 +1,5 @@
+import { API } from "../../lib/api-endpoints";
+import { KEYS } from "../../lib/query-keys";
 import { z } from "zod";
 import { useQuery } from "@tanstack/react-query";
 import { CrudPage } from "../../components/crud/CrudPage";
@@ -61,23 +63,23 @@ export default function ExamsPage() {
   // Seul DIRECTOR crée des examens ; CENSEUR supervise, TEACHER consulte (matrice).
   const canWrite = role === "DIRECTOR";
   const yearsQuery = useQuery({
-    queryKey: ["academic-years"],
-    queryFn: async () => (await api.get<IdName[]>("/academic-years")).data,
+    queryKey: KEYS.academicYears,
+    queryFn: async () => (await api.get<IdName[]>(API.academicYears)).data,
   });
   const subjectsQuery = useQuery({
-    queryKey: ["subjects"],
-    queryFn: async () => (await api.get<IdName[]>("/subjects")).data,
+    queryKey: KEYS.subjects,
+    queryFn: async () => (await api.get<IdName[]>(API.subjects)).data,
     // Référentiels inaccessibles à TEACHER (formulaire masqué en lecture seule).
     enabled: role !== "TEACHER",
   });
   const periodsQuery = useQuery({
-    queryKey: ["periods"],
-    queryFn: async () => (await api.get<IdName[]>("/periods")).data,
+    queryKey: KEYS.periods,
+    queryFn: async () => (await api.get<IdName[]>(API.periods)).data,
     enabled: role !== "TEACHER",
   });
   const classroomsQuery = useQuery({
-    queryKey: ["classrooms"],
-    queryFn: async () => (await api.get<IdName[]>("/classrooms")).data,
+    queryKey: KEYS.classrooms,
+    queryFn: async () => (await api.get<IdName[]>(API.classrooms)).data,
     enabled: role !== "TEACHER",
   });
 
@@ -91,8 +93,8 @@ export default function ExamsPage() {
       readOnly={!canWrite}
       itemLabel="examen"
       createLabel="Nouvel examen"
-      queryKey={["exams"]}
-      endpoint="/exams"
+      queryKey={KEYS.exams}
+      endpoint={API.exams}
       columns={[
         { header: "Examen", primary: true, render: (exam) => exam.name },
         { header: "Matière", render: (exam) => exam.subject.name },

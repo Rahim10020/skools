@@ -1,3 +1,5 @@
+import { API } from "../../lib/api-endpoints";
+import { KEYS } from "../../lib/query-keys";
 import { z } from "zod";
 import { useQuery } from "@tanstack/react-query";
 import { CrudPage } from "../../components/crud/CrudPage";
@@ -31,8 +33,8 @@ export default function LevelsPage() {
   const role = useAuthStore((state) => state.role);
   // CENSEUR : supervision en lecture seule (matrice), écritures refusées 403.
   const cyclesQuery = useQuery({
-    queryKey: ["cycles"],
-    queryFn: async () => (await api.get<CycleOption[]>("/cycles")).data,
+    queryKey: KEYS.cycles,
+    queryFn: async () => (await api.get<CycleOption[]>(API.cycles)).data,
   });
 
   return (
@@ -42,8 +44,8 @@ export default function LevelsPage() {
       description="Les niveaux rattachés à chaque cycle (6ème, 5ème, Seconde…)."
       itemLabel="niveau"
       createLabel="Nouveau niveau"
-      queryKey={["levels"]}
-      endpoint="/levels"
+      queryKey={KEYS.levels}
+      endpoint={API.levels}
       columns={[
         { header: "Niveau", primary: true, render: (level) => level.name },
         { header: "Cycle", render: (level) => level.cycle.name },

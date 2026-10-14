@@ -1,3 +1,4 @@
+import { ROUTES } from "../../lib/routes";
 import type { IconComponent } from "../icons/Icon";
 import DashboardIcon from "../icons/DashboardIcon";
 import CalendarIcon from "../icons/CalendarIcon";
@@ -39,54 +40,54 @@ export interface SidebarNavGroup {
 export const SIDEBAR_NAV: SidebarNavGroup[] = [
   {
     title: "Pilotage",
-    items: [{ to: "/dashboard", label: "Tableau de bord", icon: DashboardIcon }],
+    items: [{ to: ROUTES.dashboard, label: "Tableau de bord", icon: DashboardIcon }],
   },
   {
     title: "Référentiels",
     items: [
-      { to: "/academic-years", label: "Années scolaires", icon: CalendarIcon },
-      { to: "/cycles", label: "Cycles", icon: FolderIcon },
-      { to: "/levels", label: "Niveaux", icon: FilterIcon },
-      { to: "/series", label: "Séries", icon: FileIcon },
-      { to: "/subjects", label: "Matières", icon: NotePadIcon },
-      { to: "/periods", label: "Périodes", icon: ClockIcon },
-      { to: "/classrooms", label: "Classes", icon: DoorIcon },
+      { to: ROUTES.academicYears, label: "Années scolaires", icon: CalendarIcon },
+      { to: ROUTES.cycles, label: "Cycles", icon: FolderIcon },
+      { to: ROUTES.levels, label: "Niveaux", icon: FilterIcon },
+      { to: ROUTES.series, label: "Séries", icon: FileIcon },
+      { to: ROUTES.subjects, label: "Matières", icon: NotePadIcon },
+      { to: ROUTES.periods, label: "Périodes", icon: ClockIcon },
+      { to: ROUTES.classrooms, label: "Classes", icon: DoorIcon },
     ],
   },
   {
     title: "Personnes",
     items: [
-      { to: "/students", label: "Élèves", icon: ContactsIcon },
-      { to: "/teachers", label: "Enseignants", icon: EyeIcon },
-      { to: "/parents", label: "Parents", icon: MailIcon },
-      { to: "/link-parents", label: "Lier parents", icon: LinkIcon },
-      { to: "/my-children", label: "Mes enfants", icon: ContactsIcon },
-      { to: "/teacher-assignments", label: "Affectations", icon: ArrowForwardIcon },
-      { to: "/enrollments", label: "Inscriptions", icon: AddIcon },
+      { to: ROUTES.students, label: "Élèves", icon: ContactsIcon },
+      { to: ROUTES.teachers, label: "Enseignants", icon: EyeIcon },
+      { to: ROUTES.parents, label: "Parents", icon: MailIcon },
+      { to: ROUTES.linkParents, label: "Lier parents", icon: LinkIcon },
+      { to: ROUTES.myChildren, label: "Mes enfants", icon: ContactsIcon },
+      { to: ROUTES.teacherAssignments, label: "Affectations", icon: ArrowForwardIcon },
+      { to: ROUTES.enrollments, label: "Inscriptions", icon: AddIcon },
     ],
   },
   {
     title: "Évaluations",
     items: [
-      { to: "/exams", label: "Examens", icon: ExamIcon },
-      { to: "/grades", label: "Notes", icon: CheckCircleIcon },
-      { to: "/my-grades", label: "Mes notes", icon: CheckCircleIcon },
-      { to: "/report-cards", label: "Bulletins", icon: DownloadIcon },
+      { to: ROUTES.exams, label: "Examens", icon: ExamIcon },
+      { to: ROUTES.grades, label: "Notes", icon: CheckCircleIcon },
+      { to: ROUTES.myGrades, label: "Mes notes", icon: CheckCircleIcon },
+      { to: ROUTES.reportCards, label: "Bulletins", icon: DownloadIcon },
     ],
   },
   {
     title: "Vie scolaire",
     items: [
-      { to: "/attendances", label: "Présences", icon: CheckIcon },
-      { to: "/my-absences", label: "Mes absences", icon: CheckIcon },
-      { to: "/schedules", label: "Emplois du temps", icon: DateIcon },
-      { to: "/discipline", label: "Discipline", icon: InfoCircleIcon },
+      { to: ROUTES.attendances, label: "Présences", icon: CheckIcon },
+      { to: ROUTES.myAbsences, label: "Mes absences", icon: CheckIcon },
+      { to: ROUTES.schedules, label: "Emplois du temps", icon: DateIcon },
+      { to: ROUTES.discipline, label: "Discipline", icon: InfoCircleIcon },
     ],
   },
   {
     title: "Administration",
     items: [
-      { to: "/users", label: "Utilisateurs & rôles", icon: ContactsIcon },
+      { to: ROUTES.users, label: "Utilisateurs & rôles", icon: ContactsIcon },
     ],
   },
 ];

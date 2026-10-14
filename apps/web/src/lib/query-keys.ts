@@ -1,0 +1,42 @@
+/**
+ * Clés de cache TanStack Query centralisées (un seul nommage par ressource).
+ * Règle : aucun tableau littéral en dehors de ce fichier — utiliser KEYS.*.
+ */
+export const KEYS = {
+  me: ["me"],
+  academicYears: ["academic-years"],
+  cycles: ["cycles"],
+  levels: ["levels"],
+  series: ["series"],
+  subjects: ["subjects"],
+  periods: ["periods"],
+  classrooms: ["classrooms"],
+  students: ["students"],
+  studentsMe: ["students", "me"],
+  teachers: ["teachers"],
+  teachersMe: ["teachers", "me"],
+  parents: ["parents"],
+  parentsMe: ["parents", "me"],
+  myChildren: ["my-children"],
+  teacherAssignments: ["teacher-assignments"],
+  teacherAssignmentsMe: ["teacher-assignments", "me"],
+  teacherAssignmentsAll: ["teacher-assignments", "all"],
+  parentStudentsOfStudent: (studentId: string) => ["parent-students", studentId],
+  enrollments: ["enrollments"],
+  exams: ["exams"],
+  grades: ["grades"],
+  gradesByExam: (examId: string) => ["grades", examId],
+  gradesByStudent: (studentId: string) => ["grades", "student", studentId],
+  reportCard: (studentId: string, academicYearId: string, periodId = "") =>
+    ["report-card", studentId, academicYearId, periodId],
+  classroomOverview: (classroomId: string, academicYearId: string) =>
+    ["classroom-overview", classroomId, academicYearId],
+  attendances: (classroomId: string, date: string) => ["attendances", classroomId, date],
+  attendancesByStudent: (studentId: string) => ["attendances", "student", studentId],
+  schedules: (classroomId = "") => ["schedules", classroomId],
+  discipline: (studentId = "") => ["discipline", studentId],
+  members: ["members"],
+  establishment: (id: string | null) => ["establishment", id],
+  notifications: ["notifications"],
+  notificationsUnreadCount: ["notifications", "unread-count"],
+} as const;

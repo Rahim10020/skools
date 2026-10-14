@@ -1,3 +1,5 @@
+import { API } from "../../lib/api-endpoints";
+import { KEYS } from "../../lib/query-keys";
 import { useQuery } from "@tanstack/react-query";
 import api, { getErrorMessage } from "../../lib/api";
 import { useAuthStore } from "../../stores/auth-store";
@@ -51,17 +53,17 @@ export default function MyAbsencesPage() {
   const childrenQuery = useMyChildren(isParent);
 
   const meQuery = useQuery({
-    queryKey: ["students", "me"],
-    queryFn: async () => (await api.get<MeStudent>("/students/me")).data,
+    queryKey: KEYS.studentsMe,
+    queryFn: async () => (await api.get<MeStudent>(API.studentsMe)).data,
     enabled: !isParent,
   });
 
   const studentId = isParent ? childId : (meQuery.data?.id ?? "");
   const historyQuery = useQuery({
-    queryKey: ["attendances", "student", studentId],
+    queryKey: KEYS.attendancesByStudent(studentId),
     queryFn: async () =>
       (
-        await api.get<AttendanceHistoryItem[]>("/attendances/student", {
+        await api.get<AttendanceHistoryItem[]>(API.attendancesByStudent, {
           params: { studentId },
         })
       ).data,

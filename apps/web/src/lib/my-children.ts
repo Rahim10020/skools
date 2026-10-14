@@ -1,3 +1,4 @@
+import { API } from "./api-endpoints";
 import { useQuery } from "@tanstack/react-query";
 import api from "./api";
 import { useAuthStore } from "../stores/auth-store";
@@ -15,7 +16,7 @@ export function useMyChildren(enabled = true) {
     queryFn: async () =>
       (
         await api.get<Array<ChildOption & { id: string }>>(
-          "/parent-students/my-children",
+          API.myChildren,
         )
       ).data,
     enabled,

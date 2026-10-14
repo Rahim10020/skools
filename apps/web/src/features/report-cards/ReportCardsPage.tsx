@@ -1,3 +1,5 @@
+import { API } from "../../lib/api-endpoints";
+import { KEYS } from "../../lib/query-keys";
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import api, { getErrorMessage } from "../../lib/api";
@@ -77,28 +79,28 @@ export default function ReportCardsPage() {
   const [selectedPeriodId, setSelectedPeriodId] = useState("");
 
   const studentsQuery = useQuery({
-    queryKey: ["students"],
-    queryFn: async () => (await api.get<StudentOption[]>("/students")).data,
+    queryKey: KEYS.students,
+    queryFn: async () => (await api.get<StudentOption[]>(API.students)).data,
     // Famille : pas d'accès aux listes globales (matrice).
     enabled: !isFamily,
   });
   const yearsQuery = useQuery({
-    queryKey: ["academic-years"],
-    queryFn: async () => (await api.get<IdName[]>("/academic-years")).data,
+    queryKey: KEYS.academicYears,
+    queryFn: async () => (await api.get<IdName[]>(API.academicYears)).data,
   });
   const periodsQuery = useQuery({
-    queryKey: ["periods"],
-    queryFn: async () => (await api.get<IdName[]>("/periods")).data,
+    queryKey: KEYS.periods,
+    queryFn: async () => (await api.get<IdName[]>(API.periods)).data,
   });
   const classroomsQuery = useQuery({
-    queryKey: ["classrooms"],
-    queryFn: async () => (await api.get<IdName[]>("/classrooms")).data,
+    queryKey: KEYS.classrooms,
+    queryFn: async () => (await api.get<IdName[]>(API.classrooms)).data,
     enabled: !isFamily,
   });
   const meQuery = useQuery({
-    queryKey: ["students", "me"],
+    queryKey: KEYS.studentsMe,
     queryFn: async () =>
-      (await api.get<{ id: string }>("/students/me")).data,
+      (await api.get<{ id: string }>(API.studentsMe)).data,
     enabled: isStudent,
   });
 
@@ -108,10 +110,10 @@ export default function ReportCardsPage() {
   const effectiveViewMode = isFamily ? "student" : viewMode;
 
   const studentReportQuery = useQuery({
-    queryKey: ["report-card", effectiveStudentId, selectedYearId, selectedPeriodId],
+    queryKey: KEYS.reportCard(effectiveStudentId, selectedYearId, selectedPeriodId),
     queryFn: async () =>
       (
-        await api.get<StudentReport>("/report-cards/student", {
+        await api.get<StudentReport>(API.reportCardsStudent, {
           params: {
             studentId: effectiveStudentId,
             academicYearId: selectedYearId,
@@ -123,10 +125,10 @@ export default function ReportCardsPage() {
   });
 
   const classroomQuery = useQuery({
-    queryKey: ["classroom-overview", selectedClassroomId, selectedYearId],
+    queryKey: KEYS.classroomOverview(selectedClassroomId, selectedYearId),
     queryFn: async () =>
       (
-        await api.get<ClassroomOverviewItem[]>("/report-cards/classroom", {
+        await api.get<ClassroomOverviewItem[]>(API.reportCardsClassroom, {
           params: { classroomId: selectedClassroomId, academicYearId: selectedYearId },
         })
       ).data,

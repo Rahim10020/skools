@@ -1,3 +1,6 @@
+import { API } from "../../lib/api-endpoints";
+import { KEYS } from "../../lib/query-keys";
+import { ROUTES } from "../../lib/routes";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import api, { requestServerLogout } from "../../lib/api";
@@ -52,19 +55,19 @@ export default function ProfilPage() {
   const logout = useAuthStore((s) => s.logout);
 
   const meQuery = useQuery({
-    queryKey: ["me"],
-    queryFn: async () => (await api.get<MeResponse>("/auth/me")).data,
+    queryKey: KEYS.me,
+    queryFn: async () => (await api.get<MeResponse>(API.authMe)).data,
   });
   const childrenQuery = useQuery({
-    queryKey: ["my-children"],
-    queryFn: async () => (await api.get<MyChild[]>("/parent-students/my-children")).data,
+    queryKey: KEYS.myChildren,
+    queryFn: async () => (await api.get<MyChild[]>(API.myChildren)).data,
     enabled: role === "PARENT",
   });
 
   const handleLogout = async () => {
     await requestServerLogout(refreshToken ?? undefined);
     logout();
-    navigate("/login");
+    navigate(ROUTES.login);
   };
 
   const me = meQuery.data ?? null;

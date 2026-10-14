@@ -1,3 +1,5 @@
+import { API } from "../../lib/api-endpoints";
+import { KEYS } from "../../lib/query-keys";
 import { z } from "zod";
 import { useQuery } from "@tanstack/react-query";
 import { CrudPage } from "../../components/crud/CrudPage";
@@ -37,16 +39,16 @@ export default function ClassroomsPage() {
   const role = useAuthStore((state) => state.role);
   // CENSEUR : supervision en lecture seule (matrice), écritures refusées 403.
   const yearsQuery = useQuery({
-    queryKey: ["academic-years"],
-    queryFn: async () => (await api.get<IdName[]>("/academic-years")).data,
+    queryKey: KEYS.academicYears,
+    queryFn: async () => (await api.get<IdName[]>(API.academicYears)).data,
   });
   const levelsQuery = useQuery({
-    queryKey: ["levels"],
-    queryFn: async () => (await api.get<IdName[]>("/levels")).data,
+    queryKey: KEYS.levels,
+    queryFn: async () => (await api.get<IdName[]>(API.levels)).data,
   });
   const seriesQuery = useQuery({
-    queryKey: ["series"],
-    queryFn: async () => (await api.get<IdName[]>("/series")).data,
+    queryKey: KEYS.series,
+    queryFn: async () => (await api.get<IdName[]>(API.series)).data,
   });
 
   const toOptions = (data: IdName[] | undefined) =>
@@ -59,8 +61,8 @@ export default function ClassroomsPage() {
       description="Les classes de l'établissement, par année, niveau et série."
       itemLabel="classe"
       createLabel="Nouvelle classe"
-      queryKey={["classrooms"]}
-      endpoint="/classrooms"
+      queryKey={KEYS.classrooms}
+      endpoint={API.classrooms}
       columns={[
         { header: "Classe", primary: true, render: (classroom) => classroom.name },
         { header: "Année scolaire", render: (classroom) => classroom.academicYear.name },

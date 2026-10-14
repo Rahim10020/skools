@@ -1,3 +1,5 @@
+import { API } from "../../lib/api-endpoints";
+import { KEYS } from "../../lib/query-keys";
 import { z } from "zod";
 import { CrudPage } from "../../components/crud/CrudPage";
 import { useAuthStore } from "../../stores/auth-store";
@@ -26,8 +28,8 @@ export default function SubjectsPage() {
       description="Les matières enseignées dans l'établissement."
       itemLabel="matière"
       createLabel="Nouvelle matière"
-      queryKey={["subjects"]}
-      endpoint="/subjects"
+      queryKey={KEYS.subjects}
+      endpoint={API.subjects}
       columns={[
         { header: "Matière", primary: true, render: (subject) => subject.name },
         { header: "Code", render: (subject) => subject.code || "—" },

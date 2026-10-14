@@ -1,3 +1,5 @@
+import { API } from "../../lib/api-endpoints";
+import { KEYS } from "../../lib/query-keys";
 import { z } from "zod";
 import { useQuery } from "@tanstack/react-query";
 import { CrudPage } from "../../components/crud/CrudPage";
@@ -25,8 +27,8 @@ export default function SeriesPage() {
   const role = useAuthStore((state) => state.role);
   // CENSEUR : supervision en lecture seule (matrice), écritures refusées 403.
   const levelsQuery = useQuery({
-    queryKey: ["levels"],
-    queryFn: async () => (await api.get<LevelOption[]>("/levels")).data,
+    queryKey: KEYS.levels,
+    queryFn: async () => (await api.get<LevelOption[]>(API.levels)).data,
   });
 
   return (
@@ -36,8 +38,8 @@ export default function SeriesPage() {
       description="Les séries rattachées aux niveaux (A, C, D, S, L…)."
       itemLabel="série"
       createLabel="Nouvelle série"
-      queryKey={["series"]}
-      endpoint="/series"
+      queryKey={KEYS.series}
+      endpoint={API.series}
       columns={[
         { header: "Série", primary: true, render: (series) => series.name },
         { header: "Niveau", render: (series) => series.level?.name ?? "—" },

@@ -1,3 +1,5 @@
+import { API, apiPath } from "../../lib/api-endpoints";
+import { KEYS } from "../../lib/query-keys";
 import { useState } from "react";
 import { z } from "zod";
 import { useQuery } from "@tanstack/react-query";
@@ -78,24 +80,24 @@ export default function SchedulesPage() {
   const isReadOnly = isTeacher || role === "SURVEILLANT" || role === "STUDENT" || role === "PARENT";
 
   const classroomsQuery = useQuery({
-    queryKey: ["classrooms"],
-    queryFn: async () => (await api.get<IdName[]>("/classrooms")).data,
+    queryKey: KEYS.classrooms,
+    queryFn: async () => (await api.get<IdName[]>(API.classrooms)).data,
     // Lecture seule : créneaux déjà filtrés serveur ; noms inclus dans la réponse.
     enabled: !isReadOnly,
   });
   const subjectsQuery = useQuery({
-    queryKey: ["subjects"],
-    queryFn: async () => (await api.get<IdName[]>("/subjects")).data,
+    queryKey: KEYS.subjects,
+    queryFn: async () => (await api.get<IdName[]>(API.subjects)).data,
     enabled: !isReadOnly,
   });
   const teachersQuery = useQuery({
-    queryKey: ["teachers"],
-    queryFn: async () => (await api.get<TeacherOption[]>("/teachers")).data,
+    queryKey: KEYS.teachers,
+    queryFn: async () => (await api.get<TeacherOption[]>(API.teachers)).data,
     enabled: !isReadOnly,
   });
   const yearsQuery = useQuery({
-    queryKey: ["academic-years"],
-    queryFn: async () => (await api.get<IdName[]>("/academic-years")).data,
+    queryKey: KEYS.academicYears,
+    queryFn: async () => (await api.get<IdName[]>(API.academicYears)).data,
     enabled: !isReadOnly,
   });
 
@@ -119,9 +121,9 @@ export default function SchedulesPage() {
       readOnly={isReadOnly}
       itemLabel="créneau"
       createLabel="Nouveau créneau"
-      queryKey={["schedules", filterClassroomId]}
-      endpoint="/schedules"
-      listPath={filterClassroomId ? `/schedules?classroomId=${filterClassroomId}` : "/schedules"}
+      queryKey={KEYS.schedules(filterClassroomId)}
+      endpoint={API.schedules}
+      listPath={filterClassroomId ? apiPath.schedulesByClassroom(filterClassroomId) : API.schedules}
       toolbarExtra={
         isReadOnly ? undefined : (
           <div className="max-w-md">
