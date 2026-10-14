@@ -56,19 +56,19 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="flex flex-col gap-p5">
+    <div className="flex flex-col gap-p6">
       <div className="text-center md:text-left">
-        <h1 className="text-dp20 sm:text-dp24 text-(--skools-text-primary)">
+        <h1 className="text-dp24 text-(--skools-text-primary)">
           Bon retour parmi nous
         </h1>
-        <p className="mt-p1 text-r14 text-(--skools-text-muted)">
+        <p className="mt-p2 text-r14 text-(--skools-text-muted)">
           Connectez-vous à votre compte Skools
         </p>
       </div>
 
       <form
         onSubmit={handleSubmit(onSubmit)}
-        className="flex flex-col gap-p4"
+        className="flex flex-col gap-p4 max-w-sm mx-4 md:mx-0 md:max-w-none"
         noValidate
       >
         <Controller
@@ -130,7 +130,7 @@ export default function LoginPage() {
         Pas encore de compte ?{" "}
         <Link
           to={ROUTES.register}
-          className="font-medium text-(--common-blue) hover:underline"
+          className="font-medium text-(--common-blue) underline lg:no-underline lg:hover:underline"
         >
           S&apos;inscrire
         </Link>

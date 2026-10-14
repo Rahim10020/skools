@@ -1,5 +1,4 @@
 import type { ReactNode } from "react";
-import { BrandLogo } from "../../../components/BrandLogo";
 import { Wordmark } from "../../../components/Wordmark";
 
 /**
@@ -11,8 +10,8 @@ export function AuthLayout({ children }: { children: ReactNode }) {
   return (
     <div className="flex flex-col min-h-screen w-full bg-(--skools-app-bg) text-(--skools-text-primary) overflow-x-hidden">
       {/* Topbar mobile uniquement */}
-      <div className="lg:hidden sticky top-0 z-20 flex items-center justify-center w-full bg-(--skools-elevated-bg) px-5 py-4">
-        <BrandLogo size={64} />
+      <div className="lg:hidden sticky top-0 z-20 flex items-center justify-center w-full px-5 py-4">
+        <Wordmark />
       </div>
 
       <div className="flex flex-1 overflow-hidden">
