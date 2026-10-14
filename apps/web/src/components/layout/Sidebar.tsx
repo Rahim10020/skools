@@ -304,7 +304,7 @@ export function Sidebar({
         className="sidebar-scrollbar flex-1 overflow-y-auto px-p4 py-p4"
       >
         <div
-          className={["mb-p3", collapsed ? "lg:hidden" : ""]
+          className={["mb-p4", collapsed ? "lg:hidden" : ""]
             .filter(Boolean)
             .join(" ")}
         >
