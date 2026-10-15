@@ -48,7 +48,7 @@ export function ThemeToggle() {
       aria-pressed={isDark}
       aria-label={isDark ? "Passer en mode clair" : "Passer en mode sombre"}
       title={isDark ? "Passer en mode clair" : "Passer en mode sombre"}
-      className="flex size-10 items-center justify-center rounded-r2 text-(--skools-icon-muted) hover:bg-(--skools-interactive-hover-bg) hover:text-(--skools-icon-primary)"
+      className="flex size-8 cursor-pointer items-center justify-center rounded-r2 text-(--skools-icon-muted) bg-(--skools-interactive-hover-bg) hover:text-(--skools-icon-primary)"
     >
       {isDark ? <SunGlyph /> : <MoonGlyph />}
     </button>

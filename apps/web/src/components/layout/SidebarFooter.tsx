@@ -39,7 +39,12 @@ export function SidebarFooter({
 
   return (
     <div className="border-t border-(--skools-border-subtle) p-p4">
-      <div className={cx("flex items-center gap-p2", collapsed && "lg:flex-col lg:justify-center")}>
+      <div
+        className={cx(
+          "flex items-center gap-p2",
+          collapsed && "lg:flex-col lg:justify-center",
+        )}
+      >
         <Avatar alt={fullName} />
         <div className={cx("flex-1 min-w-0", collapsed && "lg:hidden")}>
           <p className="text-m12 text-(--skools-text-primary) truncate">
@@ -51,10 +56,10 @@ export function SidebarFooter({
             </p>
           )}
         </div>
+        <ThemeToggle />
         {role !== ROLES.SUPER_ADMIN && (
           <NotificationsBell collapsed={collapsed} />
         )}
-        <ThemeToggle />
       </div>
       <span className={cx(collapsed && "lg:hidden")}>
         <button

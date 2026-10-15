@@ -10,12 +10,7 @@ import { IconButton } from "../../components/ui/icon-button";
 import { EmptyState } from "../../components/ui/empty-state";
 
 export type NotificationType =
-  | "NOTE"
-  | "ABSENCE"
-  | "DISCIPLINE"
-  | "INSCRIPTION"
-  | "MEMBRE"
-  | "INFO";
+  "NOTE" | "ABSENCE" | "DISCIPLINE" | "INSCRIPTION" | "MEMBRE" | "INFO";
 
 interface AppNotification {
   id: string;
@@ -55,7 +50,11 @@ function timeAgoFr(iso: string): string {
  * Sans topbar desktop (idiome EPL) : bouton dans la sidebar + header mobile,
  * panneau ancré au bouton, compteur non-lus, scrutation 60 s.
  */
-export function NotificationsBell({ collapsed = false }: { collapsed?: boolean }) {
+export function NotificationsBell({
+  collapsed = false,
+}: {
+  collapsed?: boolean;
+}) {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [open, setOpen] = useState(false);
@@ -63,7 +62,8 @@ export function NotificationsBell({ collapsed = false }: { collapsed?: boolean }
 
   const listQuery = useQuery({
     queryKey: KEYS.notifications,
-    queryFn: async () => (await api.get<AppNotification[]>(API.notifications)).data,
+    queryFn: async () =>
+      (await api.get<AppNotification[]>(API.notifications)).data,
     refetchInterval: 60_000,
     enabled: open,
   });
@@ -79,7 +79,8 @@ export function NotificationsBell({ collapsed = false }: { collapsed?: boolean }
   };
 
   const readMutation = useMutation({
-    mutationFn: async (id: string) => (await api.patch(apiPath.notificationRead(id))).data,
+    mutationFn: async (id: string) =>
+      (await api.patch(apiPath.notificationRead(id))).data,
     onSuccess: () => invalidate(),
   });
 
@@ -103,7 +104,7 @@ export function NotificationsBell({ collapsed = false }: { collapsed?: boolean }
       document.removeEventListener("pointerdown", onPointerDown);
       document.removeEventListener("keydown", onKeyDown);
     };
-  }, [open ]);
+  }, [open]);
 
   const unread = countQuery.data?.count ?? 0;
   const items = listQuery.data ?? [];
@@ -119,11 +120,13 @@ export function NotificationsBell({ collapsed = false }: { collapsed?: boolean }
     <div ref={rootRef} className="relative">
       <IconButton
         onClick={() => setOpen((v) => !v)}
-        aria-label={unread > 0 ? `Notifications (${unread} non lue(s))` : "Notifications"}
+        aria-label={
+          unread > 0 ? `Notifications (${unread} non lue(s))` : "Notifications"
+        }
         aria-expanded={open}
         title="Notifications"
       >
-        <span className="relative block size-4">
+        <span className="relative block size-6">
           <BellIcon className="size-full" />
           {unread > 0 && (
             <span
@@ -146,7 +149,9 @@ export function NotificationsBell({ collapsed = false }: { collapsed?: boolean }
           ].join(" ")}
         >
           <div className="flex items-center justify-between gap-p2 border-b border-(--skools-border-subtle) px-p4 py-p3">
-            <p className="text-sb14 text-(--skools-text-primary)">Notifications</p>
+            <p className="text-sb14 text-(--skools-text-primary)">
+              Notifications
+            </p>
             <button
               type="button"
               onClick={() => readAllMutation.mutate()}
@@ -164,7 +169,9 @@ export function NotificationsBell({ collapsed = false }: { collapsed?: boolean }
               </p>
             ) : listQuery.isError ? (
               <div className="px-p4 py-p6 text-center">
-                <p className="text-r14 text-(--common-red)">{getErrorMessage(listQuery.error)}</p>
+                <p className="text-r14 text-(--common-red)">
+                  {getErrorMessage(listQuery.error)}
+                </p>
                 <button
                   type="button"
                   onClick={() => void listQuery.refetch()}
@@ -205,7 +212,9 @@ export function NotificationsBell({ collapsed = false }: { collapsed?: boolean }
                             {timeAgoFr(item.createdAt)}
                           </span>
                         </span>
-                        <span className="text-m12 text-(--skools-text-primary)">{item.title}</span>
+                        <span className="text-m12 text-(--skools-text-primary)">
+                          {item.title}
+                        </span>
                         {item.message && (
                           <span className="truncate text-r12 text-(--skools-text-muted)">
                             {item.message}
