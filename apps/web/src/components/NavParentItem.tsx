@@ -3,7 +3,6 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import type { SidebarNavParent } from "./layout/sidebar-nav";
 import { Icon } from "./icons/Icon";
 import { FlyoutPanel } from "./FlyoutPanel";
-import { ChevronDownwardIcon } from "./icons/ChevronDownwardIcon";
 
 const FLYOUT_CLOSE_MS = 150;
 
@@ -93,15 +92,6 @@ export function NavParentItem({
         >
           {item.label}
         </span>
-        <ChevronDownwardIcon
-          className={[
-            "size-4 shrink-0 transition-transform duration-200",
-            collapsed ? "lg:hidden" : "",
-            flyoutOpen || mobileOpen ? "" : "-rotate-90",
-          ]
-            .filter(Boolean)
-            .join(" ")}
-        />
       </button>
     </div>
   );

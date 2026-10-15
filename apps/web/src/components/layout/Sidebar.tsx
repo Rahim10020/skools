@@ -4,7 +4,7 @@ import { ROUTES } from "../../lib/routes";
 import { useEffect, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { SIDEBAR_NAV, isNavParent, type SidebarNavEntry, type SidebarNavItem } from "./sidebar-nav";
+import { SIDEBAR_STATIC_SECTION, SIDEBAR_ENTRIES, isNavParent, type SidebarNavEntry, type SidebarNavItem } from "./sidebar-nav";
 import { NavParentItem } from "../NavParentItem";
 import { useAuthStore } from "../../stores/auth-store";
 import { requestServerLogout } from "../../lib/api";
@@ -23,7 +23,6 @@ import { normalizeText } from "../../lib/text";
 import { NotificationsBell } from "../../features/notifications/NotificationsBell";
 import { Icon } from "../icons/Icon";
 import { DoubleCaretIcon } from "../icons/DoubleCaretIcon";
-import { ChevronDownwardIcon } from "../icons/ChevronDownwardIcon";
 import { LogOutIcon } from "../icons/LogOutIcon";
 import { XIcon } from "../icons/XIcon";
 import ProfilIcon from "../icons/ProfilIcon";
@@ -31,7 +30,6 @@ import SettingsNavIcon from "../icons/SettingsNavIcon";
 import { BrandLogo } from "../BrandLogo";
 
 const COLLAPSED_KEY = "skools-sidebar-collapsed";
-const OPEN_GROUPS_KEY = "skools-sidebar-open";
 
 interface MeEstablishments {
   establishments: Array<{
@@ -145,17 +143,7 @@ export function Sidebar({
   });
   const { user, role, establishmentId, refreshToken, logout } = useAuthStore();
   const navigate = useNavigate();
-  const { pathname } = useLocation();
   const [query, setQuery] = useState("");
-  const [openGroups, setOpenGroups] = useState<Record<string, boolean>>(() => {
-    try {
-      return JSON.parse(
-        localStorage.getItem(OPEN_GROUPS_KEY) ?? "{}",
-      ) as Record<string, boolean>;
-    } catch {
-      return {};
-    }
-  });
 
   useEffect(() => {
     try {
@@ -164,14 +152,6 @@ export function Sidebar({
       // Stockage indisponible : le repli reste en mémoire de session.
     }
   }, [collapsed]);
-
-  useEffect(() => {
-    try {
-      localStorage.setItem(OPEN_GROUPS_KEY, JSON.stringify(openGroups));
-    } catch {
-      // Stockage indisponible : l'accordéon reste en mémoire de session.
-    }
-  }, [openGroups]);
 
   // Repli au clavier (desktop uniquement).
   useEffect(() => {
@@ -197,64 +177,48 @@ export function Sidebar({
   const fullName =
     [user?.firstName, user?.lastName].filter(Boolean).join(" ") ||
     "Utilisateur";
-  // Sans établissement (compte venant de s'inscrire) : navigation réduite.
+  // Sans établissement (compte venant de s'inscrire) : Vue d'ensemble seule.
   // Matrice : on masque les entrées non autorisées, on ne grise jamais.
   // Parents : enfants filtrés par rôle, parent masqué si aucun enfant visible.
-  const groups = (establishmentId ? SIDEBAR_NAV : SIDEBAR_NAV.slice(0, 1))
-    .map((group) => ({
-      ...group,
-      items: group.items.flatMap((item): SidebarNavEntry[] => {
-        if (!isNavParent(item)) {
-          return canAccess(item.to, role) ? [item] : [];
-        }
-        const children = item.children.filter((child) => canAccess(child.to, role));
-        return children.length > 0 ? [{ ...item, children }] : [];
-      }),
-    }))
-    .filter((group) => group.items.length > 0);
+  function filterEntries(entries: SidebarNavEntry[]): SidebarNavEntry[] {
+    return entries.flatMap((entry): SidebarNavEntry[] => {
+      if (!isNavParent(entry)) {
+        return canAccess(entry.to, role) ? [entry] : [];
+      }
+      const children = entry.children.filter((child) => canAccess(child.to, role));
+      return children.length > 0 ? [{ ...entry, children }] : [];
+    });
+  }
+
+  const staticItems = establishmentId ? filterEntries(SIDEBAR_STATIC_SECTION.items) : [];
+  const entries = establishmentId ? filterEntries(SIDEBAR_ENTRIES) : filterEntries(SIDEBAR_ENTRIES.slice(0, 1));
   const bottomItems = BOTTOM_NAV.filter((item) => canAccess(item.to, role));
 
   // Recherche : filtre insensible aux accents sur libellés + enfants.
   const normalizedQuery = normalizeText(query.trim());
   const searching = normalizedQuery.length > 0;
-  const visibleGroups = searching
-    ? groups
-        .map((group) => ({
-          ...group,
-          items: group.items.flatMap((item): SidebarNavEntry[] => {
-            if (!isNavParent(item)) {
-              return normalizeText(item.label).includes(normalizedQuery) ? [item] : [];
-            }
-            const children = item.children.filter((child) =>
-              normalizeText(child.label).includes(normalizedQuery),
-            );
-            if (children.length > 0) return [{ ...item, children }];
-            return normalizeText(item.label).includes(normalizedQuery) ? [item] : [];
-          }),
-        }))
-        .filter((group) => group.items.length > 0)
-    : groups;
-
-  const isGroupOpen = (group: {
-    title: string;
-    defaultOpen?: boolean;
-    items: SidebarNavEntry[];
-  }) => {
-    if (searching) return true;
-    if (openGroups[group.title] !== undefined) return openGroups[group.title];
-    if (group.defaultOpen) return true;
-    // Le groupe de la route active est déplié par défaut (enfants inclus).
-    return group.items.some((item) =>
-      isNavParent(item)
-        ? item.children.some(
-            (child) => pathname === child.to || pathname.startsWith(`${child.to}/`),
-          )
-        : pathname === item.to || pathname.startsWith(`${item.to}/`),
-    );
-  };
-
-  const toggleGroup = (title: string, currentlyOpen: boolean) =>
-    setOpenGroups((prev) => ({ ...prev, [title]: !currentlyOpen }));
+  function searchEntries(entriesToSearch: SidebarNavEntry[]): SidebarNavEntry[] {
+    return entriesToSearch.flatMap((entry): SidebarNavEntry[] => {
+      if (!isNavParent(entry)) {
+        return normalizeText(entry.label).includes(normalizedQuery) ? [entry] : [];
+      }
+      const children = entry.children.filter((child) =>
+        normalizeText(child.label).includes(normalizedQuery),
+      );
+      if (children.length > 0) return [{ ...entry, children }];
+      return normalizeText(entry.label).includes(normalizedQuery) ? [entry] : [];
+    });
+  }
+  const visibleStaticItems = searching ? searchEntries(staticItems) : staticItems;
+  const visibleEntries = searching ? searchEntries(entries) : entries;
+  const hasResults = visibleStaticItems.length > 0 || visibleEntries.length > 0;
+  // Vue d'ensemble d'abord, section Année Scolaire ensuite, puis le reste.
+  const headEntries = visibleEntries.filter(
+    (entry) => !isNavParent(entry) && entry.to === ROUTES.dashboard,
+  );
+  const tailEntries = visibleEntries.filter(
+    (entry) => isNavParent(entry) || entry.to !== ROUTES.dashboard,
+  );
 
   const meQuery = useQuery({
     queryKey: ["me"],
@@ -330,88 +294,89 @@ export function Sidebar({
         >
           <NavSearch value={query} onChange={setQuery} />
         </div>
-        {searching && visibleGroups.length === 0 ? (
+        {searching && !hasResults ? (
           <p className="px-p2 py-p4 text-center text-r12 text-(--skools-text-muted)">
             Aucune page pour « {query.trim()} »
           </p>
         ) : (
-          visibleGroups.map((group, gi) => {
-            const open = collapsed ? true : isGroupOpen(group);
-            // Groupe à un seul item visible : entrée directe, sans accordéon.
-            // Parent à un seul enfant visible : lien direct vers l'enfant.
-            const single = group.items.length === 1 ? group.items[0] : null;
-            const direct = single
-              ? isNavParent(single) && single.children.length === 1
-                ? single.children[0]
-                : !isNavParent(single)
-                  ? single
-                  : null
-              : null;
-            if (direct) {
-              return (
-                <div key={group.title} className={gi > 0 ? "mt-p4" : ""}>
+          <div className="flex flex-col gap-p1">
+            {headEntries.map((entry) =>
+              isNavParent(entry) ? (
+                <NavParentItem
+                  key={entry.label}
+                  item={entry}
+                  collapsed={collapsed}
+                  onNavigate={onCloseMobile}
+                />
+              ) : (
+                <NavItemLink
+                  key={entry.to}
+                  item={entry}
+                  collapsed={collapsed}
+                  onNavigate={onCloseMobile}
+                />
+              ),
+            )}
+            {visibleStaticItems.length > 0 && (
+              <div className="mt-p4">
+                <p
+                  className={[
+                    "px-p2 mb-p2 text-[11px] font-medium uppercase tracking-wide text-(--skools-text-muted)",
+                    collapsed ? "lg:hidden" : "",
+                  ]
+                    .filter(Boolean)
+                    .join(" ")}
+                >
+                  {SIDEBAR_STATIC_SECTION.title}
+                </p>
+                <div className="flex flex-col gap-p1">
+                  {visibleStaticItems.map((item) =>
+                    isNavParent(item) ? (
+                      <NavParentItem
+                        key={item.label}
+                        item={item}
+                        collapsed={collapsed}
+                        onNavigate={onCloseMobile}
+                      />
+                    ) : (
+                      <NavItemLink
+                        key={item.to}
+                        item={item}
+                        collapsed={collapsed}
+                        onNavigate={onCloseMobile}
+                      />
+                    ),
+                  )}
+                </div>
+              </div>
+            )}
+            {tailEntries.map((entry) =>
+              isNavParent(entry) ? (
+                entry.children.length === 1 ? (
                   <NavItemLink
-                    item={direct}
+                    key={entry.children[0].to}
+                    item={entry.children[0]}
                     collapsed={collapsed}
                     onNavigate={onCloseMobile}
                   />
-                </div>
-              );
-            }
-            return (
-              <div key={group.title} className={gi > 0 ? "mt-p4" : ""}>
-                {collapsed ? (
-                  <>
-                    <p className="px-p2 mb-p2 text-[11px] font-medium uppercase tracking-wide text-(--skools-text-muted) lg:hidden">
-                      {group.title}
-                    </p>
-                    {gi > 0 && (
-                      <span className="hidden lg:block">
-                        <Separator className="mb-p4" />
-                      </span>
-                    )}
-                  </>
                 ) : (
-                  <button
-                    type="button"
-                    onClick={() => toggleGroup(group.title, open)}
-                    aria-expanded={open}
-                    aria-label={`${open ? "Replier" : "Déplier"} ${group.title}`}
-                    className="mb-p2 flex w-full items-center justify-between rounded-r2 px-p2 py-p1 text-[11px] font-medium uppercase tracking-wide text-(--skools-text-muted) transition-colors hover:bg-(--skools-interactive-hover-bg) hover:text-(--skools-text-primary)"
-                  >
-                    <span className="truncate">{group.title}</span>
-                    <ChevronDownwardIcon
-                      className={[
-                        "size-4 shrink-0 transition-transform duration-200",
-                        open ? "" : "-rotate-90",
-                      ].join(" ")}
-                    />
-                  </button>
-                )}
-                {open && (
-                  <div className="flex flex-col gap-p1">
-                    {group.items.map((item) =>
-                      isNavParent(item) ? (
-                        <NavParentItem
-                          key={item.label}
-                          item={item}
-                          collapsed={collapsed}
-                          onNavigate={onCloseMobile}
-                        />
-                      ) : (
-                        <NavItemLink
-                          key={item.to}
-                          item={item}
-                          collapsed={collapsed}
-                          onNavigate={onCloseMobile}
-                        />
-                      ),
-                    )}
-                  </div>
-                )}
-              </div>
-            );
-          })
+                  <NavParentItem
+                    key={entry.label}
+                    item={entry}
+                    collapsed={collapsed}
+                    onNavigate={onCloseMobile}
+                  />
+                )
+              ) : (
+                <NavItemLink
+                  key={entry.to}
+                  item={entry}
+                  collapsed={collapsed}
+                  onNavigate={onCloseMobile}
+                />
+              ),
+            )}
+          </div>
         )}
         {bottomItems.length > 0 && (
           <div className="mt-p4">

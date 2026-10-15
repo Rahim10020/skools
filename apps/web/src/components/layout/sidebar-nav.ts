@@ -47,61 +47,55 @@ export function isNavParent(
   return "children" in entry;
 }
 
-export interface SidebarNavItem {
-  to: string;
-  label: string;
-  icon: IconComponent;
-}
-
-export interface SidebarNavGroup {
+/**
+ * Section statique Année Scolaire : toujours dépliée, titre non cliquable,
+ * sans chevron. Fonctionnement conservé tel quel.
+ */
+export interface SidebarNavSection {
   title: string;
-  /** Ouvert par défaut (préférence persistée + route active priment). */
-  defaultOpen?: boolean;
   items: SidebarNavEntry[];
 }
 
 /**
  * Navigation du shell. Organisation façon matrice (docs/access-matrix.md) :
- * hubs à onglets + pages directes, groupés par domaine.
+ * recherche, Vue d'ensemble, section statique Année Scolaire, entrées
+ * parentes à flyout (Personnes, Pédagogie, Vie scolaire), pages directes.
  * Filtrage par rôle via `canAccess` (matrice docs/access-matrix.md) dans Sidebar.
- * "Utilisateurs & rôles" n'est visible que pour DIRECTOR (groupe Administration).
+ * "Utilisateurs & rôles" n'est visible que pour DIRECTOR.
  */
-export const SIDEBAR_NAV: SidebarNavGroup[] = [
+export const SIDEBAR_STATIC_SECTION: SidebarNavSection = {
+  title: "Année Scolaire",
+  items: [
+    {
+      label: "Structures",
+      icon: FolderIcon,
+      children: [
+        { to: ROUTES.academicYears, label: "Années scolaires", icon: CalendarIcon },
+        { to: ROUTES.cycles, label: "Cycles", icon: FolderIcon },
+        { to: ROUTES.levels, label: "Niveaux", icon: FilterIcon },
+        { to: ROUTES.series, label: "Séries", icon: FileIcon },
+        { to: ROUTES.classrooms, label: "Classes", icon: DoorIcon },
+      ],
+    },
+    {
+      label: "Matières & périodes",
+      icon: NotePadIcon,
+      children: [
+        { to: ROUTES.subjects, label: "Matières", icon: NotePadIcon },
+        { to: ROUTES.periods, label: "Périodes", icon: ClockIcon },
+      ],
+    },
+    { to: ROUTES.schedules, label: "Emplois du temps", icon: DateIcon },
+  ],
+};
+
+/** Entrées plates : feuille directe ou parent à flyout. */
+export const SIDEBAR_ENTRIES: SidebarNavEntry[] = [
+  { to: ROUTES.dashboard, label: "Tableau de bord", icon: DashboardIcon },
   {
-    title: "Pilotage",
-    defaultOpen: true,
-    items: [
-      { to: ROUTES.dashboard, label: "Tableau de bord", icon: DashboardIcon },
-    ],
-  },
-  {
-    title: "Année Scolaire",
-    items: [
-      {
-        label: "Structures",
-        icon: FolderIcon,
-        children: [
-          { to: ROUTES.academicYears, label: "Années scolaires", icon: CalendarIcon },
-          { to: ROUTES.cycles, label: "Cycles", icon: FolderIcon },
-          { to: ROUTES.levels, label: "Niveaux", icon: FilterIcon },
-          { to: ROUTES.series, label: "Séries", icon: FileIcon },
-          { to: ROUTES.classrooms, label: "Classes", icon: DoorIcon },
-        ],
-      },
-      {
-        label: "Matières & périodes",
-        icon: NotePadIcon,
-        children: [
-          { to: ROUTES.subjects, label: "Matières", icon: NotePadIcon },
-          { to: ROUTES.periods, label: "Périodes", icon: ClockIcon },
-        ],
-      },
-      { to: ROUTES.schedules, label: "Emplois du temps", icon: DateIcon },
-    ],
-  },
-  {
-    title: "Personnes",
-    items: [
+    label: "Personnes",
+    icon: ContactsIcon,
+    children: [
       { to: ROUTES.students, label: "Élèves", icon: ContactsIcon },
       { to: ROUTES.teachers, label: "Enseignants", icon: EyeIcon },
       { to: ROUTES.parents, label: "Parents", icon: MailIcon },
@@ -111,16 +105,11 @@ export const SIDEBAR_NAV: SidebarNavGroup[] = [
     ],
   },
   {
-    title: "Pédagogie",
-    items: [
-      {
-        label: "Examens & notes",
-        icon: CheckCircleIcon,
-        children: [
-          { to: ROUTES.exams, label: "Examens", icon: ExamIcon },
-          { to: ROUTES.grades, label: "Saisie de notes", icon: CheckCircleIcon },
-        ],
-      },
+    label: "Pédagogie",
+    icon: ExamIcon,
+    children: [
+      { to: ROUTES.exams, label: "Examens", icon: ExamIcon },
+      { to: ROUTES.grades, label: "Saisie de notes", icon: CheckCircleIcon },
       { to: ROUTES.reportCards, label: "Bulletins", icon: DownloadIcon },
       { to: ROUTES.myGrades, label: "Mes notes", icon: CheckCircleIcon },
       {
@@ -131,17 +120,13 @@ export const SIDEBAR_NAV: SidebarNavGroup[] = [
     ],
   },
   {
-    title: "Vie scolaire",
-    items: [
+    label: "Vie scolaire",
+    icon: CheckIcon,
+    children: [
       { to: ROUTES.attendances, label: "Présences", icon: CheckIcon },
       { to: ROUTES.myAbsences, label: "Mes absences", icon: CheckIcon },
       { to: ROUTES.discipline, label: "Discipline", icon: InfoCircleIcon },
     ],
   },
-  {
-    title: "Administration",
-    items: [
-      { to: ROUTES.users, label: "Utilisateurs & rôles", icon: ContactsIcon },
-    ],
-  },
+  { to: ROUTES.users, label: "Utilisateurs & rôles", icon: ContactsIcon },
 ];
