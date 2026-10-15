@@ -28,7 +28,7 @@ export function SidebarNavLink({
       onClick={onNavigate}
       aria-current={active ? "page" : undefined}
       className={cx(
-        "group flex items-center gap-p2 h-8 rounded-r2 px-p2 text-r12 transition-colors",
+        "group flex items-center gap-p2 h-8 rounded-r2 px-p2 text-r14 cursor-pointer transition-colors",
         collapsed && "lg:justify-center",
         active
           ? "bg-(--skools-interactive-active-bg) text-(--skools-text-primary) font-medium"

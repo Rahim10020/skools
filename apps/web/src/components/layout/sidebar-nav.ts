@@ -41,9 +41,7 @@ export interface SidebarNavParent {
 
 export type SidebarNavEntry = SidebarNavItem | SidebarNavParent;
 
-export function isNavParent(
-  entry: SidebarNavEntry,
-): entry is SidebarNavParent {
+export function isNavParent(entry: SidebarNavEntry): entry is SidebarNavParent {
   return "children" in entry;
 }
 
@@ -70,7 +68,11 @@ export const SIDEBAR_STATIC_SECTION: SidebarNavSection = {
       label: "Structures",
       icon: FolderIcon,
       children: [
-        { to: ROUTES.academicYears, label: "Années scolaires", icon: CalendarIcon },
+        {
+          to: ROUTES.academicYears,
+          label: "Années scolaires",
+          icon: CalendarIcon,
+        },
         { to: ROUTES.cycles, label: "Cycles", icon: FolderIcon },
         { to: ROUTES.levels, label: "Niveaux", icon: FilterIcon },
         { to: ROUTES.series, label: "Séries", icon: FileIcon },

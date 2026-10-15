@@ -294,7 +294,7 @@ export function Sidebar({
         {bottomItems.length > 0 && (
           <div className="mt-p4">
             <Separator className="mb-p4" />
-            <div className="flex flex-col gap-p1">
+            <div className="flex flex-col gap-p4">
               {bottomItems.map((item) => (
                 <SidebarNavLink
                   key={item.to}
