@@ -21,7 +21,7 @@ function isRouteActive(pathname: string, to: string) {
 /** Ligne commune feuille / parent : même taille, même état actif. */
 function navRowClass(active: boolean, collapsed: boolean) {
   return cx(
-    "group flex w-full items-center gap-p2 h-8 rounded-r2 px-p2 text-r14 cursor-pointer transition-colors",
+    "group flex w-full items-center gap-p2 h-8 rounded-r2 px-p2 text-m12 cursor-pointer transition-colors",
     collapsed && "lg:justify-center",
     active
       ? "bg-(--skools-interactive-active-bg) text-(--skools-text-primary) font-medium"

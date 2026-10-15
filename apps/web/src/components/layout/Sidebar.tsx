@@ -204,7 +204,7 @@ export function Sidebar({
         aria-label="Sections"
         className="sidebar-scrollbar flex-1 overflow-y-auto px-p4 py-p4"
       >
-        <div className={cx("mb-p4", collapsed && "lg:hidden")}>
+        <div className={cx("mb-p8", collapsed && "lg:hidden")}>
           <NavSearch value={query} onChange={setQuery} />
         </div>
         {searching && !hasResults ? (
@@ -212,7 +212,7 @@ export function Sidebar({
             Aucune page pour « {query.trim()} »
           </p>
         ) : (
-          <div className="flex flex-col gap-p2">
+          <div className="flex flex-col gap-p3">
             {visibleEntries.map((entry) => renderEntry(entry))}
           </div>
         )}
