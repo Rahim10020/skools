@@ -1,4 +1,4 @@
-import { useState, type FormEvent, type ReactNode } from "react";
+import { useMemo, useState, type FormEvent, type ReactNode } from "react";
 import { useCrudResource } from "../../hooks/use-crud";
 import { getErrorMessage } from "../../lib/api";
 import { PageHeader } from "../../layouts/PageHeader";
@@ -19,10 +19,15 @@ import { Select, type SelectOption } from "../ui/select";
 import { Textarea } from "../ui/textarea";
 import { Checkbox } from "../ui/checkbox";
 import { Modal } from "../ui/use-modal";
-import { Skeleton } from "../ui/skeleton";
 import { EmptyState, ErrorState } from "../ui/empty-state";
 import { toast } from "../ui/toast";
 import PlusIcon from "../icons/PlusIcon";
+import { useRowSelection } from "../data-list/use-row-selection";
+import { exportToCsv } from "../data-list/csv";
+import { Pagination } from "../data-list/Pagination";
+import { HeaderSelect } from "../data-list/HeaderSelect";
+import { DataListToolbar } from "../data-list/DataListToolbar";
+import { DataListSkeleton } from "../data-list/DataListSkeleton";
 
 export type CrudFieldType =
   "text" | "number" | "date" | "time" | "select" | "textarea" | "checkbox";
@@ -80,6 +85,12 @@ export interface CrudPageProps<T> {
   ) => Record<string, unknown>;
   nameOf: (item: T) => string;
   idOf?: (item: T) => string;
+  /** Taille de page cliente façon epl (défaut 10). */
+  pageSize?: number;
+  /** Export CSV de la sélection (masqué si absent). */
+  csvHeaders?: string[];
+  toCsvRow?: (item: T) => string[];
+  csvFilename?: string;
 }
 
 function FieldShell({
@@ -345,15 +356,45 @@ export function CrudPage<T>({
   toSubmit,
   nameOf,
   idOf = defaultIdOf,
+  pageSize = 10,
+  csvHeaders,
+  toCsvRow,
+  csvFilename,
 }: CrudPageProps<T>) {
   // undefined = fermé, null = création, objet = édition.
   const [editing, setEditing] = useState<T | null | undefined>(undefined);
   const [deleteTarget, setDeleteTarget] = useState<T | null>(null);
+  const [bulkConfirmOpen, setBulkConfirmOpen] = useState(false);
+  const [bulkPending, setBulkPending] = useState(false);
+  const [menuOpenId, setMenuOpenId] = useState<string | null>(null);
+  const [page, setPage] = useState(1);
 
   const { list, createOne, updateOne, removeOne, invalidate } =
     useCrudResource<T>(endpoint, queryKey, listPath);
-  const items = list.data ?? [];
+  const items = useMemo(() => list.data ?? [], [list.data]);
   const formFields = editing ? (editFields ?? fields) : fields;
+  const selection = useRowSelection();
+
+  const listId = `${queryKey.join("/")}::${listPath ?? endpoint}`;
+  const [prevListId, setPrevListId] = useState(listId);
+  if (prevListId !== listId) {
+    setPrevListId(listId);
+    setPage(1);
+    selection.clear();
+  }
+
+  const totalPages = Math.max(1, Math.ceil(items.length / pageSize));
+  const safePage = Math.min(Math.max(page, 1), totalPages);
+  const pageItems = useMemo(
+    () => items.slice((safePage - 1) * pageSize, safePage * pageSize),
+    [items, safePage, pageSize],
+  );
+  const pageIds = useMemo(() => pageItems.map(idOf), [pageItems, idOf]);
+  const pageSelectedCount = pageIds.filter((id) => selection.has(id)).length;
+  const pageAllChecked =
+    pageIds.length > 0 && pageSelectedCount === pageIds.length;
+  const pageIndeterminate = pageSelectedCount > 0 && !pageAllChecked;
+  const canExport = !!csvHeaders && !!toCsvRow;
 
   const handleCreate = (values: Record<string, string>) =>
     createOne.mutateAsync(toSubmit(values, "create")).then(() => {
@@ -381,6 +422,45 @@ export function CrudPage<T>({
     } catch (error) {
       toast.error(getErrorMessage(error));
     }
+  };
+
+  const handleBulkDelete = async () => {
+    const ids = selection.selectedIds;
+    if (ids.length === 0) return;
+    setBulkPending(true);
+    const results = await Promise.allSettled(
+      ids.map((id) => removeOne.mutateAsync(id)),
+    );
+    const ok = results.filter((r) => r.status === "fulfilled").length;
+    const ko = results.length - ok;
+    invalidate();
+    selection.clear();
+    setBulkConfirmOpen(false);
+    setBulkPending(false);
+    if (ko === 0) toast.success(`${ok} élément(s) supprimé(s)`);
+    else if (ok === 0) toast.error("Suppression groupée impossible");
+    else toast.error(`${ok} supprimé(s), ${ko} échec(s)`);
+  };
+
+  const handleExport = () => {
+    if (!csvHeaders || !toCsvRow) return;
+    const byId = new Map(items.map((item) => [idOf(item), item]));
+    const rows = selection.selectedIds
+      .map((id) => byId.get(id))
+      .filter((item): item is T => !!item)
+      .map(toCsvRow);
+    exportToCsv(csvFilename ?? title.toLowerCase(), csvHeaders, rows);
+  };
+
+  const invertPageSelection = () => {
+    const selectedOnPage = new Set(
+      pageIds.filter((id) => selection.has(id)),
+    );
+    selection.selectMany(
+      pageIds.filter((id) => !selectedOnPage.has(id)),
+      true,
+    );
+    selection.selectMany([...selectedOnPage], false);
   };
 
   return (
@@ -412,24 +492,7 @@ export function CrudPage<T>({
           }}
         />
       ) : list.isPending ? (
-        <TableContainer>
-          <Table aria-label={`Chargement : ${title.toLowerCase()}`}>
-            <TableBody>
-              {[0, 1, 2].map((row) => (
-                <TableRow key={row}>
-                  {columns.map((column) => (
-                    <TableCell key={column.header}>
-                      <Skeleton className="h-[16px] w-3/4 rounded-r1" />
-                    </TableCell>
-                  ))}
-                  <TableCell>
-                    <Skeleton className="h-[16px] w-16 rounded-r1" />
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </TableContainer>
+        <DataListSkeleton columns={columns.length} label={`Chargement : ${title.toLowerCase()}`} />
       ) : items.length === 0 ? (
         <EmptyState
           title={`Aucun ${itemLabel} pour le moment`}
@@ -439,66 +502,160 @@ export function CrudPage<T>({
           }
         />
       ) : (
-        <TableContainer>
-          <Table>
-            <TableHeader>
-              <tr>
-                {columns.map((column) => (
-                  <TableHeaderCell key={column.header}>
-                    {column.header}
+        <div className="flex flex-col gap-p3">
+          <DataListToolbar
+            total={items.length}
+            itemLabel={itemLabel}
+            selectedCount={selection.selectedCount}
+            canDelete={!readOnly}
+            canExport={canExport}
+            bulkPending={bulkPending}
+            onBulkDelete={() => setBulkConfirmOpen(true)}
+            onExport={handleExport}
+            onClear={selection.clear}
+          />
+          <TableContainer>
+            <Table>
+              <TableHeader>
+                <tr>
+                  <TableHeaderCell className="w-10">
+                    <HeaderSelect
+                      checked={pageAllChecked}
+                      indeterminate={pageIndeterminate}
+                      onToggleAll={() =>
+                        selection.selectMany(pageIds, !pageAllChecked)
+                      }
+                      onSelectAll={() => selection.selectMany(pageIds, true)}
+                      onSelectNone={() => selection.selectMany(pageIds, false)}
+                      onInvert={invertPageSelection}
+                    />
                   </TableHeaderCell>
-                ))}
-                {!readOnly && (
+                  {columns.map((column) => (
+                    <TableHeaderCell key={column.header}>
+                      {column.header}
+                    </TableHeaderCell>
+                  ))}
                   <TableHeaderCell>
                     <span className="sr-only">Actions</span>
                   </TableHeaderCell>
-                )}
-              </tr>
-            </TableHeader>
-            <TableBody>
-              {items.map((item) => {
-                const name = nameOf(item);
-                return (
-                  <TableRow key={idOf(item)}>
-                    {columns.map((column) =>
-                      column.primary ? (
-                        <TableCellPrimary key={column.header}>
-                          {column.render(item)}
-                        </TableCellPrimary>
-                      ) : (
-                        <TableCell key={column.header}>
-                          {column.render(item)}
-                        </TableCell>
-                      ),
-                    )}
-                    {!readOnly && (
+                </tr>
+              </TableHeader>
+              <TableBody>
+                {pageItems.map((item) => {
+                  const id = idOf(item);
+                  const name = nameOf(item);
+                  const checked = selection.has(id);
+                  return (
+                    <TableRow
+                      key={id}
+                      className={`group ${checked ? "bg-(--skools-interactive-active-bg)/40" : ""}`}
+                    >
+                      <TableCell className="w-10">
+                        <Checkbox
+                          checked={checked}
+                          onChange={() => selection.toggle(id)}
+                          aria-label={`Sélectionner ${name}`}
+                        />
+                      </TableCell>
+                      {columns.map((column) =>
+                        column.primary ? (
+                          <TableCellPrimary key={column.header}>
+                            {column.render(item)}
+                          </TableCellPrimary>
+                        ) : (
+                          <TableCell key={column.header}>
+                            {column.render(item)}
+                          </TableCell>
+                        ),
+                      )}
                       <TableCell>
-                        <div className="flex justify-end gap-p3">
+                        {/* Desktop : actions au hover/focus façon Gmail */}
+                        <div className="hidden lg:flex justify-end gap-p3 opacity-0 transition-opacity group-hover:opacity-100 focus-within:opacity-100">
+                          {!readOnly && (
+                            <>
+                              <button
+                                type="button"
+                                aria-label={`Modifier ${name}`}
+                                onClick={() => setEditing(item)}
+                                className="text-r12 font-medium text-(--common-blue) hover:underline cursor-pointer"
+                              >
+                                Modifier
+                              </button>
+                              <button
+                                type="button"
+                                aria-label={`Supprimer ${name}`}
+                                onClick={() => setDeleteTarget(item)}
+                                className="text-r12 font-medium text-(--common-red) hover:underline cursor-pointer"
+                              >
+                                Supprimer
+                              </button>
+                            </>
+                          )}
+                        </div>
+                        {/* Mobile : menu 3 points */}
+                        <div className="relative flex justify-end lg:hidden">
                           <button
                             type="button"
-                            aria-label={`Modifier ${name}`}
-                            onClick={() => setEditing(item)}
-                            className="text-r12 font-medium text-(--common-blue) hover:underline"
+                            aria-label={`Options pour ${name}`}
+                            aria-haspopup="menu"
+                            aria-expanded={menuOpenId === id}
+                            onClick={() =>
+                              setMenuOpenId((v) => (v === id ? null : id))
+                            }
+                            className="inline-flex size-8 items-center justify-center rounded-r1 text-r14 text-(--skools-text-muted) hover:bg-(--skools-interactive-hover-bg) cursor-pointer"
                           >
-                            Modifier
+                            •••
                           </button>
-                          <button
-                            type="button"
-                            aria-label={`Supprimer ${name}`}
-                            onClick={() => setDeleteTarget(item)}
-                            className="text-r12 font-medium text-(--common-red) hover:underline"
-                          >
-                            Supprimer
-                          </button>
+                          {menuOpenId === id && !readOnly && (
+                            <div
+                              role="menu"
+                              className="absolute right-0 top-full z-30 mt-1 min-w-36 flex flex-col gap-1 rounded-r2 border border-(--skools-border-subtle) bg-(--skools-sidebar-bg) p-1 shadow-lg"
+                            >
+                              <button
+                                type="button"
+                                role="menuitem"
+                                onClick={() => {
+                                  setMenuOpenId(null);
+                                  setEditing(item);
+                                }}
+                                className="block w-full rounded-r2 px-p2 py-1.5 text-left text-r12 text-(--common-blue) hover:bg-(--skools-interactive-hover-bg) cursor-pointer"
+                              >
+                                Modifier
+                              </button>
+                              <button
+                                type="button"
+                                role="menuitem"
+                                onClick={() => {
+                                  setMenuOpenId(null);
+                                  setDeleteTarget(item);
+                                }}
+                                className="block w-full rounded-r2 px-p2 py-1.5 text-left text-r12 text-(--common-red) hover:bg-(--skools-interactive-hover-bg) cursor-pointer"
+                              >
+                                Supprimer
+                              </button>
+                            </div>
+                          )}
                         </div>
                       </TableCell>
-                    )}
-                  </TableRow>
-                );
-              })}
-            </TableBody>
-          </Table>
-        </TableContainer>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
+          </TableContainer>
+          {totalPages > 1 && (
+            <div className="ml-auto">
+              <Pagination
+                page={safePage}
+                totalPages={totalPages}
+                onPageChange={(next) => {
+                  setPage(next);
+                  selection.clear();
+                }}
+              />
+            </div>
+          )}
+        </div>
       )}
 
       <Modal.Root
@@ -561,6 +718,42 @@ export function CrudPage<T>({
             </Modal.Footer>
           </Modal.Content>
         )}
+      </Modal.Root>
+
+      <Modal.Root
+        size="sm"
+        open={bulkConfirmOpen}
+        onOpenChange={(open) => {
+          if (!open) setBulkConfirmOpen(false);
+        }}
+      >
+        <Modal.Content labelledBy="crud-bulk-delete-title">
+          <Modal.Header>
+            <Modal.Title id="crud-bulk-delete-title">
+              Supprimer {selection.selectedCount} élément(s) ?
+            </Modal.Title>
+            <Modal.Description>
+              Cette action est irréversible. Les éléments non supprimés
+              (erreurs) seront signalés après l'opération.
+            </Modal.Description>
+          </Modal.Header>
+          <Modal.Footer>
+            <Modal.Close>
+              <Button variant="secondary" fullWidth={false}>
+                Annuler
+              </Button>
+            </Modal.Close>
+            <Button
+              fullWidth={false}
+              variant={bulkPending ? "loading" : "primary"}
+              disabled={bulkPending}
+              onClick={handleBulkDelete}
+              className="bg-(--common-red)!"
+            >
+              Supprimer
+            </Button>
+          </Modal.Footer>
+        </Modal.Content>
       </Modal.Root>
     </div>
   );

@@ -32,6 +32,10 @@ export default function CyclesPage() {
       createLabel="Nouveau cycle"
       queryKey={KEYS.cycles}
       endpoint={API.cycles}
+      pageSize={10}
+      csvFilename="cycles"
+      csvHeaders={["Cycle", "Ordre"]}
+      toCsvRow={(cycle) => [cycle.name, cycle.order != null ? String(cycle.order) : ""]}
       columns={[
         { header: "Cycle", primary: true, render: (cycle) => cycle.name },
         { header: "Ordre", render: (cycle) => cycle.order ?? "—" },

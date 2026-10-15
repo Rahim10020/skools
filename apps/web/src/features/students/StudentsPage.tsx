@@ -51,6 +51,15 @@ export default function StudentsPage() {
       createLabel="Nouvel élève"
       queryKey={KEYS.students}
       endpoint={API.students}
+      pageSize={10}
+      csvFilename="eleves"
+      csvHeaders={["Élève", "Matricule", "Naissance", "Téléphone"]}
+      toCsvRow={(student) => [
+        fullName(student),
+        student.matricule ?? "",
+        formatDateFr(student.dateOfBirth),
+        student.phone ?? "",
+      ]}
       columns={[
         { header: "Élève", primary: true, render: fullName },
         { header: "Matricule", render: (student) => student.matricule || "—" },

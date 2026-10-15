@@ -1,7 +1,7 @@
 import { ROLES } from "../../lib/roles";
 import { API, apiPath } from "../../lib/api-endpoints";
 import { KEYS } from "../../lib/query-keys";
-import { useState, type FormEvent } from "react";
+import { useMemo, useState, type FormEvent } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import api, { getErrorMessage } from "../../lib/api";
 import { ROLE_LABELS_FR, roleLabel } from "../../lib/permissions";
@@ -22,9 +22,17 @@ import {
 } from "../../components/ui/table";
 import { Modal } from "../../components/ui/use-modal";
 import { EmptyState, ErrorState } from "../../components/ui/empty-state";
-import { Skeleton } from "../../components/ui/skeleton";
 import { toast } from "../../components/ui/toast";
 import PlusIcon from "../../components/icons/PlusIcon";
+import { Checkbox } from "../../components/ui/checkbox";
+import { useRowSelection } from "../../components/data-list/use-row-selection";
+import { exportToCsv } from "../../components/data-list/csv";
+import { Pagination } from "../../components/data-list/Pagination";
+import { HeaderSelect } from "../../components/data-list/HeaderSelect";
+import { DataListToolbar } from "../../components/data-list/DataListToolbar";
+import { DataListSkeleton } from "../../components/data-list/DataListSkeleton";
+
+const USERS_PAGE_SIZE = 10;
 
 interface Member {
   id: string;
@@ -55,6 +63,11 @@ export default function UsersPage() {
   const [editRole, setEditRole] = useState("");
   const [editError, setEditError] = useState<string | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<Member | null>(null);
+  const [bulkConfirmOpen, setBulkConfirmOpen] = useState(false);
+  const [bulkPending, setBulkPending] = useState(false);
+  const [menuOpenId, setMenuOpenId] = useState<string | null>(null);
+  const [page, setPage] = useState(1);
+  const selection = useRowSelection();
 
   const members = useQuery({
     queryKey: KEYS.members,
@@ -142,7 +155,57 @@ export default function UsersPage() {
     }
   };
 
-  const items = members.data ?? [];
+  const items = useMemo(() => members.data ?? [], [members.data]);
+  const totalPages = Math.max(1, Math.ceil(items.length / USERS_PAGE_SIZE));
+  const safePage = Math.min(Math.max(page, 1), totalPages);
+  const pageItems = useMemo(
+    () => items.slice((safePage - 1) * USERS_PAGE_SIZE, safePage * USERS_PAGE_SIZE),
+    [items, safePage],
+  );
+  const pageIds = useMemo(() => pageItems.map((m) => m.id), [pageItems]);
+  const pageSelectedCount = pageIds.filter((id) => selection.has(id)).length;
+  const pageAllChecked = pageIds.length > 0 && pageSelectedCount === pageIds.length;
+  const pageIndeterminate = pageSelectedCount > 0 && !pageAllChecked;
+  // Sécurité : on ne retire jamais son propre accès en masse.
+  const bulkIds = selection.selectedIds.filter((id) => {
+    const member = items.find((m) => m.id === id);
+    return member && member.user.id !== currentUserId;
+  });
+
+  const invertPageSelection = () => {
+    const selectedOnPage = new Set(pageIds.filter((id) => selection.has(id)));
+    selection.selectMany(
+      pageIds.filter((id) => !selectedOnPage.has(id)),
+      true,
+    );
+    selection.selectMany([...selectedOnPage], false);
+  };
+
+  const handleBulkRemove = async () => {
+    if (bulkIds.length === 0) return;
+    setBulkPending(true);
+    const results = await Promise.allSettled(
+      bulkIds.map((id) => deleteMutation.mutateAsync(id)),
+    );
+    const ok = results.filter((r) => r.status === "fulfilled").length;
+    const ko = results.length - ok;
+    invalidate();
+    selection.clear();
+    setBulkConfirmOpen(false);
+    setBulkPending(false);
+    if (ko === 0) toast.success(`${ok} accès retiré(s)`);
+    else if (ok === 0) toast.error("Retrait groupé impossible");
+    else toast.error(`${ok} retiré(s), ${ko} échec(s)`);
+  };
+
+  const handleExport = () => {
+    const byId = new Map(items.map((m) => [m.id, m]));
+    const rows = selection.selectedIds
+      .map((id) => byId.get(id))
+      .filter((m): m is Member => !!m)
+      .map((m) => [memberName(m), m.user.email, roleLabel(m.role)]);
+    exportToCsv("utilisateurs", ["Membre", "Email", "Rôle"], rows);
+  };
 
   return (
     <div>
@@ -167,92 +230,167 @@ export default function UsersPage() {
           onRetry={() => void members.refetch()}
         />
       ) : members.isPending ? (
-        <TableContainer>
-          <Table aria-label="Chargement des membres">
-            <TableBody>
-              {[0, 1, 2].map((row) => (
-                <TableRow key={row}>
-                  <TableCell>
-                    <Skeleton className="h-[16px] w-3/4 rounded-r1" />
-                  </TableCell>
-                  <TableCell>
-                    <Skeleton className="h-[16px] w-1/2 rounded-r1" />
-                  </TableCell>
-                  <TableCell>
-                    <Skeleton className="h-[16px] w-16 rounded-r1" />
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </TableContainer>
+        <DataListSkeleton columns={3} label="Chargement des membres" />
       ) : items.length === 0 ? (
         <EmptyState
           title="Aucun membre pour le moment"
           description="Ajoutez le premier membre avec le bouton « Ajouter un membre »."
         />
       ) : (
-        <TableContainer>
-          <Table>
-            <TableHeader>
-              <tr>
-                <TableHeaderCell>Membre</TableHeaderCell>
-                <TableHeaderCell>Email</TableHeaderCell>
-                <TableHeaderCell>Rôle</TableHeaderCell>
-                <TableHeaderCell>
-                  <span className="sr-only">Actions</span>
-                </TableHeaderCell>
-              </tr>
-            </TableHeader>
-            <TableBody>
-              {items.map((member) => {
-                const isSelf = member.user.id === currentUserId;
-                return (
-                  <TableRow key={member.id}>
-                    <TableCellPrimary>
-                      {memberName(member)}
-                      {isSelf && (
-                        <span className="ml-p2 text-r11 text-(--skools-text-muted)">
-                          (vous)
-                        </span>
-                      )}
-                    </TableCellPrimary>
-                    <TableCell>{member.user.email}</TableCell>
-                    <TableCell>{roleLabel(member.role)}</TableCell>
-                    <TableCell>
-                      <div className="flex justify-end gap-p3">
-                        {isSelf ? (
-                          <span className="text-r12 text-(--skools-text-muted)">
-                            —
+        <div className="flex flex-col gap-p3">
+          <DataListToolbar
+            total={items.length}
+            itemLabel="membre"
+            selectedCount={selection.selectedCount}
+            canDelete
+            canExport
+            bulkPending={bulkPending}
+            onBulkDelete={() => setBulkConfirmOpen(true)}
+            onExport={handleExport}
+            onClear={selection.clear}
+          />
+          <TableContainer>
+            <Table>
+              <TableHeader>
+                <tr>
+                  <TableHeaderCell className="w-10">
+                    <HeaderSelect
+                      checked={pageAllChecked}
+                      indeterminate={pageIndeterminate}
+                      onToggleAll={() =>
+                        selection.selectMany(pageIds, !pageAllChecked)
+                      }
+                      onSelectAll={() => selection.selectMany(pageIds, true)}
+                      onSelectNone={() => selection.selectMany(pageIds, false)}
+                      onInvert={invertPageSelection}
+                    />
+                  </TableHeaderCell>
+                  <TableHeaderCell>Membre</TableHeaderCell>
+                  <TableHeaderCell>Email</TableHeaderCell>
+                  <TableHeaderCell>Rôle</TableHeaderCell>
+                  <TableHeaderCell>
+                    <span className="sr-only">Actions</span>
+                  </TableHeaderCell>
+                </tr>
+              </TableHeader>
+              <TableBody>
+                {pageItems.map((member) => {
+                  const isSelf = member.user.id === currentUserId;
+                  const checked = selection.has(member.id);
+                  return (
+                    <TableRow
+                      key={member.id}
+                      className={`group ${checked ? "bg-(--skools-interactive-active-bg)/40" : ""}`}
+                    >
+                      <TableCell className="w-10">
+                        <Checkbox
+                          checked={checked}
+                          onChange={() => selection.toggle(member.id)}
+                          aria-label={`Sélectionner ${memberName(member)}`}
+                        />
+                      </TableCell>
+                      <TableCellPrimary>
+                        {memberName(member)}
+                        {isSelf && (
+                          <span className="ml-p2 text-r11 text-(--skools-text-muted)">
+                            (vous)
                           </span>
-                        ) : (
-                          <>
-                            <button
-                              type="button"
-                              aria-label={`Modifier le rôle de ${memberName(member)}`}
-                              onClick={() => openEdit(member)}
-                              className="text-r12 font-medium text-(--common-blue) hover:underline"
-                            >
-                              Modifier
-                            </button>
-                            <button
-                              type="button"
-                              aria-label={`Retirer ${memberName(member)}`}
-                              onClick={() => setDeleteTarget(member)}
-                              className="text-r12 font-medium text-(--common-red) hover:underline"
-                            >
-                              Retirer
-                            </button>
-                          </>
                         )}
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                );
-              })}
-            </TableBody>
-          </Table>
-        </TableContainer>
+                      </TableCellPrimary>
+                      <TableCell>{member.user.email}</TableCell>
+                      <TableCell>{roleLabel(member.role)}</TableCell>
+                      <TableCell>
+                        <div className="hidden lg:flex justify-end gap-p3 opacity-0 transition-opacity group-hover:opacity-100 focus-within:opacity-100">
+                          {isSelf ? (
+                            <span className="text-r12 text-(--skools-text-muted)">
+                              —
+                            </span>
+                          ) : (
+                            <>
+                              <button
+                                type="button"
+                                aria-label={`Modifier le rôle de ${memberName(member)}`}
+                                onClick={() => openEdit(member)}
+                                className="text-r12 font-medium text-(--common-blue) hover:underline cursor-pointer"
+                              >
+                                Modifier
+                              </button>
+                              <button
+                                type="button"
+                                aria-label={`Retirer ${memberName(member)}`}
+                                onClick={() => setDeleteTarget(member)}
+                                className="text-r12 font-medium text-(--common-red) hover:underline cursor-pointer"
+                              >
+                                Retirer
+                              </button>
+                            </>
+                          )}
+                        </div>
+                        <div className="relative flex justify-end lg:hidden">
+                          <button
+                            type="button"
+                            aria-label={`Options pour ${memberName(member)}`}
+                            aria-haspopup="menu"
+                            aria-expanded={menuOpenId === member.id}
+                            onClick={() =>
+                              setMenuOpenId((v) =>
+                                v === member.id ? null : member.id,
+                              )
+                            }
+                            className="inline-flex size-8 items-center justify-center rounded-r1 text-r14 text-(--skools-text-muted) hover:bg-(--skools-interactive-hover-bg) cursor-pointer"
+                          >
+                            •••
+                          </button>
+                          {menuOpenId === member.id && !isSelf && (
+                            <div
+                              role="menu"
+                              className="absolute right-0 top-full z-30 mt-1 min-w-36 flex flex-col gap-1 rounded-r2 border border-(--skools-border-subtle) bg-(--skools-sidebar-bg) p-1 shadow-lg"
+                            >
+                              <button
+                                type="button"
+                                role="menuitem"
+                                onClick={() => {
+                                  setMenuOpenId(null);
+                                  openEdit(member);
+                                }}
+                                className="block w-full rounded-r2 px-p2 py-1.5 text-left text-r12 text-(--common-blue) hover:bg-(--skools-interactive-hover-bg) cursor-pointer"
+                              >
+                                Modifier
+                              </button>
+                              <button
+                                type="button"
+                                role="menuitem"
+                                onClick={() => {
+                                  setMenuOpenId(null);
+                                  setDeleteTarget(member);
+                                }}
+                                className="block w-full rounded-r2 px-p2 py-1.5 text-left text-r12 text-(--common-red) hover:bg-(--skools-interactive-hover-bg) cursor-pointer"
+                              >
+                                Retirer
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
+          </TableContainer>
+          {totalPages > 1 && (
+            <div className="ml-auto">
+              <Pagination
+                page={safePage}
+                totalPages={totalPages}
+                onPageChange={(next) => {
+                  setPage(next);
+                  selection.clear();
+                }}
+              />
+            </div>
+          )}
+        </div>
       )}
 
       {/* Ajout */}
@@ -419,6 +557,41 @@ export default function UsersPage() {
             </Modal.Footer>
           </Modal.Content>
         )}
+      </Modal.Root>
+
+      {/* Retrait groupé (hors soi-même) */}
+      <Modal.Root
+        size="sm"
+        open={bulkConfirmOpen}
+        onOpenChange={(open) => !open && setBulkConfirmOpen(false)}
+      >
+        <Modal.Content labelledBy="users-bulk-title">
+          <Modal.Header>
+            <Modal.Title id="users-bulk-title">
+              Retirer {bulkIds.length} accès ?
+            </Modal.Title>
+            <Modal.Description>
+              Votre propre accès est exclu automatiquement. Cette action est
+              irréversible.
+            </Modal.Description>
+          </Modal.Header>
+          <Modal.Footer>
+            <Modal.Close>
+              <Button variant="secondary" fullWidth={false}>
+                Annuler
+              </Button>
+            </Modal.Close>
+            <Button
+              fullWidth={false}
+              variant={bulkPending ? "loading" : "primary"}
+              disabled={bulkPending || bulkIds.length === 0}
+              onClick={handleBulkRemove}
+              className="bg-(--common-red)!"
+            >
+              Retirer
+            </Button>
+          </Modal.Footer>
+        </Modal.Content>
       </Modal.Root>
     </div>
   );

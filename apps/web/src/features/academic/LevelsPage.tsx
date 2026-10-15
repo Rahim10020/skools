@@ -43,6 +43,14 @@ export default function LevelsPage() {
       createLabel="Nouveau niveau"
       queryKey={KEYS.levels}
       endpoint={API.levels}
+      pageSize={10}
+      csvFilename="niveaux"
+      csvHeaders={["Niveau", "Cycle", "Ordre"]}
+      toCsvRow={(level) => [
+        level.name,
+        level.cycle.name,
+        level.order != null ? String(level.order) : "",
+      ]}
       columns={[
         { header: "Niveau", primary: true, render: (level) => level.name },
         { header: "Cycle", render: (level) => level.cycle.name },

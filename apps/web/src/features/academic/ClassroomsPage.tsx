@@ -60,6 +60,16 @@ export default function ClassroomsPage() {
       createLabel="Nouvelle classe"
       queryKey={KEYS.classrooms}
       endpoint={API.classrooms}
+      pageSize={10}
+      csvFilename="classes"
+      csvHeaders={["Classe", "Année scolaire", "Niveau", "Série", "Effectif max"]}
+      toCsvRow={(classroom) => [
+        classroom.name,
+        classroom.academicYear.name,
+        classroom.level.name,
+        classroom.series?.name ?? "",
+        classroom.capacity != null ? String(classroom.capacity) : "",
+      ]}
       columns={[
         {
           header: "Classe",
