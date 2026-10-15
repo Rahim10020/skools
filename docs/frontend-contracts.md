@@ -39,17 +39,17 @@
 | `levels` | `cycleId UUID, name (≥1), order?` (400 si cycle hors établissement) |
 | `series` | `name (≥1), levelId?: UUID` |
 | `subjects` | `name (≥2), code?, description?` |
-| `classrooms` | `academicYearId UUID, levelId UUID, seriesId?: UUID, name (≥1), capacity?: int ≥1` |
+| `classrooms` | `academicYearId UUID, levelId UUID, seriesId?: UUID, name (≥1), capacity?: int ≥1`. `GET /?search=&levelId=&seriesId=&academicYearId=&page=&limit=` → `{ data, pagination }` façon epl ; **sans param → tableau brut** (compat) |
 | `periods` | `academicYearId UUID, name (≥2), startDate ISO, endDate ISO, order?` |
 
 > `academic-years` et `periods` : `GET /` et `GET /:id` ouverts à tous les rôles d'établissement (matrice règle 6 : sélecteur d'année visible sauf SUPER_ADMIN ; filtre période des bulletins). Écritures DIRECTOR/ADMIN (CENSEUR lit les années).
 
 ## Personnes (JWT)
 
-- `students` CRUD : `firstName (≥2), lastName (≥2), matricule?, gender?, dateOfBirth? ISO, placeOfBirth?, phone?, address?, userId? UUID` (+ `GET /students/me` rôle STUDENT). `userId` = liaison compte → dossier : compte existant, membre actif de l'établissement, rôle STUDENT, non déjà lié (404/400/409 sinon).
+- `students` CRUD : `firstName (≥2), lastName (≥2), matricule?, gender?, dateOfBirth? ISO, placeOfBirth?, phone?, address?, userId? UUID` (+ `GET /students/me` rôle STUDENT). `userId` = liaison compte → dossier : compte existant, membre actif de l'établissement, rôle STUDENT, non déjà lié (404/400/409 sinon). `GET /students?search=&gender=&classroomId=&academicYearId=&page=&limit=` → `{ data, pagination }` façon epl (`total_count, page, page_size, total_pages, has_next, has_previous, skip, limit`) ; **sans param → tableau brut** (compat).
 - `teachers` CRUD : `firstName (≥2), lastName (≥2), matricule?, gender?, phone?, email? (IsEmail), address?, specialty?, userId? UUID` (+ `GET /teachers/me` rôle TEACHER, mêmes garde-fous, rôle attendu TEACHER).
 - `parents` CRUD : `firstName (≥2), lastName (≥2), phone?, email?, address?, profession?, userId? UUID` (+ `GET /parents/me` rôle PARENT, mêmes garde-fous, rôle attendu PARENT).
-- `user-establishments` (DIRECTOR) : `GET /` (membres actifs), `POST /` (`email, role` sauf SUPER_ADMIN ; 404 compte inconnu, 409 déjà dans un établissement), `PATCH /:id` (`role`, sauf soi-même), `DELETE /:id` (sauf soi-même).
+- `user-establishments` (DIRECTOR) : `GET /` (membres actifs), `POST /` (`email, role` sauf SUPER_ADMIN ; 404 compte inconnu, 409 déjà dans un établissement), `PATCH /:id` (`role`, sauf soi-même), `DELETE /:id` (sauf soi-même). `GET /?search=&role=&page=&limit=` (search = prénom/nom/email) → `{ data, pagination }` façon epl ; **sans param → tableau brut** (compat).
 - `POST /parent-students` : `parentId UUID, studentId UUID, relation?: FATHER\|MOTHER\|GUARDIAN\|OTHER, isPrimary?`. `GET /parent-students/student/:studentId`, `GET /parent-students/parent/:parentId`, `DELETE /:id` (id de la **liaison**). 409 si déjà liés. Pas de PATCH (unlink + re-link).
 - `GET /parent-students/my-children` (PARENT) → `[{ id (liaison), student{id,firstName,lastName,matricule}, classroom{id,name}|null (année en cours) }]` (404 si pas de dossier parent lié).
 - `GET /grades?studentId=<uuid>` : STUDENT/PARENT (élève imposé : lui-même / ses enfants, 403 sinon ; `studentId` requis, 403 si absent), TEACHER (restreint à ses examens), staff (filtre libre). Inclut `exam{subject{name}}` pour l'affichage.

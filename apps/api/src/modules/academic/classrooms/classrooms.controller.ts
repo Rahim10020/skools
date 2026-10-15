@@ -9,10 +9,12 @@ import {
   UseGuards,
   Request,
   ParseUUIDPipe,
+  Query,
 } from '@nestjs/common';
 import { ClassroomsService } from './classrooms.service.js';
 import { CreateClassroomDto } from './dto/create-classroom.dto.js';
 import { UpdateClassroomDto } from './dto/update-classroom.dto.js';
+import { ListClassroomsQuery } from './dto/list-classrooms.query.js';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard.js';
 import { RolesGuard } from '../../../common/guards/roles.guard.js';
 import { Roles } from '../../../common/decorators/roles.decorator.js';
@@ -31,8 +33,8 @@ export class ClassroomsController {
 
   @Get()
   @Roles(Role.DIRECTOR, Role.ADMIN, Role.CENSEUR)
-  findAll(@Request() req: any) {
-    return this.classroomsService.findAll(req.user.establishmentId);
+  findAll(@Request() req: any, @Query() query: ListClassroomsQuery) {
+    return this.classroomsService.findAll(req.user.establishmentId, query);
   }
 
   @Get(':id')

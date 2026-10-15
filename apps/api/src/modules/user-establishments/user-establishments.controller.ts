@@ -9,11 +9,13 @@ import {
   UseGuards,
   Request,
   ParseUUIDPipe,
+  Query,
 } from '@nestjs/common';
 import { Role } from '@prisma/client';
 import { UserEstablishmentsService } from './user-establishments.service.js';
 import { AddMemberDto } from './dto/add-member.dto.js';
 import { UpdateMemberRoleDto } from './dto/update-member-role.dto.js';
+import { ListMembersQuery } from './dto/list-members.query.js';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard.js';
 import { RolesGuard } from '../../common/guards/roles.guard.js';
 import { Roles } from '../../common/decorators/roles.decorator.js';
@@ -27,9 +29,10 @@ export class UserEstablishmentsController {
   ) {}
 
   @Get()
-  findMembers(@Request() req: any) {
+  findMembers(@Request() req: any, @Query() query: ListMembersQuery) {
     return this.userEstablishmentsService.findMembers(
       req.user.establishmentId,
+      query,
     );
   }
 

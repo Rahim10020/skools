@@ -9,11 +9,13 @@ import {
   UseGuards,
   Request,
   ParseUUIDPipe,
+  Query,
 } from '@nestjs/common';
 import { Role } from '@prisma/client';
 import { StudentsService } from './students.service.js';
 import { CreateStudentDto } from './dto/create-student.dto.js';
 import { UpdateStudentDto } from './dto/update-student.dto.js';
+import { ListStudentsQuery } from './dto/list-students.query.js';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard.js';
 import { RolesGuard } from '../../common/guards/roles.guard.js';
 import { Roles } from '../../common/decorators/roles.decorator.js';
@@ -37,8 +39,8 @@ export class StudentsController {
     Role.SURVEILLANT,
     Role.BIBLIOTECAIRE,
   )
-  findAll(@Request() req: any) {
-    return this.studentsService.findAll(req.user.establishmentId);
+  findAll(@Request() req: any, @Query() query: ListStudentsQuery) {
+    return this.studentsService.findAll(req.user.establishmentId, query);
   }
 
   // Avant '/:id' : sinon 'me' est capturé comme UUID invalide (400).

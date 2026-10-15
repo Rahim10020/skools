@@ -5,8 +5,14 @@ import {
 } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service.js';
 import { validateDossierUserLink } from '../../common/helpers/dossier-user-link.js';
+import {
+  containsInsensitive,
+  paginate,
+  parseListQuery,
+} from '../../common/helpers/list-query.js';
 import { CreateStudentDto } from './dto/create-student.dto.js';
 import { UpdateStudentDto } from './dto/update-student.dto.js';
+import { ListStudentsQuery } from './dto/list-students.query.js';
 
 @Injectable()
 export class StudentsService {
@@ -53,11 +59,54 @@ export class StudentsService {
     });
   }
 
-  async findAll(establishmentId: string) {
-    return this.prisma.student.findMany({
-      where: { establishmentId, isActive: true },
-      orderBy: [{ lastName: 'asc' }, { firstName: 'asc' }],
+  /**
+   * Liste façon epl : `?search=&gender=&classroomId=&page=&limit=`.
+   * Sans param → tableau brut historique (compat frontend).
+   * Avec param → `{ data, pagination }`.
+   */
+  async findAll(establishmentId: string, query: ListStudentsQuery = {}) {
+    const base = { establishmentId, isActive: true };
+    const parsed = parseListQuery({
+      page: query.page,
+      limit: query.limit,
+      search: query.search,
+      hasFilter:
+        query.gender !== undefined ||
+        query.classroomId !== undefined ||
+        query.academicYearId !== undefined,
     });
+    if (!parsed.paginated) {
+      return this.prisma.student.findMany({
+        where: base,
+        orderBy: [{ lastName: 'asc' }, { firstName: 'asc' }],
+      });
+    }
+
+    const where: Record<string, unknown> = { ...base };
+    if (parsed.search) {
+      where.OR = [
+        { firstName: containsInsensitive(parsed.search) },
+        { lastName: containsInsensitive(parsed.search) },
+        { matricule: containsInsensitive(parsed.search) },
+      ];
+    }
+    if (query.gender) where.gender = query.gender;
+    if (query.classroomId || query.academicYearId) {
+      const enrollment: Record<string, unknown> = {};
+      if (query.classroomId) enrollment.classroomId = query.classroomId;
+      if (query.academicYearId) enrollment.academicYearId = query.academicYearId;
+      where.enrollments = { some: enrollment };
+    }
+    const [total, items] = await this.prisma.$transaction([
+      this.prisma.student.count({ where }),
+      this.prisma.student.findMany({
+        where,
+        orderBy: [{ lastName: 'asc' }, { firstName: 'asc' }],
+        skip: parsed.skip,
+        take: parsed.limit,
+      }),
+    ]);
+    return paginate(items, total, parsed.page, parsed.limit);
   }
 
   async findOne(id: string, establishmentId: string) {
