@@ -76,7 +76,7 @@ export function SidebarFooter({
           <Tooltip>
             <TooltipTrigger>
               <IconButton onClick={handleLogout} aria-label="Déconnexion">
-                <LogOutIcon className="size-4" />
+                <LogOutIcon className="size-[20px]" />
               </IconButton>
             </TooltipTrigger>
             <TooltipContent side="right">Déconnexion</TooltipContent>
