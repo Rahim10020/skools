@@ -10,9 +10,8 @@ import {
   type SidebarNavEntry,
   type SidebarNavItem,
 } from "./sidebar-nav";
-import { SidebarNavLink } from "./SidebarNavLink";
+import { SidebarNavEntry as SidebarNavEntryView } from "./SidebarNavEntry";
 import { SidebarFooter } from "./SidebarFooter";
-import { NavParentItem } from "../NavParentItem";
 import { useAuthStore } from "../../stores/auth-store";
 import api from "../../lib/api";
 import { canAccess } from "../../lib/permissions";
@@ -133,32 +132,11 @@ export function Sidebar({
   const hasResults = visibleEntries.length > 0;
 
   function renderEntry(entry: SidebarNavEntry) {
-    // Parent à un seul enfant visible : lien direct vers l'enfant.
-    if (isNavParent(entry) && entry.children.length === 1) {
-      const [only] = entry.children;
-      return (
-        <SidebarNavLink
-          key={only.to}
-          item={only}
-          collapsed={collapsed}
-          onNavigate={onCloseMobile}
-        />
-      );
-    }
-    if (isNavParent(entry)) {
-      return (
-        <NavParentItem
-          key={entry.label}
-          item={entry}
-          collapsed={collapsed}
-          onNavigate={onCloseMobile}
-        />
-      );
-    }
+    const key = isNavParent(entry) ? entry.label : entry.to;
     return (
-      <SidebarNavLink
-        key={entry.to}
-        item={entry}
+      <SidebarNavEntryView
+        key={key}
+        entry={entry}
         collapsed={collapsed}
         onNavigate={onCloseMobile}
       />
@@ -234,18 +212,18 @@ export function Sidebar({
             Aucune page pour « {query.trim()} »
           </p>
         ) : (
-          <div className="flex flex-col gap-p1">
+          <div className="flex flex-col gap-p2">
             {visibleEntries.map((entry) => renderEntry(entry))}
           </div>
         )}
         {bottomItems.length > 0 && (
           <div className="mt-p4">
             <Separator className="mb-p4" />
-            <div className="flex flex-col gap-p6">
+            <div className="flex flex-col gap-p4">
               {bottomItems.map((item) => (
-                <SidebarNavLink
+                <SidebarNavEntryView
                   key={item.to}
-                  item={item}
+                  entry={item}
                   collapsed={collapsed}
                   onNavigate={onCloseMobile}
                 />

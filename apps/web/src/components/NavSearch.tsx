@@ -2,7 +2,7 @@ import { useEffect, useRef } from "react";
 import SearchIcon from "./icons/SearchIcon";
 
 /**
- * Recherche rapide des pages (design EPL : champ h-7 + chip ⌘F).
+ * Recherche rapide des pages (champ h-7 + chip ⌘F).
  * Ctrl+F focalise le champ (hors saisie en cours), Échap vide et perd le focus.
  */
 export function NavSearch({
@@ -22,7 +22,11 @@ export function NavSearch({
         target instanceof HTMLTextAreaElement ||
         target instanceof HTMLSelectElement ||
         target?.isContentEditable;
-      if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "f" && !typing) {
+      if (
+        (event.ctrlKey || event.metaKey) &&
+        event.key.toLowerCase() === "f" &&
+        !typing
+      ) {
         event.preventDefault();
         inputRef.current?.focus();
       }
@@ -32,7 +36,7 @@ export function NavSearch({
   }, []);
 
   return (
-    <div className="flex items-center bg-(--skools-elevated-bg) border-[0.8px] border-(--skools-border-subtle) rounded-r2 pl-p2 pr-1.5 h-7 text-r12 min-w-0">
+    <div className="flex items-center bg-(--skools-elevated-bg) border-[0.8px] border-(--skools-border-subtle) rounded-r2 pl-p2 pr-1.5 h-8 text-r12 min-w-0">
       <div className="flex items-center gap-p2 min-w-0 flex-1">
         <SearchIcon className="size-4 shrink-0" />
         <input
@@ -54,7 +58,7 @@ export function NavSearch({
       </div>
       <div
         aria-hidden="true"
-        className="flex border-[0.8px] border-(--skools-border-subtle) w-6 uppercase rounded-[6px] text-r10 px-[7px] items-center justify-center text-(--skools-text-muted) select-none shrink-0"
+        className="flex border-[0.8px] border-(--skools-border-subtle) w-6 uppercase rounded-md text-r10 px-1.75 items-center justify-center text-(--skools-text-muted) select-none shrink-0"
       >
         ⌘F
       </div>

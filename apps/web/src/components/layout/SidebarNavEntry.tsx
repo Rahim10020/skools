@@ -1,21 +1,76 @@
 import { useEffect, useRef, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
-import type { SidebarNavParent } from "./layout/sidebar-nav";
-import { Icon } from "./icons/Icon";
-import { FlyoutPanel } from "./FlyoutPanel";
+import {
+  isNavParent,
+  type SidebarNavChild,
+  type SidebarNavEntry as SidebarNavEntryType,
+  type SidebarNavItem,
+  type SidebarNavParent,
+} from "./sidebar-nav";
+import { cx } from "../../lib/cx";
+import { Icon } from "../icons/Icon";
+import { Tooltip, TooltipContent, TooltipTrigger } from "../ui/tooltip";
+import { FlyoutPanel } from "../FlyoutPanel";
 
 const FLYOUT_CLOSE_MS = 200;
 
-function isChildActive(pathname: string, to: string) {
+function isRouteActive(pathname: string, to: string) {
   return pathname === to || pathname.startsWith(`${to}/`);
 }
 
-/**
- * Entrée parente : même style que les feuilles,
- * survol → panneau des sous-pages, clic → épingle le panneau ouvert
- * (ligne en style actif), drawer mobile → sous-liste inline.
- */
-export function NavParentItem({
+/** Ligne commune feuille / parent : même taille, même état actif. */
+function navRowClass(active: boolean, collapsed: boolean) {
+  return cx(
+    "group flex w-full items-center gap-p2 h-8 rounded-r2 px-p2 text-r14 cursor-pointer transition-colors",
+    collapsed && "lg:justify-center",
+    active
+      ? "bg-(--skools-interactive-active-bg) text-(--skools-text-primary) font-medium"
+      : "text-(--skools-text-muted) hover:bg-(--skools-interactive-hover-bg) hover:text-(--skools-text-primary)",
+  );
+}
+
+function LeafLink({
+  item,
+  collapsed,
+  onNavigate,
+}: {
+  item: SidebarNavItem | SidebarNavChild;
+  collapsed: boolean;
+  onNavigate?: () => void;
+}) {
+  const { pathname } = useLocation();
+  const active = isRouteActive(pathname, item.to);
+
+  const link = (
+    <Link
+      to={item.to}
+      data-active={active}
+      onClick={onNavigate}
+      aria-current={active ? "page" : undefined}
+      className={navRowClass(active, collapsed)}
+    >
+      <Icon component={item.icon} size={18} className="shrink-0" />
+      <span className={cx("truncate", collapsed && "lg:hidden")}>
+        {item.label}
+      </span>
+    </Link>
+  );
+
+  if (!collapsed) return link;
+  return (
+    <>
+      <span className="lg:hidden">{link}</span>
+      <span className="hidden lg:block">
+        <Tooltip>
+          <TooltipTrigger>{link}</TooltipTrigger>
+          <TooltipContent side="right">{item.label}</TooltipContent>
+        </Tooltip>
+      </span>
+    </>
+  );
+}
+
+function ParentRow({
   item,
   collapsed,
   onNavigate,
@@ -28,7 +83,7 @@ export function NavParentItem({
   const [flyoutOpen, setFlyoutOpen] = useState(false);
   const [pinned, setPinned] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(() =>
-    item.children.some((child) => isChildActive(pathname, child.to)),
+    item.children.some((child) => isRouteActive(pathname, child.to)),
   );
   const triggerRef = useRef<HTMLDivElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
@@ -36,7 +91,7 @@ export function NavParentItem({
 
   const children = item.children;
   const active =
-    children.some((child) => isChildActive(pathname, child.to)) || flyoutOpen;
+    children.some((child) => isRouteActive(pathname, child.to)) || flyoutOpen;
 
   const cancelClose = () => {
     if (closeTimeout.current) clearTimeout(closeTimeout.current);
@@ -118,24 +173,14 @@ export function NavParentItem({
         aria-expanded={flyoutOpen || mobileOpen}
         aria-haspopup="menu"
         aria-label={`${item.label} — ${children.length} sous-pages`}
-        className={[
-          "group flex w-full items-center gap-p2 h-8 rounded-r2 px-p2 text-r14 cursor-pointer transition-colors",
-          collapsed ? "lg:justify-center" : "",
-          active
-            ? "bg-(--skools-interactive-active-bg) text-(--skools-text-primary) font-medium"
-            : "text-(--skools-text-muted) hover:bg-(--skools-interactive-hover-bg) hover:text-(--skools-text-primary)",
-        ]
-          .filter(Boolean)
-          .join(" ")}
+        className={navRowClass(active, collapsed)}
       >
         <Icon component={item.icon} size={18} className="shrink-0" />
         <span
-          className={[
+          className={cx(
             "truncate flex-1 min-w-0 text-left",
-            collapsed ? "lg:hidden" : "",
-          ]
-            .filter(Boolean)
-            .join(" ")}
+            collapsed && "lg:hidden",
+          )}
         >
           {item.label}
         </span>
@@ -168,21 +213,21 @@ export function NavParentItem({
         }}
       />
       {!collapsed && mobileOpen && (
-        <div className="mt-p1 flex flex-col gap-p1 lg:hidden">
+        <div className="mt-p2 flex flex-col gap-p2 lg:hidden">
           {children.map((child) => {
-            const childActive = isChildActive(pathname, child.to);
+            const childActive = isRouteActive(pathname, child.to);
             return (
               <Link
                 key={child.to}
                 to={child.to}
                 aria-current={childActive ? "page" : undefined}
                 onClick={onNavigate}
-                className={[
+                className={cx(
                   "flex items-center gap-p2 h-8 rounded-r2 pl-p8 pr-p2 text-r12 transition-colors",
                   childActive
                     ? "bg-(--skools-interactive-active-bg) text-(--skools-text-primary) font-medium"
                     : "text-(--skools-text-muted) hover:bg-(--skools-interactive-hover-bg) hover:text-(--skools-text-primary)",
-                ].join(" ")}
+                )}
               >
                 <Icon component={child.icon} size={18} className="shrink-0" />
                 <span className="truncate">{child.label}</span>
@@ -192,5 +237,36 @@ export function NavParentItem({
         </div>
       )}
     </>
+  );
+}
+
+/**
+ * Entrée unique de la sidebar (feuille ou parent).
+ * - Feuille : `<Link>` direct + tooltip en mode replié.
+ * - Parent : bouton + flyout desktop, sous-liste inline sur mobile.
+ * - Parent à un seul enfant visible : lien direct vers l'enfant.
+ */
+export function SidebarNavEntry({
+  entry,
+  collapsed,
+  onNavigate,
+}: {
+  entry: SidebarNavEntryType;
+  collapsed: boolean;
+  onNavigate?: () => void;
+}) {
+  if (isNavParent(entry)) {
+    if (entry.children.length === 1) {
+      const [only] = entry.children;
+      return (
+        <LeafLink item={only} collapsed={collapsed} onNavigate={onNavigate} />
+      );
+    }
+    return (
+      <ParentRow item={entry} collapsed={collapsed} onNavigate={onNavigate} />
+    );
+  }
+  return (
+    <LeafLink item={entry} collapsed={collapsed} onNavigate={onNavigate} />
   );
 }

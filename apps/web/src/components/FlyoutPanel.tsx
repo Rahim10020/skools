@@ -10,7 +10,7 @@ const SIDE_OFFSET = 12;
 /**
  * Panneau flyout : au survol d'une entrée parente, affiche ses
  * sous-pages à droite, en portal (pas d'écrasement du layout).
- * Le minuteur de fermeture est possédé par le parent (`NavParentItem`) :
+ * Le minuteur de fermeture est possédé par le parent (`SidebarNavEntry`) :
  * ce panneau ne fait que signaler les entrées/sorties du pointeur.
  * Chevauchement de 2px avec le déclencheur : aucune zone morte à traverser.
  */
