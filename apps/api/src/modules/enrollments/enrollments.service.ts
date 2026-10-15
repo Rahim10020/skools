@@ -18,6 +18,12 @@ import {
   resolveVisibleStudentIds,
 } from '../../common/helpers/family-scope.js';
 import type { RequestActor } from '../../common/types/request-actor.js';
+import { ListEnrollmentsQuery } from './dto/list-enrollments.query.js';
+import {
+  containsInsensitive,
+  paginate,
+  parseListQuery,
+} from '../../common/helpers/list-query.js';
 import { NotificationsService } from '../notifications/notifications.service.js';
 
 @Injectable()
@@ -104,7 +110,15 @@ export class EnrollmentsService {
     return enrollment;
   }
 
-  async findAll(establishmentId: string, actor?: RequestActor) {
+  /**
+   * Liste façon epl : `?search=&classroomId=&academicYearId=&status=&page=&limit=`.
+   * Périmètres acteur préservés (enseignant / famille). Sans param → tableau brut.
+   */
+  async findAll(
+    establishmentId: string,
+    actor?: RequestActor,
+    query: ListEnrollmentsQuery = {},
+  ) {
     // Périmètre enseignant : inscrits de ses classes (registre d'appel/notes).
     let classroomIds: string[] | undefined;
     const scope = await resolveTeacherScope(this.prisma, establishmentId, actor);
@@ -120,27 +134,68 @@ export class EnrollmentsService {
       );
     }
 
-    return this.prisma.enrollment.findMany({
-      where: {
-        establishmentId,
-        isActive: true,
-        ...(classroomIds ? { classroomId: { in: classroomIds } } : {}),
-        ...(studentIds ? { studentId: { in: studentIds } } : {}),
-      },
-      include: {
-        student: {
-          select: {
-            id: true,
-            firstName: true,
-            lastName: true,
-            matricule: true,
-          },
+    const include = {
+      student: {
+        select: {
+          id: true,
+          firstName: true,
+          lastName: true,
+          matricule: true,
         },
-        classroom: { select: { id: true, name: true } },
-        academicYear: { select: { id: true, name: true, isCurrent: true } },
       },
-      orderBy: { createdAt: 'desc' },
+      classroom: { select: { id: true, name: true } },
+      academicYear: { select: { id: true, name: true, isCurrent: true } },
+    };
+    const parsed = parseListQuery({
+      page: query.page,
+      limit: query.limit,
+      search: query.search,
+      hasFilter:
+        query.classroomId !== undefined ||
+        query.academicYearId !== undefined ||
+        query.status !== undefined,
     });
+    if (!parsed.paginated) {
+      return this.prisma.enrollment.findMany({
+        where: {
+          establishmentId,
+          isActive: true,
+          ...(classroomIds ? { classroomId: { in: classroomIds } } : {}),
+          ...(studentIds ? { studentId: { in: studentIds } } : {}),
+        },
+        include,
+        orderBy: { createdAt: 'desc' },
+      });
+    }
+
+    const where: Record<string, unknown> = {
+      establishmentId,
+      isActive: true,
+      ...(classroomIds ? { classroomId: { in: classroomIds } } : {}),
+      ...(studentIds ? { studentId: { in: studentIds } } : {}),
+    };
+    if (query.classroomId) where.classroomId = query.classroomId;
+    if (query.academicYearId) where.academicYearId = query.academicYearId;
+    if (query.status) where.status = query.status;
+    if (parsed.search) {
+      const match = containsInsensitive(parsed.search);
+      where.OR = [
+        { student: { firstName: match } },
+        { student: { lastName: match } },
+        { student: { matricule: match } },
+      ];
+    }
+    const [total, items] = await this.prisma.$transaction([
+      this.prisma.enrollment.count({ where }),
+      this.prisma.enrollment.findMany({
+        where,
+        include,
+        orderBy: { createdAt: 'desc' },
+        skip: parsed.skip,
+        take: parsed.limit,
+      }),
+    ]);
+    return paginate(items, total, parsed.page, parsed.limit);
   }
 
   async findOne(id: string, establishmentId: string, actor?: RequestActor) {

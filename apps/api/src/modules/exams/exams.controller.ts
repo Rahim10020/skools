@@ -9,8 +9,10 @@ import {
   UseGuards,
   Request,
   ParseUUIDPipe,
+  Query,
 } from '@nestjs/common';
 import { ExamsService } from './exams.service.js';
+import { ListExamsQuery } from './dto/list-exams.query.js';
 import { CreateExamDto } from './dto/create-exam.dto.js';
 import { UpdateExamDto } from './dto/update-exam.dto.js';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard.js';
@@ -31,11 +33,15 @@ export class ExamsController {
 
   @Get()
   @Roles(Role.DIRECTOR, Role.CENSEUR, Role.TEACHER)
-  findAll(@Request() req: any) {
-    return this.examsService.findAll(req.user.establishmentId, {
-      id: req.user.id,
-      role: req.user.role,
-    });
+  findAll(@Request() req: any, @Query() query: ListExamsQuery) {
+    return this.examsService.findAll(
+      req.user.establishmentId,
+      {
+        id: req.user.id,
+        role: req.user.role,
+      },
+      query,
+    );
   }
 
   @Get(':id')

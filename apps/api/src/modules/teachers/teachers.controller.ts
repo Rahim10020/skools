@@ -9,10 +9,12 @@ import {
   UseGuards,
   Request,
   ParseUUIDPipe,
+  Query,
 } from '@nestjs/common';
 import { TeachersService } from './teachers.service.js';
 import { CreateTeacherDto } from './dto/create-teacher.dto.js';
 import { UpdateTeacherDto } from './dto/update-teacher.dto.js';
+import { ListTeachersQuery } from './dto/list-teachers.query.js';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard.js';
 import { RolesGuard } from '../../common/guards/roles.guard.js';
 import { Roles } from '../../common/decorators/roles.decorator.js';
@@ -30,8 +32,8 @@ export class TeachersController {
   }
 
   @Get()
-  findAll(@Request() req: any) {
-    return this.teachersService.findAll(req.user.establishmentId);
+  findAll(@Request() req: any, @Query() query: ListTeachersQuery) {
+    return this.teachersService.findAll(req.user.establishmentId, query);
   }
 
   // Avant '/:id' : sinon 'me' est capturé comme UUID invalide (400).

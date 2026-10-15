@@ -49,6 +49,7 @@ export default function TeachersPage() {
       createLabel="Nouvel enseignant"
       queryKey={KEYS.teachers}
       endpoint={API.teachers}
+      searchPlaceholder="Rechercher un enseignant…"
       columns={[
         { header: "Enseignant", primary: true, render: fullName },
         { header: "Spécialité", render: (teacher) => teacher.specialty || "—" },

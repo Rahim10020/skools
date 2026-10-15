@@ -12,6 +12,12 @@ import {
   resolveTeacherScope,
 } from '../../common/helpers/teacher-scope.js';
 import type { RequestActor } from '../../common/types/request-actor.js';
+import { ListExamsQuery } from './dto/list-exams.query.js';
+import {
+  containsInsensitive,
+  paginate,
+  parseListQuery,
+} from '../../common/helpers/list-query.js';
 
 @Injectable()
 export class ExamsService {
@@ -66,27 +72,92 @@ export class ExamsService {
     });
   }
 
-  async findAll(establishmentId: string, actor?: RequestActor) {
+  /**
+   * Liste façon epl : `?search=&subjectId=&classroomId=&periodId=&page=&limit=`.
+   * Périmètre enseignant préservé (post-filtre, pagination en mémoire).
+   * Sans param → tableau brut historique.
+   */
+  async findAll(
+    establishmentId: string,
+    actor?: RequestActor,
+    query: ListExamsQuery = {},
+  ) {
+    const include = {
+      subject: { select: { id: true, name: true } },
+      classroom: { select: { id: true, name: true } },
+      academicYear: { select: { id: true, name: true } },
+      period: { select: { id: true, name: true } },
+    };
+    const parsed = parseListQuery({
+      page: query.page,
+      limit: query.limit,
+      search: query.search,
+      hasFilter:
+        query.subjectId !== undefined ||
+        query.classroomId !== undefined ||
+        query.periodId !== undefined,
+    });
+    if (!parsed.paginated) {
+      const exams = await this.prisma.exam.findMany({
+        where: { establishmentId, isActive: true },
+        include,
+        orderBy: { examDate: 'desc' },
+      });
+      const scope = await resolveTeacherScope(
+        this.prisma,
+        establishmentId,
+        actor,
+      );
+      if (!scope) return exams;
+      return exams.filter((exam) =>
+        examInScope(scope, {
+          subjectId: exam.subjectId,
+          classroomId: exam.classroomId,
+          academicYearId: exam.academicYearId,
+        }),
+      );
+    }
+
+    const where: Record<string, unknown> = {
+      establishmentId,
+      isActive: true,
+    };
+    if (parsed.search) where.name = containsInsensitive(parsed.search);
+    if (query.subjectId) where.subjectId = query.subjectId;
+    if (query.classroomId) where.classroomId = query.classroomId;
+    if (query.periodId) where.periodId = query.periodId;
+    const scope = await resolveTeacherScope(this.prisma, establishmentId, actor);
+    if (!scope) {
+      const [total, items] = await this.prisma.$transaction([
+        this.prisma.exam.count({ where }),
+        this.prisma.exam.findMany({
+          where,
+          include,
+          orderBy: { examDate: 'desc' },
+          skip: parsed.skip,
+          take: parsed.limit,
+        }),
+      ]);
+      return paginate(items, total, parsed.page, parsed.limit);
+    }
+    // Périmètre enseignant : filtre en mémoire puis pagination locale.
     const exams = await this.prisma.exam.findMany({
-      where: { establishmentId, isActive: true },
-      include: {
-        subject: { select: { id: true, name: true } },
-        classroom: { select: { id: true, name: true } },
-        academicYear: { select: { id: true, name: true } },
-        period: { select: { id: true, name: true } },
-      },
+      where,
+      include,
       orderBy: { examDate: 'desc' },
     });
-
-    // Périmètre enseignant : ses matières/classes uniquement.
-    const scope = await resolveTeacherScope(this.prisma, establishmentId, actor);
-    if (!scope) return exams;
-    return exams.filter((exam) =>
+    const visible = exams.filter((exam) =>
       examInScope(scope, {
         subjectId: exam.subjectId,
         classroomId: exam.classroomId,
         academicYearId: exam.academicYearId,
       }),
+    );
+    return paginate(
+      visible.slice(parsed.skip, parsed.skip + parsed.limit),
+      visible.length,
+      parsed.page,
+      parsed.limit,
     );
   }
 

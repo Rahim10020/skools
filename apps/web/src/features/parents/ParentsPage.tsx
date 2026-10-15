@@ -44,6 +44,7 @@ export default function ParentsPage() {
       createLabel="Nouveau parent"
       queryKey={KEYS.parents}
       endpoint={API.parents}
+      searchPlaceholder="Rechercher un parent…"
       columns={[
         { header: "Parent", primary: true, render: fullName },
         { header: "Téléphone", render: (parent) => parent.phone || "—" },

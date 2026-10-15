@@ -9,8 +9,10 @@ import {
   UseGuards,
   Request,
   ParseUUIDPipe,
+  Query,
 } from '@nestjs/common';
 import { EnrollmentsService } from './enrollments.service.js';
+import { ListEnrollmentsQuery } from './dto/list-enrollments.query.js';
 import { CreateEnrollmentDto } from './dto/create-enrollment.dto.js';
 import { UpdateEnrollmentDto } from './dto/update-enrollment.dto.js';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard.js';
@@ -31,11 +33,15 @@ export class EnrollmentsController {
 
   @Get()
   @Roles(Role.DIRECTOR, Role.ADMIN, Role.CENSEUR, Role.TEACHER, Role.STUDENT, Role.PARENT)
-  findAll(@Request() req: any) {
-    return this.enrollmentsService.findAll(req.user.establishmentId, {
-      id: req.user.id,
-      role: req.user.role,
-    });
+  findAll(@Request() req: any, @Query() query: ListEnrollmentsQuery) {
+    return this.enrollmentsService.findAll(
+      req.user.establishmentId,
+      {
+        id: req.user.id,
+        role: req.user.role,
+      },
+      query,
+    );
   }
 
   @Get(':id')

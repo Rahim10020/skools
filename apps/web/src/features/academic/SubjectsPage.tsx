@@ -31,6 +31,7 @@ export default function SubjectsPage() {
       createLabel="Nouvelle matière"
       queryKey={KEYS.subjects}
       endpoint={API.subjects}
+      searchPlaceholder="Rechercher une matière…"
       columns={[
         { header: "Matière", primary: true, render: (subject) => subject.name },
         { header: "Code", render: (subject) => subject.code || "—" },

@@ -9,10 +9,12 @@ import {
   UseGuards,
   Request,
   ParseUUIDPipe,
+  Query,
 } from '@nestjs/common';
 import { CyclesService } from './cycles.service.js';
 import { CreateCycleDto } from './dto/create-cycle.dto.js';
 import { UpdateCycleDto } from './dto/update-cycle.dto.js';
+import { ListCyclesQuery } from './dto/list-cycles.query.js';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard.js';
 import { RolesGuard } from '../../../common/guards/roles.guard.js';
 import { Roles } from '../../../common/decorators/roles.decorator.js';
@@ -31,8 +33,8 @@ export class CyclesController {
 
   @Get()
   @Roles(Role.DIRECTOR, Role.ADMIN, Role.CENSEUR)
-  findAll(@Request() req: any) {
-    return this.cyclesService.findAll(req.user.establishmentId);
+  findAll(@Request() req: any, @Query() query: ListCyclesQuery) {
+    return this.cyclesService.findAll(req.user.establishmentId, query);
   }
 
   @Get(':id')

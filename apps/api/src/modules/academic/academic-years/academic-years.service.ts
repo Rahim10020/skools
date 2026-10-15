@@ -6,6 +6,12 @@ import {
 import { PrismaService } from '../../../prisma/prisma.service.js';
 import { CreateAcademicYearDto } from './dto/create-academic-year.dto.js';
 import { UpdateAcademicYearDto } from './dto/update-academic-year.dto.js';
+import { ListAcademicYearsQuery } from './dto/list-academic-years.query.js';
+import {
+  containsInsensitive,
+  paginate,
+  parseListQuery,
+} from '../../../common/helpers/list-query.js';
 
 @Injectable()
 export class AcademicYearsService {
@@ -37,11 +43,35 @@ export class AcademicYearsService {
     });
   }
 
-  async findAll(establishmentId: string) {
-    return this.prisma.academicYear.findMany({
-      where: { establishmentId, isActive: true },
-      orderBy: { startDate: 'desc' },
+  /** Liste façon epl : `?search=&page=&limit=` (sans param → tableau brut). */
+  async findAll(establishmentId: string, query: ListAcademicYearsQuery = {}) {
+    const parsed = parseListQuery({
+      page: query.page,
+      limit: query.limit,
+      search: query.search,
+      hasFilter: false,
     });
+    if (!parsed.paginated) {
+      return this.prisma.academicYear.findMany({
+        where: { establishmentId, isActive: true },
+        orderBy: { startDate: 'desc' },
+      });
+    }
+    const where: Record<string, unknown> = {
+      establishmentId,
+      isActive: true,
+    };
+    if (parsed.search) where.name = containsInsensitive(parsed.search);
+    const [total, items] = await this.prisma.$transaction([
+      this.prisma.academicYear.count({ where }),
+      this.prisma.academicYear.findMany({
+        where,
+        orderBy: { startDate: 'desc' },
+        skip: parsed.skip,
+        take: parsed.limit,
+      }),
+    ]);
+    return paginate(items, total, parsed.page, parsed.limit);
   }
 
   async findOne(id: string, establishmentId: string) {

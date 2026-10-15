@@ -1,18 +1,8 @@
-import { useMemo, useState, type FormEvent, type ReactNode } from "react";
-import { useCrudResource } from "../../hooks/use-crud";
+import { useCallback, useMemo, useState, type FormEvent, type ReactNode } from "react";
+import { useCrudResource, type ListParams } from "../../hooks/use-crud";
 import { getErrorMessage } from "../../lib/api";
 import { PageHeader } from "../../layouts/PageHeader";
 import { Button } from "../ui/button";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableCellPrimary,
-  TableContainer,
-  TableHeader,
-  TableHeaderCell,
-  TableRow,
-} from "../ui/table";
 import { Input } from "../ui/input";
 import { INPUT_BASE, getBg } from "../ui/input-tokens";
 import { Select, type SelectOption } from "../ui/select";
@@ -26,8 +16,19 @@ import { useRowSelection } from "../data-list/use-row-selection";
 import { exportToCsv } from "../data-list/csv";
 import { Pagination } from "../data-list/Pagination";
 import { HeaderSelect } from "../data-list/HeaderSelect";
-import { DataListToolbar } from "../data-list/DataListToolbar";
-import { DataListSkeleton } from "../data-list/DataListSkeleton";
+import { ListHeader } from "../epl-list/ListHeader";
+import { EplList } from "../epl-list/EplList";
+import { EplSkeleton } from "../epl-list/EplSkeleton";
+import type { StatusPillSpec } from "../epl-list/StatusPill";
+
+/** Filtre epl d'une liste : `param` = query param serveur, `options` statiques ou dynamiques. */
+export interface CrudFilterDef {
+  key: string;
+  label: string;
+  /** Nom du query param envoyé au backend. */
+  param: string;
+  options: Array<{ label: string; value: string }>;
+}
 
 export type CrudFieldType =
   "text" | "number" | "date" | "time" | "select" | "textarea" | "checkbox";
@@ -85,8 +86,14 @@ export interface CrudPageProps<T> {
   ) => Record<string, unknown>;
   nameOf: (item: T) => string;
   idOf?: (item: T) => string;
-  /** Taille de page cliente façon epl (défaut 10). */
+  /** Taille de page serveur façon epl (défaut 10). */
   pageSize?: number;
+  /** Filtres epl (query params serveur). */
+  filters?: CrudFilterDef[];
+  /** Pastille statut en fin de ligne (façon epl). */
+  statusPill?: (item: T) => StatusPillSpec | null;
+  /** Placeholder de la recherche (absent = pas de recherche). */
+  searchPlaceholder?: string;
   /** Export CSV de la sélection (masqué si absent). */
   csvHeaders?: string[];
   toCsvRow?: (item: T) => string[];
@@ -357,6 +364,9 @@ export function CrudPage<T>({
   nameOf,
   idOf = defaultIdOf,
   pageSize = 10,
+  filters = [],
+  statusPill,
+  searchPlaceholder,
   csvHeaders,
   toCsvRow,
   csvFilename,
@@ -366,12 +376,26 @@ export function CrudPage<T>({
   const [deleteTarget, setDeleteTarget] = useState<T | null>(null);
   const [bulkConfirmOpen, setBulkConfirmOpen] = useState(false);
   const [bulkPending, setBulkPending] = useState(false);
-  const [menuOpenId, setMenuOpenId] = useState<string | null>(null);
   const [page, setPage] = useState(1);
+  const [search, setSearch] = useState("");
+  const [filterValues, setFilterValues] = useState<Record<string, string>>({});
+
+  const params = useMemo(() => {
+    const next: ListParams = { page, limit: pageSize };
+    if (search) next.search = search;
+    for (const filter of filters) {
+      const value = filterValues[filter.key];
+      if (value) next[filter.param] = value;
+    }
+    return next;
+  }, [page, pageSize, search, filters, filterValues]);
 
   const { list, createOne, updateOne, removeOne, invalidate } =
-    useCrudResource<T>(endpoint, queryKey, listPath);
-  const items = useMemo(() => list.data ?? [], [list.data]);
+    useCrudResource<T>(endpoint, queryKey, listPath, params);
+  const items = useMemo(() => list.data?.items ?? [], [list.data]);
+  const pagination = list.data?.pagination ?? null;
+  const total = pagination?.total_count ?? items.length;
+  const totalPages = Math.max(pagination?.total_pages ?? 1, 1);
   const formFields = editing ? (editFields ?? fields) : fields;
   const selection = useRowSelection();
 
@@ -380,21 +404,46 @@ export function CrudPage<T>({
   if (prevListId !== listId) {
     setPrevListId(listId);
     setPage(1);
+    setSearch("");
+    setFilterValues({});
     selection.clear();
   }
 
-  const totalPages = Math.max(1, Math.ceil(items.length / pageSize));
-  const safePage = Math.min(Math.max(page, 1), totalPages);
-  const pageItems = useMemo(
-    () => items.slice((safePage - 1) * pageSize, safePage * pageSize),
-    [items, safePage, pageSize],
+  const handleSearch = useCallback(
+    (value: string) => {
+      setSearch(value);
+      setPage(1);
+      selection.clear();
+    },
+    [selection],
   );
-  const pageIds = useMemo(() => pageItems.map(idOf), [pageItems, idOf]);
+
+  const handleFilterChange = useCallback(
+    (key: string) => (value: string) => {
+      setFilterValues((prev) => ({ ...prev, [key]: value }));
+      setPage(1);
+      selection.clear();
+    },
+    [selection],
+  );
+
+  const pageIds = useMemo(() => items.map(idOf), [items, idOf]);
   const pageSelectedCount = pageIds.filter((id) => selection.has(id)).length;
   const pageAllChecked =
     pageIds.length > 0 && pageSelectedCount === pageIds.length;
   const pageIndeterminate = pageSelectedCount > 0 && !pageAllChecked;
   const canExport = !!csvHeaders && !!toCsvRow;
+
+  const invertPageSelection = () => {
+    const selectedOnPage = new Set(
+      pageIds.filter((id) => selection.has(id)),
+    );
+    selection.selectMany(
+      pageIds.filter((id) => !selectedOnPage.has(id)),
+      true,
+    );
+    selection.selectMany([...selectedOnPage], false);
+  };
 
   const handleCreate = (values: Record<string, string>) =>
     createOne.mutateAsync(toSubmit(values, "create")).then(() => {
@@ -452,17 +501,6 @@ export function CrudPage<T>({
     exportToCsv(csvFilename ?? title.toLowerCase(), csvHeaders, rows);
   };
 
-  const invertPageSelection = () => {
-    const selectedOnPage = new Set(
-      pageIds.filter((id) => selection.has(id)),
-    );
-    selection.selectMany(
-      pageIds.filter((id) => !selectedOnPage.has(id)),
-      true,
-    );
-    selection.selectMany([...selectedOnPage], false);
-  };
-
   return (
     <div>
       <PageHeader
@@ -492,7 +530,7 @@ export function CrudPage<T>({
           }}
         />
       ) : list.isPending ? (
-        <DataListSkeleton columns={columns.length} label={`Chargement : ${title.toLowerCase()}`} />
+        <EplSkeleton label={`Chargement : ${title.toLowerCase()}`} />
       ) : items.length === 0 ? (
         <EmptyState
           title={`Aucun ${itemLabel} pour le moment`}
@@ -502,151 +540,60 @@ export function CrudPage<T>({
           }
         />
       ) : (
-        <div className="flex flex-col gap-p3">
-          <DataListToolbar
-            total={items.length}
-            itemLabel={itemLabel}
-            selectedCount={selection.selectedCount}
-            canDelete={!readOnly}
-            canExport={canExport}
-            bulkPending={bulkPending}
-            onBulkDelete={() => setBulkConfirmOpen(true)}
-            onExport={handleExport}
-            onClear={selection.clear}
+        <div className="w-full flex flex-col gap-p4 pb-p10">
+          <ListHeader
+            count={total}
+            countLabel={itemLabel}
+            filters={filters.map((filter) => ({
+              key: filter.key,
+              label: filter.label,
+              value: filterValues[filter.key] ?? "",
+              options: filter.options,
+              onChange: handleFilterChange(filter.key),
+            }))}
+            searchable={searchPlaceholder !== undefined}
+            searchPlaceholder={searchPlaceholder ?? "Rechercher…"}
+            onSearch={handleSearch}
+            selection={{
+              count: selection.selectedCount,
+              canDelete: !readOnly,
+              canExport,
+              pending: bulkPending,
+              onDelete: () => setBulkConfirmOpen(true),
+              onExport: handleExport,
+              onClear: selection.clear,
+            }}
           />
-          <TableContainer>
-            <Table>
-              <TableHeader>
-                <tr>
-                  <TableHeaderCell className="w-10">
-                    <HeaderSelect
-                      checked={pageAllChecked}
-                      indeterminate={pageIndeterminate}
-                      onToggleAll={() =>
-                        selection.selectMany(pageIds, !pageAllChecked)
-                      }
-                      onSelectAll={() => selection.selectMany(pageIds, true)}
-                      onSelectNone={() => selection.selectMany(pageIds, false)}
-                      onInvert={invertPageSelection}
-                    />
-                  </TableHeaderCell>
-                  {columns.map((column) => (
-                    <TableHeaderCell key={column.header}>
-                      {column.header}
-                    </TableHeaderCell>
-                  ))}
-                  <TableHeaderCell>
-                    <span className="sr-only">Actions</span>
-                  </TableHeaderCell>
-                </tr>
-              </TableHeader>
-              <TableBody>
-                {pageItems.map((item) => {
-                  const id = idOf(item);
-                  const name = nameOf(item);
-                  const checked = selection.has(id);
-                  return (
-                    <TableRow
-                      key={id}
-                      className={`group ${checked ? "bg-(--skools-interactive-active-bg)/40" : ""}`}
-                    >
-                      <TableCell className="w-10">
-                        <Checkbox
-                          checked={checked}
-                          onChange={() => selection.toggle(id)}
-                          aria-label={`Sélectionner ${name}`}
-                        />
-                      </TableCell>
-                      {columns.map((column) =>
-                        column.primary ? (
-                          <TableCellPrimary key={column.header}>
-                            {column.render(item)}
-                          </TableCellPrimary>
-                        ) : (
-                          <TableCell key={column.header}>
-                            {column.render(item)}
-                          </TableCell>
-                        ),
-                      )}
-                      <TableCell>
-                        {/* Desktop : actions au hover/focus façon Gmail */}
-                        <div className="hidden lg:flex justify-end gap-p3 opacity-0 transition-opacity group-hover:opacity-100 focus-within:opacity-100">
-                          {!readOnly && (
-                            <>
-                              <button
-                                type="button"
-                                aria-label={`Modifier ${name}`}
-                                onClick={() => setEditing(item)}
-                                className="text-r12 font-medium text-(--common-blue) hover:underline cursor-pointer"
-                              >
-                                Modifier
-                              </button>
-                              <button
-                                type="button"
-                                aria-label={`Supprimer ${name}`}
-                                onClick={() => setDeleteTarget(item)}
-                                className="text-r12 font-medium text-(--common-red) hover:underline cursor-pointer"
-                              >
-                                Supprimer
-                              </button>
-                            </>
-                          )}
-                        </div>
-                        {/* Mobile : menu 3 points */}
-                        <div className="relative flex justify-end lg:hidden">
-                          <button
-                            type="button"
-                            aria-label={`Options pour ${name}`}
-                            aria-haspopup="menu"
-                            aria-expanded={menuOpenId === id}
-                            onClick={() =>
-                              setMenuOpenId((v) => (v === id ? null : id))
-                            }
-                            className="inline-flex size-8 items-center justify-center rounded-r1 text-r14 text-(--skools-text-muted) hover:bg-(--skools-interactive-hover-bg) cursor-pointer"
-                          >
-                            •••
-                          </button>
-                          {menuOpenId === id && !readOnly && (
-                            <div
-                              role="menu"
-                              className="absolute right-0 top-full z-30 mt-1 min-w-36 flex flex-col gap-1 rounded-r2 border border-(--skools-border-subtle) bg-(--skools-sidebar-bg) p-1 shadow-lg"
-                            >
-                              <button
-                                type="button"
-                                role="menuitem"
-                                onClick={() => {
-                                  setMenuOpenId(null);
-                                  setEditing(item);
-                                }}
-                                className="block w-full rounded-r2 px-p2 py-1.5 text-left text-r12 text-(--common-blue) hover:bg-(--skools-interactive-hover-bg) cursor-pointer"
-                              >
-                                Modifier
-                              </button>
-                              <button
-                                type="button"
-                                role="menuitem"
-                                onClick={() => {
-                                  setMenuOpenId(null);
-                                  setDeleteTarget(item);
-                                }}
-                                className="block w-full rounded-r2 px-p2 py-1.5 text-left text-r12 text-(--common-red) hover:bg-(--skools-interactive-hover-bg) cursor-pointer"
-                              >
-                                Supprimer
-                              </button>
-                            </div>
-                          )}
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  );
-                })}
-              </TableBody>
-            </Table>
-          </TableContainer>
+          <EplList
+            items={items}
+            columns={columns}
+            idOf={idOf}
+            nameOf={nameOf}
+            statusPill={statusPill}
+            selection={{
+              has: selection.has,
+              toggle: selection.toggle,
+              header: (
+                <HeaderSelect
+                  checked={pageAllChecked}
+                  indeterminate={pageIndeterminate}
+                  onToggleAll={() =>
+                    selection.selectMany(pageIds, !pageAllChecked)
+                  }
+                  onSelectAll={() => selection.selectMany(pageIds, true)}
+                  onSelectNone={() => selection.selectMany(pageIds, false)}
+                  onInvert={invertPageSelection}
+                />
+              ),
+            }}
+            readOnly={readOnly}
+            onEdit={readOnly ? undefined : (item) => setEditing(item)}
+            onDelete={readOnly ? undefined : (item) => setDeleteTarget(item)}
+          />
           {totalPages > 1 && (
             <div className="ml-auto">
               <Pagination
-                page={safePage}
+                page={pagination?.page ?? page}
                 totalPages={totalPages}
                 onPageChange={(next) => {
                   setPage(next);

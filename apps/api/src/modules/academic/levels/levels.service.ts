@@ -2,6 +2,12 @@ import { Injectable, NotFoundException, BadRequestException } from '@nestjs/comm
 import { PrismaService } from '../../../prisma/prisma.service.js';
 import { CreateLevelDto } from './dto/create-level.dto.js';
 import { UpdateLevelDto } from './dto/update-level.dto.js';
+import { ListLevelsQuery } from './dto/list-levels.query.js';
+import {
+  containsInsensitive,
+  paginate,
+  parseListQuery,
+} from '../../../common/helpers/list-query.js';
 
 @Injectable()
 export class LevelsService {
@@ -27,16 +33,39 @@ export class LevelsService {
     });
   }
 
-  async findAll(establishmentId: string) {
-    return this.prisma.level.findMany({
-      where: { establishmentId, isActive: true },
-      include: {
-        cycle: {
-          select: { id: true, name: true },
-        },
-      },
-      orderBy: [{ cycle: { order: 'asc' } }, { order: 'asc' }],
+  /** Liste façon epl : `?search=&cycleId=&page=&limit=` (sans param → tableau brut). */
+  async findAll(establishmentId: string, query: ListLevelsQuery = {}) {
+    const include = { cycle: { select: { id: true, name: true } } };
+    const parsed = parseListQuery({
+      page: query.page,
+      limit: query.limit,
+      search: query.search,
+      hasFilter: query.cycleId !== undefined,
     });
+    if (!parsed.paginated) {
+      return this.prisma.level.findMany({
+        where: { establishmentId, isActive: true },
+        include,
+        orderBy: [{ cycle: { order: 'asc' } }, { order: 'asc' }],
+      });
+    }
+    const where: Record<string, unknown> = {
+      establishmentId,
+      isActive: true,
+    };
+    if (parsed.search) where.name = containsInsensitive(parsed.search);
+    if (query.cycleId) where.cycleId = query.cycleId;
+    const [total, items] = await this.prisma.$transaction([
+      this.prisma.level.count({ where }),
+      this.prisma.level.findMany({
+        where,
+        include,
+        orderBy: [{ cycle: { order: 'asc' } }, { order: 'asc' }],
+        skip: parsed.skip,
+        take: parsed.limit,
+      }),
+    ]);
+    return paginate(items, total, parsed.page, parsed.limit);
   }
 
   async findOne(id: string, establishmentId: string) {

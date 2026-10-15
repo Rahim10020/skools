@@ -4,7 +4,7 @@ import { KEYS } from "../../lib/query-keys";
 import { z } from "zod";
 import { useQuery } from "@tanstack/react-query";
 import { CrudPage } from "../../components/crud/CrudPage";
-import { Badge, type BadgeVariant } from "../../components/ui/badge";
+import type { StatusPillVariant } from "../../components/epl-list/StatusPill";
 import api from "../../lib/api";
 import { omitEmptyStrings } from "../../components/crud/crud-helpers";
 
@@ -29,9 +29,9 @@ interface Enrollment {
 
 const STATUS_META: Record<
   EnrollmentStatus,
-  { label: string; variant: BadgeVariant }
+  { label: string; variant: StatusPillVariant }
 > = {
-  PENDING: { label: "En attente", variant: "warning" },
+  PENDING: { label: "En attente", variant: "neutral" },
   APPROVED: { label: "Approuvée", variant: "success" },
   REJECTED: { label: "Rejetée", variant: "destructive" },
   WITHDRAWN: { label: "Retirée", variant: "neutral" },
@@ -67,6 +67,30 @@ export default function EnrollmentsPage() {
       createLabel="Nouvelle inscription"
       queryKey={KEYS.enrollments}
       endpoint={API.enrollments}
+      pageSize={10}
+      searchPlaceholder="Rechercher une inscription…"
+      filters={[
+        {
+          key: "status",
+          label: "Statut",
+          param: "status",
+          options: (
+            Object.entries(STATUS_META) as Array<
+              [EnrollmentStatus, (typeof STATUS_META)[EnrollmentStatus]]
+            >
+          ).map(([value, meta]) => ({ label: meta.label, value })),
+        },
+        {
+          key: "classroom",
+          label: "Classe",
+          param: "classroomId",
+          options: (classroomsQuery.data ?? []).map((classroom) => ({
+            label: classroom.name,
+            value: classroom.id,
+          })),
+        },
+      ]}
+      statusPill={(enrollment) => STATUS_META[enrollment.status]}
       columns={[
         {
           header: "Élève",
@@ -79,14 +103,6 @@ export default function EnrollmentsPage() {
           header: "Année scolaire",
           render: (enrollment) => enrollment.academicYear.name,
         },
-        {
-          header: "Statut",
-          render: (enrollment) => {
-            const meta = STATUS_META[enrollment.status];
-            return <Badge variant={meta.variant}>{meta.label}</Badge>;
-          },
-        },
-        { header: "Notes", render: (enrollment) => enrollment.notes || "—" },
       ]}
       fields={[
         {

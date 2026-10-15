@@ -9,10 +9,12 @@ import {
   UseGuards,
   Request,
   ParseUUIDPipe,
+  Query,
 } from '@nestjs/common';
 import { AcademicYearsService } from './academic-years.service.js';
 import { CreateAcademicYearDto } from './dto/create-academic-year.dto.js';
 import { UpdateAcademicYearDto } from './dto/update-academic-year.dto.js';
+import { ListAcademicYearsQuery } from './dto/list-academic-years.query.js';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard.js';
 import { RolesGuard } from '../../../common/guards/roles.guard.js';
 import { Roles } from '../../../common/decorators/roles.decorator.js';
@@ -43,9 +45,9 @@ export class AcademicYearsController {
     Role.STUDENT,
     Role.PARENT,
   )
-  findAll(@Request() req: any) {
+  findAll(@Request() req: any, @Query() query: ListAcademicYearsQuery) {
     const establishmentId = req.user.establishmentId;
-    return this.academicYearsService.findAll(establishmentId);
+    return this.academicYearsService.findAll(establishmentId, query);
   }
 
   @Get(':id')

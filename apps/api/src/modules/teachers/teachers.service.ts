@@ -7,6 +7,12 @@ import { PrismaService } from '../../prisma/prisma.service.js';
 import { validateDossierUserLink } from '../../common/helpers/dossier-user-link.js';
 import { CreateTeacherDto } from './dto/create-teacher.dto.js';
 import { UpdateTeacherDto } from './dto/update-teacher.dto.js';
+import { ListTeachersQuery } from './dto/list-teachers.query.js';
+import {
+  containsInsensitive,
+  paginate,
+  parseListQuery,
+} from '../../common/helpers/list-query.js';
 
 @Injectable()
 export class TeachersService {
@@ -53,11 +59,44 @@ export class TeachersService {
     });
   }
 
-  async findAll(establishmentId: string) {
-    return this.prisma.teacher.findMany({
-      where: { establishmentId, isActive: true },
-      orderBy: [{ lastName: 'asc' }, { firstName: 'asc' }],
+  /** Liste façon epl : `?search=&specialty=&page=&limit=` (sans param → tableau brut). */
+  async findAll(establishmentId: string, query: ListTeachersQuery = {}) {
+    const parsed = parseListQuery({
+      page: query.page,
+      limit: query.limit,
+      search: query.search,
+      hasFilter: query.specialty !== undefined,
     });
+    if (!parsed.paginated) {
+      return this.prisma.teacher.findMany({
+        where: { establishmentId, isActive: true },
+        orderBy: [{ lastName: 'asc' }, { firstName: 'asc' }],
+      });
+    }
+    const where: Record<string, unknown> = {
+      establishmentId,
+      isActive: true,
+    };
+    if (parsed.search) {
+      const match = containsInsensitive(parsed.search);
+      where.OR = [
+        { firstName: match },
+        { lastName: match },
+        { matricule: match },
+        { specialty: match },
+      ];
+    }
+    if (query.specialty) where.specialty = containsInsensitive(query.specialty);
+    const [total, items] = await this.prisma.$transaction([
+      this.prisma.teacher.count({ where }),
+      this.prisma.teacher.findMany({
+        where,
+        orderBy: [{ lastName: 'asc' }, { firstName: 'asc' }],
+        skip: parsed.skip,
+        take: parsed.limit,
+      }),
+    ]);
+    return paginate(items, total, parsed.page, parsed.limit);
   }
 
   async findOne(id: string, establishmentId: string) {

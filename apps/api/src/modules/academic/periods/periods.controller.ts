@@ -9,10 +9,12 @@ import {
   UseGuards,
   Request,
   ParseUUIDPipe,
+  Query,
 } from '@nestjs/common';
 import { PeriodsService } from './periods.service.js';
 import { CreatePeriodDto } from './dto/create-period.dto.js';
 import { UpdatePeriodDto } from './dto/update-period.dto.js';
+import { ListPeriodsQuery } from './dto/list-periods.query.js';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard.js';
 import { RolesGuard } from '../../../common/guards/roles.guard.js';
 import { Roles } from '../../../common/decorators/roles.decorator.js';
@@ -40,8 +42,8 @@ export class PeriodsController {
     Role.STUDENT,
     Role.PARENT,
   )
-  findAll(@Request() req: any) {
-    return this.periodsService.findAll(req.user.establishmentId);
+  findAll(@Request() req: any, @Query() query: ListPeriodsQuery) {
+    return this.periodsService.findAll(req.user.establishmentId, query);
   }
 
   @Get(':id')

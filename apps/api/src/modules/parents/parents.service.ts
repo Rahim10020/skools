@@ -3,6 +3,12 @@ import { PrismaService } from '../../prisma/prisma.service.js';
 import { validateDossierUserLink } from '../../common/helpers/dossier-user-link.js';
 import { CreateParentDto } from './dto/create-parent.dto.js';
 import { UpdateParentDto } from './dto/update-parent.dto.js';
+import { ListParentsQuery } from './dto/list-parents.query.js';
+import {
+  containsInsensitive,
+  paginate,
+  parseListQuery,
+} from '../../common/helpers/list-query.js';
 
 @Injectable()
 export class ParentsService {
@@ -32,11 +38,38 @@ export class ParentsService {
     });
   }
 
-  async findAll(establishmentId: string) {
-    return this.prisma.parent.findMany({
-      where: { establishmentId, isActive: true },
-      orderBy: [{ lastName: 'asc' }, { firstName: 'asc' }],
+  /** Liste façon epl : `?search=&page=&limit=` (nom/prénom/téléphone, sans param → tableau brut). */
+  async findAll(establishmentId: string, query: ListParentsQuery = {}) {
+    const parsed = parseListQuery({
+      page: query.page,
+      limit: query.limit,
+      search: query.search,
+      hasFilter: false,
     });
+    if (!parsed.paginated) {
+      return this.prisma.parent.findMany({
+        where: { establishmentId, isActive: true },
+        orderBy: [{ lastName: 'asc' }, { firstName: 'asc' }],
+      });
+    }
+    const where: Record<string, unknown> = {
+      establishmentId,
+      isActive: true,
+    };
+    if (parsed.search) {
+      const match = containsInsensitive(parsed.search);
+      where.OR = [{ firstName: match }, { lastName: match }, { phone: match }];
+    }
+    const [total, items] = await this.prisma.$transaction([
+      this.prisma.parent.count({ where }),
+      this.prisma.parent.findMany({
+        where,
+        orderBy: [{ lastName: 'asc' }, { firstName: 'asc' }],
+        skip: parsed.skip,
+        take: parsed.limit,
+      }),
+    ]);
+    return paginate(items, total, parsed.page, parsed.limit);
   }
 
   async findOne(id: string, establishmentId: string) {

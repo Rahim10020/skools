@@ -38,6 +38,7 @@ export default function AcademicYearsPage() {
       createLabel="Nouvelle année"
       queryKey={KEYS.academicYears}
       endpoint={API.academicYears}
+      searchPlaceholder="Rechercher une année…"
       columns={[
         { header: "Année", primary: true, render: (year) => year.name },
         { header: "Début", render: (year) => formatDateFr(year.startDate) },

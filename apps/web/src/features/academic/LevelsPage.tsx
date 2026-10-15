@@ -44,6 +44,18 @@ export default function LevelsPage() {
       queryKey={KEYS.levels}
       endpoint={API.levels}
       pageSize={10}
+      searchPlaceholder="Rechercher un niveau…"
+      filters={[
+        {
+          key: "cycle",
+          label: "Cycle",
+          param: "cycleId",
+          options: (cyclesQuery.data ?? []).map((cycle) => ({
+            label: cycle.name,
+            value: cycle.id,
+          })),
+        },
+      ]}
       csvFilename="niveaux"
       csvHeaders={["Niveau", "Cycle", "Ordre"]}
       toCsvRow={(level) => [

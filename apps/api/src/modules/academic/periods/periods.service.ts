@@ -6,6 +6,12 @@ import {
 import { PrismaService } from '../../../prisma/prisma.service.js';
 import { CreatePeriodDto } from './dto/create-period.dto.js';
 import { UpdatePeriodDto } from './dto/update-period.dto.js';
+import { ListPeriodsQuery } from './dto/list-periods.query.js';
+import {
+  containsInsensitive,
+  paginate,
+  parseListQuery,
+} from '../../../common/helpers/list-query.js';
 
 @Injectable()
 export class PeriodsService {
@@ -41,14 +47,41 @@ export class PeriodsService {
     });
   }
 
-  async findAll(establishmentId: string) {
-    return this.prisma.period.findMany({
-      where: { establishmentId, isActive: true },
-      include: {
-        academicYear: { select: { id: true, name: true, isCurrent: true } },
-      },
-      orderBy: [{ academicYear: { startDate: 'desc' } }, { order: 'asc' }],
+  /** Liste façon epl : `?search=&academicYearId=&page=&limit=` (sans param → tableau brut). */
+  async findAll(establishmentId: string, query: ListPeriodsQuery = {}) {
+    const include = {
+      academicYear: { select: { id: true, name: true, isCurrent: true } },
+    };
+    const parsed = parseListQuery({
+      page: query.page,
+      limit: query.limit,
+      search: query.search,
+      hasFilter: query.academicYearId !== undefined,
     });
+    if (!parsed.paginated) {
+      return this.prisma.period.findMany({
+        where: { establishmentId, isActive: true },
+        include,
+        orderBy: [{ academicYear: { startDate: 'desc' } }, { order: 'asc' }],
+      });
+    }
+    const where: Record<string, unknown> = {
+      establishmentId,
+      isActive: true,
+    };
+    if (parsed.search) where.name = containsInsensitive(parsed.search);
+    if (query.academicYearId) where.academicYearId = query.academicYearId;
+    const [total, items] = await this.prisma.$transaction([
+      this.prisma.period.count({ where }),
+      this.prisma.period.findMany({
+        where,
+        include,
+        orderBy: [{ academicYear: { startDate: 'desc' } }, { order: 'asc' }],
+        skip: parsed.skip,
+        take: parsed.limit,
+      }),
+    ]);
+    return paginate(items, total, parsed.page, parsed.limit);
   }
 
   async findOne(id: string, establishmentId: string) {

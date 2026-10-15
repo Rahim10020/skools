@@ -37,6 +37,18 @@ export default function SeriesPage() {
       createLabel="Nouvelle série"
       queryKey={KEYS.series}
       endpoint={API.series}
+      searchPlaceholder="Rechercher une série…"
+      filters={[
+        {
+          key: "level",
+          label: "Niveau",
+          param: "levelId",
+          options: (levelsQuery.data ?? []).map((level) => ({
+            label: level.name,
+            value: level.id,
+          })),
+        },
+      ]}
       columns={[
         { header: "Série", primary: true, render: (series) => series.name },
         { header: "Niveau", render: (series) => series.level?.name ?? "—" },

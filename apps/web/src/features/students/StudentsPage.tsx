@@ -2,8 +2,11 @@ import { canManageSchool } from "../../lib/roles";
 import { API } from "../../lib/api-endpoints";
 import { KEYS } from "../../lib/query-keys";
 import { z } from "zod";
+import { useQuery } from "@tanstack/react-query";
 import { CrudPage } from "../../components/crud/CrudPage";
 import { useAuthStore } from "../../stores/auth-store";
+import api from "../../lib/api";
+import type { IdName } from "../../types/api";
 import {
   formatDateFr,
   omitEmptyStrings,
@@ -41,6 +44,10 @@ const fullName = (student: Student) =>
 
 export default function StudentsPage() {
   const role = useAuthStore((state) => state.role);
+  const classroomsQuery = useQuery({
+    queryKey: KEYS.classrooms,
+    queryFn: async () => (await api.get<IdName[]>(API.classrooms)).data,
+  });
   // Lecture seule hors DIRECTOR/ADMIN (matrice : CENSEUR, SURVEILLANT consultent).
   return (
     <CrudPage<Student>
@@ -52,6 +59,27 @@ export default function StudentsPage() {
       queryKey={KEYS.students}
       endpoint={API.students}
       pageSize={10}
+      searchPlaceholder="Rechercher un élève…"
+      filters={[
+        {
+          key: "gender",
+          label: "Genre",
+          param: "gender",
+          options: [
+            { label: "Filles", value: "F" },
+            { label: "Garçons", value: "M" },
+          ],
+        },
+        {
+          key: "classroom",
+          label: "Classe",
+          param: "classroomId",
+          options: (classroomsQuery.data ?? []).map((c) => ({
+            label: c.name,
+            value: c.id,
+          })),
+        },
+      ]}
       csvFilename="eleves"
       csvHeaders={["Élève", "Matricule", "Naissance", "Téléphone"]}
       toCsvRow={(student) => [

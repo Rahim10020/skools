@@ -9,10 +9,12 @@ import {
   UseGuards,
   Request,
   ParseUUIDPipe,
+  Query,
 } from '@nestjs/common';
 import { LevelsService } from './levels.service.js';
 import { CreateLevelDto } from './dto/create-level.dto.js';
 import { UpdateLevelDto } from './dto/update-level.dto.js';
+import { ListLevelsQuery } from './dto/list-levels.query.js';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard.js';
 import { RolesGuard } from '../../../common/guards/roles.guard.js';
 import { Roles } from '../../../common/decorators/roles.decorator.js';
@@ -31,8 +33,8 @@ export class LevelsController {
 
   @Get()
   @Roles(Role.DIRECTOR, Role.ADMIN, Role.CENSEUR)
-  findAll(@Request() req: any) {
-    return this.levelsService.findAll(req.user.establishmentId);
+  findAll(@Request() req: any, @Query() query: ListLevelsQuery) {
+    return this.levelsService.findAll(req.user.establishmentId, query);
   }
 
   @Get(':id')

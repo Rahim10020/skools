@@ -9,10 +9,12 @@ import {
   UseGuards,
   Request,
   ParseUUIDPipe,
+  Query,
 } from '@nestjs/common';
 import { SeriesService } from './series.service.js';
 import { CreateSeriesDto } from './dto/create-series.dto.js';
 import { UpdateSeriesDto } from './dto/update-series.dto.js';
+import { ListSeriesQuery } from './dto/list-series.query.js';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard.js';
 import { RolesGuard } from '../../../common/guards/roles.guard.js';
 import { Roles } from '../../../common/decorators/roles.decorator.js';
@@ -31,8 +33,8 @@ export class SeriesController {
 
   @Get()
   @Roles(Role.DIRECTOR, Role.ADMIN, Role.CENSEUR)
-  findAll(@Request() req: any) {
-    return this.seriesService.findAll(req.user.establishmentId);
+  findAll(@Request() req: any, @Query() query: ListSeriesQuery) {
+    return this.seriesService.findAll(req.user.establishmentId, query);
   }
 
   @Get(':id')

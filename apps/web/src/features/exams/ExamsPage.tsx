@@ -6,7 +6,7 @@ import { z } from "zod";
 import { useQuery } from "@tanstack/react-query";
 import { CrudPage } from "../../components/crud/CrudPage";
 import { useAuthStore } from "../../stores/auth-store";
-import { Badge } from "../../components/ui/badge";
+import type { StatusPillVariant } from "../../components/epl-list/StatusPill";
 import api from "../../lib/api";
 import {
   formatDateFr,
@@ -92,6 +92,33 @@ export default function ExamsPage() {
       createLabel="Nouvel examen"
       queryKey={KEYS.exams}
       endpoint={API.exams}
+      pageSize={10}
+      searchPlaceholder="Rechercher un examen…"
+      filters={[
+        {
+          key: "subject",
+          label: "Matière",
+          param: "subjectId",
+          options: toOptions(subjectsQuery.data),
+        },
+        {
+          key: "classroom",
+          label: "Classe",
+          param: "classroomId",
+          options: toOptions(classroomsQuery.data),
+        },
+        {
+          key: "period",
+          label: "Période",
+          param: "periodId",
+          options: toOptions(periodsQuery.data),
+        },
+      ]}
+      statusPill={(exam) =>
+        exam.isPublished
+          ? { label: "Publié", variant: "success" as StatusPillVariant }
+          : { label: "Brouillon", variant: "neutral" as StatusPillVariant }
+      }
       columns={[
         { header: "Examen", primary: true, render: (exam) => exam.name },
         { header: "Matière", render: (exam) => exam.subject.name },
@@ -101,22 +128,9 @@ export default function ExamsPage() {
         },
         {
           header: "Type",
-          render: (exam) => (
-            <Badge variant="neutral">{EXAM_TYPE_LABELS[exam.type]}</Badge>
-          ),
+          render: (exam) => EXAM_TYPE_LABELS[exam.type],
         },
         { header: "Date", render: (exam) => formatDateFr(exam.examDate) },
-        { header: "Note max", render: (exam) => exam.maxScore },
-        { header: "Coeff.", render: (exam) => exam.coefficient },
-        {
-          header: "Statut",
-          render: (exam) =>
-            exam.isPublished ? (
-              <Badge variant="success">Publié</Badge>
-            ) : (
-              <Badge variant="warning">Brouillon</Badge>
-            ),
-        },
       ]}
       fields={[
         {

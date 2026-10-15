@@ -61,6 +61,27 @@ export default function ClassroomsPage() {
       queryKey={KEYS.classrooms}
       endpoint={API.classrooms}
       pageSize={10}
+      searchPlaceholder="Rechercher une classe…"
+      filters={[
+        {
+          key: "level",
+          label: "Niveau",
+          param: "levelId",
+          options: toOptions(levelsQuery.data),
+        },
+        {
+          key: "series",
+          label: "Série",
+          param: "seriesId",
+          options: toOptions(seriesQuery.data),
+        },
+        {
+          key: "year",
+          label: "Année",
+          param: "academicYearId",
+          options: toOptions(yearsQuery.data),
+        },
+      ]}
       csvFilename="classes"
       csvHeaders={["Classe", "Année scolaire", "Niveau", "Série", "Effectif max"]}
       toCsvRow={(classroom) => [

@@ -9,10 +9,12 @@ import {
   UseGuards,
   Request,
   ParseUUIDPipe,
+  Query,
 } from '@nestjs/common';
 import { ParentsService } from './parents.service.js';
 import { CreateParentDto } from './dto/create-parent.dto.js';
 import { UpdateParentDto } from './dto/update-parent.dto.js';
+import { ListParentsQuery } from './dto/list-parents.query.js';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard.js';
 import { RolesGuard } from '../../common/guards/roles.guard.js';
 import { Roles } from '../../common/decorators/roles.decorator.js';
@@ -30,8 +32,8 @@ export class ParentsController {
   }
 
   @Get()
-  findAll(@Request() req: any) {
-    return this.parentsService.findAll(req.user.establishmentId);
+  findAll(@Request() req: any, @Query() query: ListParentsQuery) {
+    return this.parentsService.findAll(req.user.establishmentId, query);
   }
 
   // Avant '/:id' : sinon 'me' est capturé comme UUID invalide (400).

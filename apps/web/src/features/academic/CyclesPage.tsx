@@ -32,6 +32,7 @@ export default function CyclesPage() {
       createLabel="Nouveau cycle"
       queryKey={KEYS.cycles}
       endpoint={API.cycles}
+      searchPlaceholder="Rechercher un cycle…"
       pageSize={10}
       csvFilename="cycles"
       csvHeaders={["Cycle", "Ordre"]}

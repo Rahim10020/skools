@@ -9,10 +9,12 @@ import {
   UseGuards,
   Request,
   ParseUUIDPipe,
+  Query,
 } from '@nestjs/common';
 import { SubjectsService } from './subjects.service.js';
 import { CreateSubjectDto } from './dto/create-subject.dto.js';
 import { UpdateSubjectDto } from './dto/update-subject.dto.js';
+import { ListSubjectsQuery } from './dto/list-subjects.query.js';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard.js';
 import { RolesGuard } from '../../../common/guards/roles.guard.js';
 import { Roles } from '../../../common/decorators/roles.decorator.js';
@@ -31,8 +33,8 @@ export class SubjectsController {
 
   @Get()
   @Roles(Role.DIRECTOR, Role.ADMIN, Role.CENSEUR)
-  findAll(@Request() req: any) {
-    return this.subjectsService.findAll(req.user.establishmentId);
+  findAll(@Request() req: any, @Query() query: ListSubjectsQuery) {
+    return this.subjectsService.findAll(req.user.establishmentId, query);
   }
 
   @Get(':id')

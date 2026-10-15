@@ -6,7 +6,7 @@ import { z } from "zod";
 import { useQuery } from "@tanstack/react-query";
 import { CrudPage } from "../../components/crud/CrudPage";
 import { useAuthStore } from "../../stores/auth-store";
-import { Badge } from "../../components/ui/badge";
+import type { StatusPillVariant } from "../../components/epl-list/StatusPill";
 import api from "../../lib/api";
 import {
   formatDateFr,
@@ -51,18 +51,28 @@ export default function PeriodsPage() {
       createLabel="Nouvelle période"
       queryKey={KEYS.periods}
       endpoint={API.periods}
+      searchPlaceholder="Rechercher une période…"
+      filters={[
+        {
+          key: "year",
+          label: "Année",
+          param: "academicYearId",
+          options: (yearsQuery.data ?? []).map((year) => ({
+            label: year.name,
+            value: year.id,
+          })),
+        },
+      ]}
+      statusPill={(period) =>
+        period.academicYear.isCurrent
+          ? { label: "En cours", variant: "success" as StatusPillVariant }
+          : null
+      }
       columns={[
         { header: "Période", primary: true, render: (period) => period.name },
         {
           header: "Année scolaire",
-          render: (period) => (
-            <span className="inline-flex items-center gap-p2">
-              {period.academicYear.name}
-              {period.academicYear.isCurrent && (
-                <Badge variant="success">En cours</Badge>
-              )}
-            </span>
-          ),
+          render: (period) => period.academicYear.name,
         },
         { header: "Début", render: (period) => formatDateFr(period.startDate) },
         { header: "Fin", render: (period) => formatDateFr(period.endDate) },
