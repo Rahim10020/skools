@@ -59,7 +59,7 @@ export class TeachersService {
     });
   }
 
-  /** Liste façon epl : `?search=&specialty=&page=&limit=` (sans param → tableau brut). */
+  /** Liste avec recherche et pagination : `?search=&specialty=&page=&limit=` (sans param → tableau brut). */
   async findAll(establishmentId: string, query: ListTeachersQuery = {}) {
     const parsed = parseListQuery({
       page: query.page,

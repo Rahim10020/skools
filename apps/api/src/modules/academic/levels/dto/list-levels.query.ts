@@ -9,7 +9,7 @@ import {
   Min,
 } from 'class-validator';
 
-/** Filtres liste niveaux façon epl : `?search=&cycleId=&page=&limit=`. */
+/** Filtres liste niveaux : `?search=&cycleId=&page=&limit=`. */
 export class ListLevelsQuery {
   @IsOptional()
   @IsString()

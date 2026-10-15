@@ -37,7 +37,7 @@ export class SeriesService {
     });
   }
 
-  /** Liste façon epl : `?search=&levelId=&page=&limit=` (sans param → tableau brut). */
+  /** Liste avec recherche et pagination : `?search=&levelId=&page=&limit=` (sans param → tableau brut). */
   async findAll(establishmentId: string, query: ListSeriesQuery = {}) {
     const include = { level: { select: { id: true, name: true } } };
     const parsed = parseListQuery({

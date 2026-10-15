@@ -8,7 +8,7 @@ import {
   Min,
 } from 'class-validator';
 
-/** Filtres liste années scolaires façon epl : `?search=&page=&limit=`. */
+/** Filtres liste années scolaires : `?search=&page=&limit=`. */
 export class ListAcademicYearsQuery {
   @IsOptional()
   @IsString()

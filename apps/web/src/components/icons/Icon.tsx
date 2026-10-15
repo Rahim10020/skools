@@ -13,7 +13,7 @@ interface IconProps extends SVGProps<SVGSVGElement> {
 }
 
 /**
- * Wrapper homogène pour les icônes SVG portées d'EPL.
+ * Wrapper homogène pour les icônes SVG.
  * `size` passe par le style inline : il gagne sur les attributs
  * width/height codés en dur dans les SVG d'origine.
  */

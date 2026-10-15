@@ -4,7 +4,7 @@ import { KEYS } from "../../lib/query-keys";
 import { z } from "zod";
 import { useQuery } from "@tanstack/react-query";
 import { CrudPage } from "../../components/crud/CrudPage";
-import type { StatusPillVariant } from "../../components/epl-list/StatusPill";
+import type { StatusPillVariant } from "../../components/data-list/StatusPill";
 import api from "../../lib/api";
 import { omitEmptyStrings } from "../../components/crud/crud-helpers";
 

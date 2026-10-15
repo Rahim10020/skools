@@ -17,6 +17,7 @@ export const ROUTES = {
   periods: "/periods",
   classrooms: "/classrooms",
   students: "/students",
+  studentDetails: "/students/:id",
   teachers: "/teachers",
   parents: "/parents",
   linkParents: "/link-parents",
@@ -32,6 +33,7 @@ export const ROUTES = {
   myGrades: "/my-grades",
   myAbsences: "/my-absences",
   users: "/users",
+  userDetails: "/users/:id",
   settings: "/settings",
   profil: "/profil",
 } as const;

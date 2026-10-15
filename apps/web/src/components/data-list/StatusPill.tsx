@@ -14,7 +14,7 @@ const VARIANT_CLASSES: Record<StatusPillVariant, string> = {
 };
 
 /**
- * Pastille statut façon epl `All applications` (xs, dernier élément de ligne).
+ * Pastille statut compacte (xs, dernier élément de ligne).
  */
 export function StatusPill({
   label,

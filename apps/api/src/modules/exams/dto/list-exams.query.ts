@@ -10,7 +10,7 @@ import {
 } from 'class-validator';
 
 /**
- * Filtres liste examens façon epl :
+ * Filtres liste examens :
  * `?search=&subjectId=&classroomId=&periodId=&page=&limit=`.
  */
 export class ListExamsQuery {

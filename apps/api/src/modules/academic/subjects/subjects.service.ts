@@ -24,7 +24,7 @@ export class SubjectsService {
     });
   }
 
-  /** Liste façon epl : `?search=&page=&limit=` (nom + code, sans param → tableau brut). */
+  /** Liste avec recherche et pagination : `?search=&page=&limit=` (nom + code, sans param → tableau brut). */
   async findAll(establishmentId: string, query: ListSubjectsQuery = {}) {
     const parsed = parseListQuery({
       page: query.page,

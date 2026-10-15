@@ -1,6 +1,7 @@
 import { canManageSchool } from "../../lib/roles";
 import { API } from "../../lib/api-endpoints";
 import { KEYS } from "../../lib/query-keys";
+import { ROUTES } from "../../lib/routes";
 import { z } from "zod";
 import { useQuery } from "@tanstack/react-query";
 import { CrudPage } from "../../components/crud/CrudPage";
@@ -59,6 +60,7 @@ export default function StudentsPage() {
       queryKey={KEYS.students}
       endpoint={API.students}
       pageSize={10}
+      rowTo={(student) => `${ROUTES.students}/${student.id}`}
       searchPlaceholder="Rechercher un élève…"
       filters={[
         {

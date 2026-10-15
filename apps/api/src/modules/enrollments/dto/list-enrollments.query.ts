@@ -12,7 +12,7 @@ import {
 import { EnrollmentStatus } from '@prisma/client';
 
 /**
- * Filtres liste inscriptions façon epl :
+ * Filtres liste inscriptions :
  * `?search=&classroomId=&academicYearId=&status=&page=&limit=`.
  * `search` porte sur le nom / prénom / matricule de l'élève.
  */

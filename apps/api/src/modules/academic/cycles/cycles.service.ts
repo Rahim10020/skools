@@ -23,7 +23,7 @@ export class CyclesService {
     });
   }
 
-  /** Liste façon epl : `?search=&page=&limit=` (sans param → tableau brut). */
+  /** Liste avec recherche et pagination : `?search=&page=&limit=` (sans param → tableau brut). */
   async findAll(establishmentId: string, query: ListCyclesQuery = {}) {
     const parsed = parseListQuery({
       page: query.page,

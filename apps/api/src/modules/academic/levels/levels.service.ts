@@ -33,7 +33,7 @@ export class LevelsService {
     });
   }
 
-  /** Liste façon epl : `?search=&cycleId=&page=&limit=` (sans param → tableau brut). */
+  /** Liste avec recherche et pagination : `?search=&cycleId=&page=&limit=` (sans param → tableau brut). */
   async findAll(establishmentId: string, query: ListLevelsQuery = {}) {
     const include = { cycle: { select: { id: true, name: true } } };
     const parsed = parseListQuery({

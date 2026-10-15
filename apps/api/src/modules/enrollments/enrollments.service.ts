@@ -111,7 +111,7 @@ export class EnrollmentsService {
   }
 
   /**
-   * Liste façon epl : `?search=&classroomId=&academicYearId=&status=&page=&limit=`.
+   * Liste avec recherche et pagination : `?search=&classroomId=&academicYearId=&status=&page=&limit=`.
    * Périmètres acteur préservés (enseignant / famille). Sans param → tableau brut.
    */
   async findAll(

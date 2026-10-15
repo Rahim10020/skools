@@ -47,7 +47,7 @@ function timeAgoFr(iso: string): string {
 
 /**
  * Cloche de notifications (matrice : header, tous les rôles sauf SUPER_ADMIN).
- * Sans topbar desktop (idiome EPL) : bouton dans la sidebar + header mobile,
+ * Sans topbar desktop : bouton dans la sidebar + header mobile,
  * panneau ancré au bouton, compteur non-lus, scrutation 60 s.
  */
 export function NotificationsBell({

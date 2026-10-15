@@ -8,7 +8,7 @@ import {
   Min,
 } from 'class-validator';
 
-/** Filtres liste cycles façon epl : `?search=&page=&limit=`. */
+/** Filtres liste cycles : `?search=&page=&limit=`. */
 export class ListCyclesQuery {
   @IsOptional()
   @IsString()

@@ -9,7 +9,7 @@ import {
 } from 'class-validator';
 
 /**
- * Filtres liste parents façon epl : `?search=&page=&limit=`.
+ * Filtres liste parents : `?search=&page=&limit=`.
  * `search` porte sur nom / prénom / téléphone.
  */
 export class ListParentsQuery {

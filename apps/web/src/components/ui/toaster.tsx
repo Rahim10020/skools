@@ -10,7 +10,7 @@ const TOAST_STYLES: Record<ToastState, string> = {
 };
 /**
  * Bannière inline à monter une fois en haut du contenu (shell Phase 3).
- * Un seul toast à la fois (comportement EPL conservé).
+ * Un seul toast à la fois.
  */
 export function Toaster() {
   const current = useSyncExternalStore(subscribeToast, getToastSnapshot, getToastSnapshot);

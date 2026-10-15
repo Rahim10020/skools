@@ -3,7 +3,7 @@ import type { SVGProps } from "react";
 type IconProps = SVGProps<SVGSVGElement>;
 
 /**
- * Double chevron (façon caret EPL) : repli/dépli de la sidebar.
+ * Double chevron : repli/dépli de la sidebar.
  * Pointe vers la gauche ; pivoter de 180° pour l'état inverse.
  */
 export function DoubleCaretIcon(props: IconProps) {

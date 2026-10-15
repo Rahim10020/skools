@@ -47,7 +47,7 @@ export class PeriodsService {
     });
   }
 
-  /** Liste façon epl : `?search=&academicYearId=&page=&limit=` (sans param → tableau brut). */
+  /** Liste avec recherche et pagination : `?search=&academicYearId=&page=&limit=` (sans param → tableau brut). */
   async findAll(establishmentId: string, query: ListPeriodsQuery = {}) {
     const include = {
       academicYear: { select: { id: true, name: true, isCurrent: true } },

@@ -10,7 +10,7 @@ import {
 } from 'class-validator';
 
 /**
- * Filtres liste classes façon epl :
+ * Filtres liste classes :
  * `?search=&levelId=&seriesId=&academicYearId=&page=&limit=`.
  */
 export class ListClassroomsQuery {

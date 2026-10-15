@@ -38,7 +38,7 @@ export class UserEstablishmentsService {
   ) {}
 
   /**
-   * Liste façon epl : `?search=&role=&page=&limit=`.
+   * Liste avec recherche et pagination : `?search=&role=&page=&limit=`.
    * Sans param → tableau brut historique (compat frontend).
    * Avec param → `{ data, pagination }`.
    */

@@ -134,5 +134,9 @@ export function canAccess(
 ): boolean {
   if (ALWAYS_ALLOWED.includes(path)) return true;
   if (!role) return false;
-  return NAV_BY_ROLE[role]?.includes(path) ?? false;
+  const allowed = NAV_BY_ROLE[role] ?? [];
+  if (allowed.includes(path)) return true;
+  // Pages détail `/ressource/:id` : même droit que la liste parente.
+  const parent = path.split("/").slice(0, 2).join("/") || "/";
+  return parent !== path && allowed.includes(parent);
 }

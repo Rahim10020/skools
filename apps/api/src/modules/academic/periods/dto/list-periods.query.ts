@@ -9,7 +9,7 @@ import {
   Min,
 } from 'class-validator';
 
-/** Filtres liste périodes façon epl : `?search=&academicYearId=&page=&limit=`. */
+/** Filtres liste périodes : `?search=&academicYearId=&page=&limit=`. */
 export class ListPeriodsQuery {
   @IsOptional()
   @IsString()

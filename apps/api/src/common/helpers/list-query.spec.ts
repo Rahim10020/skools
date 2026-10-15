@@ -40,7 +40,7 @@ describe('parseListQuery', () => {
 });
 
 describe('buildPagination', () => {
-  it('calcule les pages façon epl', () => {
+  it('calcule les pages', () => {
     expect(buildPagination(95, 2, 10)).toMatchObject({
       total_count: 95,
       page: 2,

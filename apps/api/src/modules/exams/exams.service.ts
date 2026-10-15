@@ -73,7 +73,7 @@ export class ExamsService {
   }
 
   /**
-   * Liste façon epl : `?search=&subjectId=&classroomId=&periodId=&page=&limit=`.
+   * Liste avec recherche et pagination : `?search=&subjectId=&classroomId=&periodId=&page=&limit=`.
    * Périmètre enseignant préservé (post-filtre, pagination en mémoire).
    * Sans param → tableau brut historique.
    */

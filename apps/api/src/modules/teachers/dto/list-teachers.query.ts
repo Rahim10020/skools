@@ -9,7 +9,7 @@ import {
 } from 'class-validator';
 
 /**
- * Filtres liste enseignants façon epl : `?search=&specialty=&page=&limit=`.
+ * Filtres liste enseignants : `?search=&specialty=&page=&limit=`.
  * `search` porte sur nom / prénom / matricule / spécialité.
  */
 export class ListTeachersQuery {

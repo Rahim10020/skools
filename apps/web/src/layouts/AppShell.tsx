@@ -40,7 +40,7 @@ export function AppShell() {
       >
         Aller au contenu
       </a>
-      {/* Barre mobile uniquement (EPL n'a pas de topbar desktop). */}
+      {/* Barre mobile uniquement (pas de topbar desktop). */}
       <header className="lg:hidden fixed top-0 inset-x-0 z-30 flex items-center gap-p3 h-14 px-p4 bg-(--skools-sidebar-bg) border-b border-(--skools-border-subtle)">
         <button
           type="button"

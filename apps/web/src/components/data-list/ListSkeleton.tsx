@@ -1,10 +1,10 @@
 import { Skeleton } from "../ui/skeleton";
 
 /**
- * Skeleton façon epl : barre d'en-tête + lignes hautes + placeholder
+ * Skeleton : barre d'en-tête + lignes hautes + placeholder
  * pagination — sur fond transparent, comme la liste.
  */
-export function EplSkeleton({
+export function ListSkeleton({
   rows = 6,
   label,
 }: {

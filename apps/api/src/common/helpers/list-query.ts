@@ -1,5 +1,5 @@
 /**
- * Listes façon epl `All applications` : `?search=&page=&limit=` + filtres,
+ * Listes avec recherche, filtres et pagination : `?search=&page=&limit=` + filtres,
  * réponse `{ data, pagination }` (`total_count, page, page_size,
  * total_pages, has_next, has_previous, skip, limit`).
  *

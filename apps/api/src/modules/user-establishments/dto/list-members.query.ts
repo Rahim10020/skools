@@ -11,7 +11,7 @@ import {
 import { Role } from '@prisma/client';
 
 /**
- * Filtres liste membres façon epl : `?search=&role=&page=&limit=`.
+ * Filtres liste membres : `?search=&role=&page=&limit=`.
  * `search` porte sur prénom / nom / email du compte.
  */
 export class ListMembersQuery {

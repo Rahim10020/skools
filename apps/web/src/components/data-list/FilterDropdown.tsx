@@ -8,7 +8,7 @@ export interface FilterOption {
 }
 
 /**
- * Filtre texte façon epl `All applications` (sex / series) :
+ * Filtre texte compact (bouton + menu déroulant) :
  * bouton texte `text-r12 muted`, valeur active entre parenthèses,
  * menu flottant avec item actif surligné + entrée « Tous » (reset).
  */

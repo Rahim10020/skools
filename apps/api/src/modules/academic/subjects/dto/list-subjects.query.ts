@@ -8,7 +8,7 @@ import {
   Min,
 } from 'class-validator';
 
-/** Filtres liste matières façon epl : `?search=&page=&limit=` (nom + code). */
+/** Filtres liste matières : `?search=&page=&limit=` (nom + code). */
 export class ListSubjectsQuery {
   @IsOptional()
   @IsString()

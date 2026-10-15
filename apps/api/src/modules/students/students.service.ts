@@ -60,7 +60,7 @@ export class StudentsService {
   }
 
   /**
-   * Liste façon epl : `?search=&gender=&classroomId=&page=&limit=`.
+   * Liste avec recherche et pagination : `?search=&gender=&classroomId=&page=&limit=`.
    * Sans param → tableau brut historique (compat frontend).
    * Avec param → `{ data, pagination }`.
    */

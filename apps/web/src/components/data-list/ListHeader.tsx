@@ -31,7 +31,7 @@ function useDebouncedValue(value: string, delayMs: number) {
 }
 
 /**
- * Ligne d'en-tête façon epl : compteur à gauche, filtres texte + petite
+ * Ligne d'en-tête : compteur à gauche, filtres texte + petite
  * recherche à droite. Quand des lignes sont sélectionnées, la zone droite
  * **bascule en actions groupées** (pas de barre ajoutée au-dessus).
  */

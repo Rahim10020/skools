@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import api from "../lib/api";
 
-/** Enveloppe pagination façon epl `All applications`. */
+/** Enveloppe de pagination : `{ data, pagination }`. */
 export interface ListPagination {
   total_count: number;
   page: number;
@@ -45,7 +45,7 @@ function toListPath(base: string, params?: ListParams) {
  * Ressource CRUD REST standard (GET liste / POST / PATCH /:id / DELETE /:id).
  * `listPath` permet d'ajouter des query params de filtre à la lecture
  * (ex. `apiPath.schedulesByClassroom(…)`).
- * `params` ajoute `?search=&page=&limit=` + filtres serveur façon epl :
+ * `params` ajoute `?search=&page=&limit=` + filtres serveur :
  * `items` contient toujours le tableau (enveloppe déballée ou non),
  * `pagination` est présent quand le backend pagine.
  * Les toasts et l'invalidation sont gérés par l'appelant (CrudPage).

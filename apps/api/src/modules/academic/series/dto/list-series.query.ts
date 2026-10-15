@@ -9,7 +9,7 @@ import {
   Min,
 } from 'class-validator';
 
-/** Filtres liste séries façon epl : `?search=&levelId=&page=&limit=`. */
+/** Filtres liste séries : `?search=&levelId=&page=&limit=`. */
 export class ListSeriesQuery {
   @IsOptional()
   @IsString()

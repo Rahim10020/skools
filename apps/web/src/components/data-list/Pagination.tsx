@@ -3,7 +3,7 @@ import { ChevronForwardIcon } from "../icons/ChevronForwardIcon";
 import { cx } from "../../lib/cx";
 
 /**
- * Pagination façon epl `All applications` : 2 boutons ronds + `page / total`.
+ * Pagination : 2 boutons ronds + `page / total`.
  * Pagination cliente (le backend skools ne pagine pas).
  */
 export function Pagination({

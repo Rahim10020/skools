@@ -10,7 +10,7 @@ import {
 } from 'class-validator';
 
 /**
- * Filtres liste élèves façon epl : `?search=&gender=&classroomId=&page=&limit=`.
+ * Filtres liste élèves : `?search=&gender=&classroomId=&page=&limit=`.
  * Tous optionnels : sans param, le service renvoie le tableau brut historique.
  */
 export class ListStudentsQuery {

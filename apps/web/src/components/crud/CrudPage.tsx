@@ -16,12 +16,12 @@ import { useRowSelection } from "../data-list/use-row-selection";
 import { exportToCsv } from "../data-list/csv";
 import { Pagination } from "../data-list/Pagination";
 import { HeaderSelect } from "../data-list/HeaderSelect";
-import { ListHeader } from "../epl-list/ListHeader";
-import { EplList } from "../epl-list/EplList";
-import { EplSkeleton } from "../epl-list/EplSkeleton";
-import type { StatusPillSpec } from "../epl-list/StatusPill";
+import { ListHeader } from "../data-list/ListHeader";
+import { DataList } from "../data-list/DataList";
+import { ListSkeleton } from "../data-list/ListSkeleton";
+import type { StatusPillSpec } from "../data-list/StatusPill";
 
-/** Filtre epl d'une liste : `param` = query param serveur, `options` statiques ou dynamiques. */
+/** Filtre d'une liste : `param` = query param serveur, `options` statiques ou dynamiques. */
 export interface CrudFilterDef {
   key: string;
   label: string;
@@ -86,11 +86,13 @@ export interface CrudPageProps<T> {
   ) => Record<string, unknown>;
   nameOf: (item: T) => string;
   idOf?: (item: T) => string;
-  /** Taille de page serveur façon epl (défaut 10). */
+  /** Clic sur la cellule primaire → page détail (l'édition reste en modal). */
+  rowTo?: (item: T) => string;
+  /** Taille de page serveur (défaut 10). */
   pageSize?: number;
-  /** Filtres epl (query params serveur). */
+  /** Filtres (query params serveur). */
   filters?: CrudFilterDef[];
-  /** Pastille statut en fin de ligne (façon epl). */
+  /** Pastille statut en fin de ligne. */
   statusPill?: (item: T) => StatusPillSpec | null;
   /** Placeholder de la recherche (absent = pas de recherche). */
   searchPlaceholder?: string;
@@ -363,6 +365,7 @@ export function CrudPage<T>({
   toSubmit,
   nameOf,
   idOf = defaultIdOf,
+  rowTo,
   pageSize = 10,
   filters = [],
   statusPill,
@@ -530,7 +533,7 @@ export function CrudPage<T>({
           }}
         />
       ) : list.isPending ? (
-        <EplSkeleton label={`Chargement : ${title.toLowerCase()}`} />
+        <ListSkeleton label={`Chargement : ${title.toLowerCase()}`} />
       ) : items.length === 0 ? (
         <EmptyState
           title={`Aucun ${itemLabel} pour le moment`}
@@ -564,7 +567,7 @@ export function CrudPage<T>({
               onClear: selection.clear,
             }}
           />
-          <EplList
+          <DataList
             items={items}
             columns={columns}
             idOf={idOf}
@@ -589,6 +592,7 @@ export function CrudPage<T>({
             readOnly={readOnly}
             onEdit={readOnly ? undefined : (item) => setEditing(item)}
             onDelete={readOnly ? undefined : (item) => setDeleteTarget(item)}
+            rowTo={rowTo}
           />
           {totalPages > 1 && (
             <div className="ml-auto">

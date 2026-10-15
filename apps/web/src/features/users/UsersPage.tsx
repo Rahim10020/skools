@@ -1,6 +1,7 @@
 import { ROLES } from "../../lib/roles";
 import { API, apiPath } from "../../lib/api-endpoints";
 import { KEYS } from "../../lib/query-keys";
+import { ROUTES } from "../../lib/routes";
 import { useCallback, useMemo, useState, type FormEvent } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import api, { getErrorMessage } from "../../lib/api";
@@ -18,9 +19,9 @@ import { useRowSelection } from "../../components/data-list/use-row-selection";
 import { exportToCsv } from "../../components/data-list/csv";
 import { Pagination } from "../../components/data-list/Pagination";
 import { HeaderSelect } from "../../components/data-list/HeaderSelect";
-import { ListHeader } from "../../components/epl-list/ListHeader";
-import { EplList } from "../../components/epl-list/EplList";
-import { EplSkeleton } from "../../components/epl-list/EplSkeleton";
+import { ListHeader } from "../../components/data-list/ListHeader";
+import { DataList } from "../../components/data-list/DataList";
+import { ListSkeleton } from "../../components/data-list/ListSkeleton";
 
 const USERS_PAGE_SIZE = 10;
 
@@ -266,7 +267,7 @@ export default function UsersPage() {
           onRetry={() => void members.refetch()}
         />
       ) : members.isPending ? (
-        <EplSkeleton label="Chargement des membres" />
+        <ListSkeleton label="Chargement des membres" />
       ) : items.length === 0 ? (
         <EmptyState
           title="Aucun membre pour le moment"
@@ -299,7 +300,7 @@ export default function UsersPage() {
               onClear: selection.clear,
             }}
           />
-          <EplList
+          <DataList
             items={items}
             columns={[
               {
@@ -343,6 +344,7 @@ export default function UsersPage() {
             onEdit={openEdit}
             onDelete={setDeleteTarget}
             hideActionsFor={(member) => member.user.id === currentUserId}
+            rowTo={(member) => `${ROUTES.users}/${member.id}`}
           />
           {totalPages > 1 && (
             <div className="ml-auto">

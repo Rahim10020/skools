@@ -4,7 +4,7 @@ import { ChevronDownwardIcon } from "../icons/ChevronDownwardIcon";
 import { cx } from "../../lib/cx";
 
 /**
- * Checkbox d'en-tête façon Gmail + menu filtre façon epl `All applications`
+ * Checkbox d'en-tête + menu de sélection (Toutes / Aucune / Inverser)
  * (sex / series) : Toutes / Aucune / Inverser la sélection (page visible).
  */
 export function HeaderSelect({

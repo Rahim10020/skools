@@ -62,7 +62,7 @@ export class ClassroomsService {
   }
 
   /**
-   * Liste façon epl : `?search=&levelId=&seriesId=&academicYearId=&page=&limit=`.
+   * Liste avec recherche et pagination : `?search=&levelId=&seriesId=&academicYearId=&page=&limit=`.
    * Sans param → tableau brut historique (compat frontend).
    * Avec param → `{ data, pagination }`.
    */

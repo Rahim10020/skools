@@ -1,30 +1,31 @@
 import { useState, type ReactNode } from "react";
+import { Link } from "react-router-dom";
 import { Checkbox } from "../ui/checkbox";
 import { HeaderSelect } from "../data-list/HeaderSelect";
 import { StatusPill, type StatusPillSpec } from "./StatusPill";
 import { cx } from "../../lib/cx";
 
-export interface EplColumn<T> {
+export interface DataColumn<T> {
   header: string;
   render: (item: T) => ReactNode;
-  /** Colonnes non primaires masquées sur mobile (comme epl : 4 colonnes max). */
+  /** Colonnes non primaires masquées sur mobile. */
   primary?: boolean;
   className?: string;
 }
 
-export interface EplSelection {
+export interface DataSelection {
   has: (id: string) => boolean;
   toggle: (id: string) => void;
   header: ReactNode;
 }
 
 /**
- * Liste façon epl `All applications` : **pas de carte** — fond transparent,
+ * Liste sans carte : fond transparent,
  * hairlines entre les lignes, pastille statut à droite.
  * Hybride Gmail : checkbox fantôme en tête de ligne (hover/focus/sélection),
  * actions au hover sur desktop, menu `•••` sur mobile.
  */
-export function EplList<T>({
+export function DataList<T>({
   items,
   columns,
   idOf,
@@ -35,18 +36,21 @@ export function EplList<T>({
   onEdit,
   onDelete,
   hideActionsFor,
+  rowTo,
 }: {
   items: T[];
-  columns: EplColumn<T>[];
+  columns: DataColumn<T>[];
   idOf: (item: T) => string;
   nameOf: (item: T) => string;
   statusPill?: (item: T) => StatusPillSpec | null;
-  selection?: EplSelection | null;
+  selection?: DataSelection | null;
   readOnly?: boolean;
   onEdit?: (item: T) => void;
   onDelete?: (item: T) => void;
   /** Lignes sans actions (ex. son propre compte) : affiche « — ». */
   hideActionsFor?: (item: T) => boolean;
+  /** Clic sur la cellule primaire → page détail (l'édition reste en modal). */
+  rowTo?: (item: T) => string;
 }) {
   const [menuOpenId, setMenuOpenId] = useState<string | null>(null);
   const showActions = !readOnly && (onEdit || onDelete);
@@ -123,7 +127,18 @@ export function EplList<T>({
                     column.className,
                   )}
                 >
-                  <span className="block truncate">{column.render(item)}</span>
+                  {column.primary && rowTo ? (
+                    <Link
+                      to={rowTo(item)}
+                      className="block truncate hover:underline cursor-pointer"
+                    >
+                      {column.render(item)}
+                    </Link>
+                  ) : (
+                    <span className="block truncate">
+                      {column.render(item)}
+                    </span>
+                  )}
                 </div>
               ))}
               <div className="flex items-center justify-end gap-p3 min-w-max">

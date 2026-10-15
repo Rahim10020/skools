@@ -38,7 +38,7 @@ export class ParentsService {
     });
   }
 
-  /** Liste façon epl : `?search=&page=&limit=` (nom/prénom/téléphone, sans param → tableau brut). */
+  /** Liste avec recherche et pagination : `?search=&page=&limit=` (nom/prénom/téléphone, sans param → tableau brut). */
   async findAll(establishmentId: string, query: ListParentsQuery = {}) {
     const parsed = parseListQuery({
       page: query.page,

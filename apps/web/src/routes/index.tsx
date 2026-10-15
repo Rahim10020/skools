@@ -29,6 +29,9 @@ const SeriesPage = lazy(() => import("../features/academic/SeriesPage"));
 const SubjectsPage = lazy(() => import("../features/academic/SubjectsPage"));
 const PeriodsPage = lazy(() => import("../features/academic/PeriodsPage"));
 const StudentsPage = lazy(() => import("../features/students/StudentsPage"));
+const StudentDetailPage = lazy(
+  () => import("../features/students/StudentDetailPage"),
+);
 const TeachersPage = lazy(() => import("../features/teachers/TeachersPage"));
 const ParentsPage = lazy(() => import("../features/parents/ParentsPage"));
 const EnrollmentsPage = lazy(
@@ -55,6 +58,9 @@ const DisciplinePage = lazy(
 const ProfilPage = lazy(() => import("../features/profil/ProfilPage"));
 const SettingsPage = lazy(() => import("../features/settings/SettingsPage"));
 const UsersPage = lazy(() => import("../features/users/UsersPage"));
+const MemberDetailPage = lazy(
+  () => import("../features/users/MemberDetailPage"),
+);
 const MyChildrenPage = lazy(
   () => import("../features/children/MyChildrenPage"),
 );
@@ -123,6 +129,10 @@ export function AppRoutes() {
                   <Route path={ROUTES.subjects} element={<SubjectsPage />} />
                   <Route path={ROUTES.periods} element={<PeriodsPage />} />
                   <Route path={ROUTES.students} element={<StudentsPage />} />
+                  <Route
+                    path={ROUTES.studentDetails}
+                    element={<StudentDetailPage />}
+                  />
                   <Route path={ROUTES.teachers} element={<TeachersPage />} />
                   <Route path={ROUTES.parents} element={<ParentsPage />} />
                   <Route
@@ -162,6 +172,10 @@ export function AppRoutes() {
                     element={<MyAbsencesPage />}
                   />
                   <Route path={ROUTES.users} element={<UsersPage />} />
+                  <Route
+                    path={ROUTES.userDetails}
+                    element={<MemberDetailPage />}
+                  />
                   <Route path={ROUTES.settings} element={<SettingsPage />} />
                 </Route>
               </Route>
