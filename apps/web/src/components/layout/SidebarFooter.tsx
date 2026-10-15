@@ -65,7 +65,7 @@ export function SidebarFooter({
         <button
           type="button"
           onClick={handleLogout}
-          className="mt-p3 flex w-full items-center gap-p2 rounded-r2 px-p2 h-8 text-r12 text-(--skools-text-muted) hover:bg-(--skools-interactive-hover-bg) hover:text-(--common-red) transition-colors"
+          className="mt-p4 cursor-pointer flex w-full items-center gap-p2 rounded-r2 px-p2 h-9 text-m12 text-(--skools-text-muted) hover:bg-(--skools-interactive-hover-bg) hover:text-(--common-red) transition-colors"
         >
           <LogOutIcon className="size-[18px] shrink-0" />
           <span>Déconnexion</span>

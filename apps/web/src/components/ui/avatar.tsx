@@ -8,7 +8,7 @@ export function Avatar({
   return (
     <div
       className={[
-        "relative size-7 min-w-7 flex rounded-r2 bg-(--skools-elevated-bg) items-center justify-center",
+        "relative size-10 min-w-9 flex rounded-r2 bg-(--skools-elevated-bg) items-center justify-center",
         className,
       ]
         .filter(Boolean)
@@ -17,11 +17,15 @@ export function Avatar({
       {!rest.src ? (
         <AvatarFallback alt={rest.alt} />
       ) : (
-        <img className="w-full h-full object-cover rounded-r2" src={rest.src} {...rest} />
+        <img
+          className="w-full h-full object-cover rounded-r2"
+          src={rest.src}
+          {...rest}
+        />
       )}
       <span
         className={[
-          "block size-1.5 rounded-full bg-(--common-blue) absolute bottom-[1px] right-[1px]",
+          "block size-2 rounded-full bg-(--common-blue) absolute bottom-px right-px",
           !info ? "hidden" : "",
         ]
           .filter(Boolean)
