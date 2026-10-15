@@ -19,8 +19,7 @@ export function SidebarNavLink({
   onNavigate?: () => void;
 }) {
   const { pathname } = useLocation();
-  const active =
-    pathname === item.to || pathname.startsWith(`${item.to}/`);
+  const active = pathname === item.to || pathname.startsWith(`${item.to}/`);
 
   const link = (
     <Link

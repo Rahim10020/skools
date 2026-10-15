@@ -28,7 +28,6 @@ import { DoubleCaretIcon } from "../icons/DoubleCaretIcon";
 import { XIcon } from "../icons/XIcon";
 import ProfilIcon from "../icons/ProfilIcon";
 import SettingsNavIcon from "../icons/SettingsNavIcon";
-import { BrandLogo } from "../BrandLogo";
 import { useLocalStorageFlag } from "../../hooks/use-local-storage";
 
 const COLLAPSED_KEY = "skools-sidebar-collapsed";
@@ -232,9 +231,7 @@ export function Sidebar({
           <span className={cx(collapsed && "lg:hidden")}>
             <Wordmark />
           </span>
-          <span className={cx(collapsed ? "hidden lg:block" : "hidden")}>
-            <BrandLogo />
-          </span>
+
           <span className="hidden lg:block">
             <CollapseButton
               collapsed={collapsed}
@@ -243,7 +240,7 @@ export function Sidebar({
           </span>
           <span className="lg:hidden">
             <IconButton onClick={onCloseMobile} aria-label="Fermer le menu">
-              <XIcon className="size-4" />
+              <XIcon className="size-6" />
             </IconButton>
           </span>
         </div>
