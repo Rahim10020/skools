@@ -4,7 +4,8 @@ import { ROUTES } from "../../lib/routes";
 import { useEffect, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { SIDEBAR_NAV, type SidebarNavItem } from "./sidebar-nav";
+import { SIDEBAR_NAV, isNavParent, type SidebarNavEntry, type SidebarNavItem } from "./sidebar-nav";
+import { NavParentItem } from "../NavParentItem";
 import { useAuthStore } from "../../stores/auth-store";
 import { requestServerLogout } from "../../lib/api";
 import api from "../../lib/api";
@@ -60,9 +61,7 @@ function NavItemLink({
 }) {
   const { pathname } = useLocation();
   const active =
-    pathname === item.to ||
-    pathname.startsWith(`${item.to}/`) ||
-    item.activePaths?.includes(pathname);
+    pathname === item.to || pathname.startsWith(`${item.to}/`);
 
   const link = (
     <Link
@@ -200,28 +199,38 @@ export function Sidebar({
     "Utilisateur";
   // Sans établissement (compte venant de s'inscrire) : navigation réduite.
   // Matrice : on masque les entrées non autorisées, on ne grise jamais.
+  // Parents : enfants filtrés par rôle, parent masqué si aucun enfant visible.
   const groups = (establishmentId ? SIDEBAR_NAV : SIDEBAR_NAV.slice(0, 1))
     .map((group) => ({
       ...group,
-      items: group.items.filter((item) => canAccess(item.to, role)),
+      items: group.items.flatMap((item): SidebarNavEntry[] => {
+        if (!isNavParent(item)) {
+          return canAccess(item.to, role) ? [item] : [];
+        }
+        const children = item.children.filter((child) => canAccess(child.to, role));
+        return children.length > 0 ? [{ ...item, children }] : [];
+      }),
     }))
     .filter((group) => group.items.length > 0);
   const bottomItems = BOTTOM_NAV.filter((item) => canAccess(item.to, role));
 
-  // Recherche : filtre insensible aux accents sur les libellés.
+  // Recherche : filtre insensible aux accents sur libellés + enfants.
   const normalizedQuery = normalizeText(query.trim());
   const searching = normalizedQuery.length > 0;
   const visibleGroups = searching
     ? groups
         .map((group) => ({
           ...group,
-          items: group.items.filter(
-            (item) =>
-              normalizeText(item.label).includes(normalizedQuery) ||
-              item.keywords?.some((keyword) =>
-                normalizeText(keyword).includes(normalizedQuery),
-              ),
-          ),
+          items: group.items.flatMap((item): SidebarNavEntry[] => {
+            if (!isNavParent(item)) {
+              return normalizeText(item.label).includes(normalizedQuery) ? [item] : [];
+            }
+            const children = item.children.filter((child) =>
+              normalizeText(child.label).includes(normalizedQuery),
+            );
+            if (children.length > 0) return [{ ...item, children }];
+            return normalizeText(item.label).includes(normalizedQuery) ? [item] : [];
+          }),
         }))
         .filter((group) => group.items.length > 0)
     : groups;
@@ -229,17 +238,18 @@ export function Sidebar({
   const isGroupOpen = (group: {
     title: string;
     defaultOpen?: boolean;
-    items: SidebarNavItem[];
+    items: SidebarNavEntry[];
   }) => {
     if (searching) return true;
     if (openGroups[group.title] !== undefined) return openGroups[group.title];
     if (group.defaultOpen) return true;
-    // Le groupe de la route active est déplié par défaut (hubs inclus).
-    return group.items.some(
-      (item) =>
-        pathname === item.to ||
-        pathname.startsWith(`${item.to}/`) ||
-        item.activePaths?.includes(pathname),
+    // Le groupe de la route active est déplié par défaut (enfants inclus).
+    return group.items.some((item) =>
+      isNavParent(item)
+        ? item.children.some(
+            (child) => pathname === child.to || pathname.startsWith(`${child.to}/`),
+          )
+        : pathname === item.to || pathname.startsWith(`${item.to}/`),
     );
   };
 
@@ -328,12 +338,20 @@ export function Sidebar({
           visibleGroups.map((group, gi) => {
             const open = collapsed ? true : isGroupOpen(group);
             // Groupe à un seul item visible : entrée directe, sans accordéon.
-            if (group.items.length === 1) {
-              const [only] = group.items;
+            // Parent à un seul enfant visible : lien direct vers l'enfant.
+            const single = group.items.length === 1 ? group.items[0] : null;
+            const direct = single
+              ? isNavParent(single) && single.children.length === 1
+                ? single.children[0]
+                : !isNavParent(single)
+                  ? single
+                  : null
+              : null;
+            if (direct) {
               return (
                 <div key={group.title} className={gi > 0 ? "mt-p4" : ""}>
                   <NavItemLink
-                    item={only}
+                    item={direct}
                     collapsed={collapsed}
                     onNavigate={onCloseMobile}
                   />
@@ -372,14 +390,23 @@ export function Sidebar({
                 )}
                 {open && (
                   <div className="flex flex-col gap-p1">
-                    {group.items.map((item) => (
-                      <NavItemLink
-                        key={item.to}
-                        item={item}
-                        collapsed={collapsed}
-                        onNavigate={onCloseMobile}
-                      />
-                    ))}
+                    {group.items.map((item) =>
+                      isNavParent(item) ? (
+                        <NavParentItem
+                          key={item.label}
+                          item={item}
+                          collapsed={collapsed}
+                          onNavigate={onCloseMobile}
+                        />
+                      ) : (
+                        <NavItemLink
+                          key={item.to}
+                          item={item}
+                          collapsed={collapsed}
+                          onNavigate={onCloseMobile}
+                        />
+                      ),
+                    )}
                   </div>
                 )}
               </div>

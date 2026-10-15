@@ -2,27 +2,49 @@ import { ROUTES } from "../../lib/routes";
 import type { IconComponent } from "../icons/Icon";
 import DashboardIcon from "../icons/DashboardIcon";
 import { FolderIcon } from "../icons/FolderIcon";
+import { FilterIcon } from "../icons/FilterIcon";
+import { FileIcon } from "../icons/FileIcon";
 import NotePadIcon from "../icons/NotePadIcon";
+import CalendarIcon from "../icons/CalendarIcon";
+import ClockIcon from "../icons/ClockIcon";
+import DoorIcon from "../icons/DoorIcon";
 import { ContactsIcon } from "../icons/ContactsIcon";
 import { EyeIcon } from "../icons/EyeIcon";
 import { MailIcon } from "../icons/MailIcon";
 import { LinkIcon } from "../icons/LinkIcon";
 import { ArrowForwardIcon } from "../icons/ArrowForwardIcon";
 import { AddIcon } from "../icons/AddIcon";
+import ExamIcon from "../icons/ExamIcon";
 import CheckCircleIcon from "../icons/CheckCircleIcon";
 import { DownloadIcon } from "../icons/DownloadIcon";
 import { CheckIcon } from "../icons/CheckIcon";
 import { DateIcon } from "../icons/DateIcon";
 import { InfoCircleIcon } from "../icons/InfoCircleIcon";
 
+export interface SidebarNavChild {
+  to: string;
+  label: string;
+  icon: IconComponent;
+}
+
 export interface SidebarNavItem {
   to: string;
   label: string;
   icon: IconComponent;
-  /** Libellés des pages regroupées (recherche : « cycles » → Structures). */
-  keywords?: string[];
-  /** Routes unitaires du hub (surbrillance active sur les accès directs). */
-  activePaths?: string[];
+}
+
+export interface SidebarNavParent {
+  label: string;
+  icon: IconComponent;
+  children: SidebarNavChild[];
+}
+
+export type SidebarNavEntry = SidebarNavItem | SidebarNavParent;
+
+export function isNavParent(
+  entry: SidebarNavEntry,
+): entry is SidebarNavParent {
+  return "children" in entry;
 }
 
 export interface SidebarNavItem {
@@ -35,7 +57,7 @@ export interface SidebarNavGroup {
   title: string;
   /** Ouvert par défaut (préférence persistée + route active priment). */
   defaultOpen?: boolean;
-  items: SidebarNavItem[];
+  items: SidebarNavEntry[];
 }
 
 /**
@@ -56,24 +78,23 @@ export const SIDEBAR_NAV: SidebarNavGroup[] = [
     title: "Année Scolaire",
     items: [
       {
-        to: ROUTES.structures,
         label: "Structures",
         icon: FolderIcon,
-        keywords: ["années scolaires", "cycles", "niveaux", "séries", "classes"],
-        activePaths: [
-          ROUTES.academicYears,
-          ROUTES.cycles,
-          ROUTES.levels,
-          ROUTES.series,
-          ROUTES.classrooms,
+        children: [
+          { to: ROUTES.academicYears, label: "Années scolaires", icon: CalendarIcon },
+          { to: ROUTES.cycles, label: "Cycles", icon: FolderIcon },
+          { to: ROUTES.levels, label: "Niveaux", icon: FilterIcon },
+          { to: ROUTES.series, label: "Séries", icon: FileIcon },
+          { to: ROUTES.classrooms, label: "Classes", icon: DoorIcon },
         ],
       },
       {
-        to: ROUTES.matieresPeriodes,
         label: "Matières & périodes",
         icon: NotePadIcon,
-        keywords: ["matières", "périodes"],
-        activePaths: [ROUTES.subjects, ROUTES.periods],
+        children: [
+          { to: ROUTES.subjects, label: "Matières", icon: NotePadIcon },
+          { to: ROUTES.periods, label: "Périodes", icon: ClockIcon },
+        ],
       },
       { to: ROUTES.schedules, label: "Emplois du temps", icon: DateIcon },
     ],
@@ -93,11 +114,12 @@ export const SIDEBAR_NAV: SidebarNavGroup[] = [
     title: "Pédagogie",
     items: [
       {
-        to: ROUTES.examensNotes,
         label: "Examens & notes",
         icon: CheckCircleIcon,
-        keywords: ["examens", "notes", "saisie"],
-        activePaths: [ROUTES.exams, ROUTES.grades],
+        children: [
+          { to: ROUTES.exams, label: "Examens", icon: ExamIcon },
+          { to: ROUTES.grades, label: "Saisie de notes", icon: CheckCircleIcon },
+        ],
       },
       { to: ROUTES.reportCards, label: "Bulletins", icon: DownloadIcon },
       { to: ROUTES.myGrades, label: "Mes notes", icon: CheckCircleIcon },
