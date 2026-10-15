@@ -3,7 +3,8 @@
  * ÉTAPE 1 : socle (établissement → classes) + comptes.
  * ÉTAPE 2 : personnes (500 élèves, 30 enseignants, 200 parents),
  *   liens parent-élève, inscriptions sur l'année courante.
- * Étape 3 (à venir) : notes, présences, EDT, discipline.
+ * ÉTAPE 3 : affectations profs, examens, notes, présences (5 jours),
+ *   EDT (6 créneaux/classe), fiches discipline.
  *
  * Usage (dev local uniquement) :
  *   docker compose up -d postgres
@@ -513,6 +514,345 @@ async function main() {
     });
   }
 
+  // ======================
+  // ÉTAPE 3 — pédagogie (chaque bloc est skippé s'il existe déjà).
+  // ======================
+  const COEF: Record<string, number> = {
+    MATH: 4, FR: 3, PC: 3, PHILO: 3, SVT: 2, HG: 2, ANG: 2, INFO: 2, EPS: 1,
+  };
+  function subjectsForClass(className: string, levelName: string): string[] {
+    if (className === "Terminale C") return ["MATH", "PC", "SVT", "FR"];
+    if (className === "Terminale D") return ["MATH", "SVT", "PC", "FR"];
+    if (className === "Terminale A" || className === "Première A")
+      return ["PHILO", "FR", "HG", "MATH"];
+    if (levelName === "Seconde") return ["MATH", "FR", "PC", "ANG"];
+    return ["MATH", "FR", "HG", "ANG"];
+  }
+
+  const directorUser = await prisma.user.findUnique({
+    where: { email: "director@ecole.test" },
+  });
+  const allSubjects = await prisma.subject.findMany({
+    where: { establishmentId: establishment.id },
+  });
+  const subjectByCode = new Map(allSubjects.map((s) => [s.code, s]));
+  const subjectNameByCode = new Map(allSubjects.map((s) => [s.code, s.name]));
+  const trimester1 = await prisma.period.findFirst({
+    where: {
+      establishmentId: establishment.id,
+      academicYearId: currentYear.id,
+      name: "Trimestre 1",
+    },
+  });
+  const trimester2 = await prisma.period.findFirst({
+    where: {
+      establishmentId: establishment.id,
+      academicYearId: currentYear.id,
+      name: "Trimestre 2",
+    },
+  });
+  const teacherDossiers = await prisma.teacher.findMany({
+    where: { establishmentId: establishment.id },
+  });
+  const teachersBySpecialty = new Map<string, { id: string }[]>();
+  for (const t of teacherDossiers) {
+    const list = teachersBySpecialty.get(t.specialty ?? "") ?? [];
+    list.push({ id: t.id });
+    teachersBySpecialty.set(t.specialty ?? "", list);
+  }
+  const teacherCounters = new Map<string, number>();
+  function teacherForSubject(code: string): string | null {
+    const name = subjectNameByCode.get(code);
+    const list: Array<{ id: string }> =
+      (name ? teachersBySpecialty.get(name) : undefined) ?? teacherDossiers;
+    if (list.length === 0) return null;
+    const i = teacherCounters.get(code) ?? 0;
+    teacherCounters.set(code, i + 1);
+    return list[i % list.length].id;
+  }
+  const classroomsFull = await prisma.classroom.findMany({
+    where: {
+      establishmentId: establishment.id,
+      academicYearId: currentYear.id,
+    },
+    include: { level: { select: { name: true } } },
+    orderBy: { name: "asc" },
+  });
+  const approvedEnrollments = await prisma.enrollment.findMany({
+    where: {
+      establishmentId: establishment.id,
+      academicYearId: currentYear.id,
+      status: "APPROVED",
+    },
+    select: { studentId: true, classroomId: true },
+  });
+  const studentsByClass = new Map<string, string[]>();
+  for (const e of approvedEnrollments) {
+    const list = studentsByClass.get(e.classroomId) ?? [];
+    list.push(e.studentId);
+    studentsByClass.set(e.classroomId, list);
+  }
+
+  // Affectations : 1 prof / matière / classe (~40).
+  if (
+    trimester1 &&
+    (await prisma.teacherAssignment.count({
+      where: { establishmentId: establishment.id },
+    })) === 0
+  ) {
+    const rows: Array<{
+      establishmentId: string;
+      teacherId: string;
+      subjectId: string;
+      classroomId: string;
+      academicYearId: string;
+    }> = [];
+    for (const classroom of classroomsFull) {
+      for (const code of subjectsForClass(classroom.name, classroom.level.name)) {
+        const subject = subjectByCode.get(code);
+        const teacherId = teacherForSubject(code);
+        if (!subject || !teacherId) continue;
+        rows.push({
+          establishmentId: establishment.id,
+          teacherId,
+          subjectId: subject.id,
+          classroomId: classroom.id,
+          academicYearId: currentYear.id,
+        });
+      }
+    }
+    await prisma.teacherAssignment.createMany({ data: rows });
+  }
+
+  // Examens : 1 composition T1 (publiée) + 1 devoir T2 (brouillon) par matière (~80).
+  if (
+    trimester1 &&
+    trimester2 &&
+    (await prisma.exam.count({ where: { establishmentId: establishment.id } })) === 0
+  ) {
+    const rows: Array<{
+      establishmentId: string;
+      academicYearId: string;
+      periodId: string;
+      subjectId: string;
+      classroomId: string;
+      name: string;
+      type: "COMPOSITION" | "DEVOIR";
+      examDate: Date;
+      maxScore: number;
+      coefficient: number;
+      isPublished: boolean;
+    }> = [];
+    for (const classroom of classroomsFull) {
+      for (const code of subjectsForClass(classroom.name, classroom.level.name)) {
+        const subject = subjectByCode.get(code);
+        if (!subject) continue;
+        const coef = COEF[code] ?? 2;
+        rows.push({
+          establishmentId: establishment.id,
+          academicYearId: currentYear.id,
+          periodId: trimester1.id,
+          subjectId: subject.id,
+          classroomId: classroom.id,
+          name: `${subject.name} — Composition T1`,
+          type: "COMPOSITION",
+          examDate: new Date(2025, 10, rint(10, 28)),
+          maxScore: 20,
+          coefficient: coef,
+          isPublished: true,
+        });
+        rows.push({
+          establishmentId: establishment.id,
+          academicYearId: currentYear.id,
+          periodId: trimester2.id,
+          subjectId: subject.id,
+          classroomId: classroom.id,
+          name: `${subject.name} — Devoir T2`,
+          type: "DEVOIR",
+          examDate: new Date(2026, 1, rint(2, 20)),
+          maxScore: 20,
+          coefficient: coef,
+          isPublished: false,
+        });
+      }
+    }
+    await prisma.exam.createMany({ data: rows });
+  }
+
+  // Notes : 1 / élève inscrit / examen (~4000, 5 % absents).
+  if ((await prisma.grade.count({ where: { establishmentId: establishment.id } })) === 0) {
+    const exams = await prisma.exam.findMany({
+      where: { establishmentId: establishment.id },
+      select: { id: true, classroomId: true },
+    });
+    const rows: Array<{
+      establishmentId: string;
+      examId: string;
+      studentId: string;
+      score: number | null;
+      appreciation: string | null;
+      isAbsent: boolean;
+    }> = [];
+    for (const exam of exams) {
+      if (!exam.classroomId) continue;
+      for (const studentId of studentsByClass.get(exam.classroomId) ?? []) {
+        if (rand() < 0.05) {
+          rows.push({
+            establishmentId: establishment.id,
+            examId: exam.id,
+            studentId,
+            score: null,
+            appreciation: "Absent",
+            isAbsent: true,
+          });
+          continue;
+        }
+        const score = Math.round((8 + rand() * 8) * 2) / 2;
+        rows.push({
+          establishmentId: establishment.id,
+          examId: exam.id,
+          studentId,
+          score,
+          appreciation:
+            score >= 16 ? "Excellent" : score >= 14 ? "Bien" : score < 8 ? "Insuffisant" : null,
+          isAbsent: false,
+        });
+      }
+    }
+    for (let i = 0; i < rows.length; i += 1000) {
+      await prisma.grade.createMany({ data: rows.slice(i, i + 1000) });
+    }
+  }
+
+  // Présences : 5 jours ouvrés × inscrits (~2500).
+  if (
+    (await prisma.attendance.count({ where: { establishmentId: establishment.id } })) === 0
+  ) {
+    const days = [8, 9, 10, 11, 12].map((d) => new Date(2025, 8, d));
+    const rows: Array<{
+      establishmentId: string;
+      studentId: string;
+      classroomId: string;
+      date: Date;
+      status: "PRESENT" | "LATE" | "ABSENT" | "EXCUSED";
+      notes: string | null;
+      recordedById: string | null;
+    }> = [];
+    for (const [classroomId, studentIds] of studentsByClass) {
+      for (const studentId of studentIds) {
+        for (const date of days) {
+          const r = rand();
+          const status =
+            r < 0.9 ? "PRESENT" : r < 0.95 ? "LATE" : r < 0.98 ? "ABSENT" : "EXCUSED";
+          rows.push({
+            establishmentId: establishment.id,
+            studentId,
+            classroomId,
+            date,
+            status,
+            notes: status === "ABSENT" ? "Absence non justifiée" : status === "EXCUSED" ? "Mot des parents" : null,
+            recordedById: directorUser?.id ?? null,
+          });
+        }
+      }
+    }
+    for (let i = 0; i < rows.length; i += 1000) {
+      await prisma.attendance.createMany({ data: rows.slice(i, i + 1000) });
+    }
+  }
+
+  // EDT : 6 créneaux / classe (~60).
+  if (
+    (await prisma.schedule.count({ where: { establishmentId: establishment.id } })) === 0
+  ) {
+    const slots: Array<{
+      day: "MONDAY" | "TUESDAY" | "WEDNESDAY" | "THURSDAY" | "FRIDAY";
+      start: string;
+      end: string;
+    }> = [
+      { day: "MONDAY", start: "08:00", end: "10:00" },
+      { day: "TUESDAY", start: "10:00", end: "12:00" },
+      { day: "WEDNESDAY", start: "08:00", end: "10:00" },
+      { day: "THURSDAY", start: "14:00", end: "16:00" },
+      { day: "FRIDAY", start: "08:00", end: "10:00" },
+      { day: "FRIDAY", start: "10:00", end: "12:00" },
+    ];
+    const rows: Array<{
+      establishmentId: string;
+      classroomId: string;
+      subjectId: string;
+      teacherId: string | null;
+      academicYearId: string;
+      dayOfWeek: (typeof slots)[number]["day"];
+      startTime: string;
+      endTime: string;
+      room: string | null;
+    }> = [];
+    classroomsFull.forEach((classroom, ci) => {
+      const codes = [...subjectsForClass(classroom.name, classroom.level.name), "EPS", "INFO"];
+      slots.forEach((slot, si) => {
+        const code = codes[(si + ci) % codes.length];
+        const subject = subjectByCode.get(code);
+        if (!subject) return;
+        rows.push({
+          establishmentId: establishment.id,
+          classroomId: classroom.id,
+          subjectId: subject.id,
+          teacherId: teacherForSubject(code),
+          academicYearId: currentYear.id,
+          dayOfWeek: slot.day,
+          startTime: slot.start,
+          endTime: slot.end,
+          room: `S${ci + 1}`,
+        });
+      });
+    });
+    await prisma.schedule.createMany({ data: rows });
+  }
+
+  // Discipline : 20 fiches réparties.
+  if (
+    (await prisma.disciplineRecord.count({ where: { establishmentId: establishment.id } })) === 0
+  ) {
+    const allStudentIds = (
+      await prisma.student.findMany({
+        where: { establishmentId: establishment.id },
+        select: { id: true },
+        take: 500,
+      })
+    ).map((s) => s.id);
+    const cases: Array<{
+      type: "WARNING" | "OBSERVATION" | "REPRIMAND" | "DETENTION";
+      title: string;
+    }> = [
+      { type: "OBSERVATION", title: "Bavardages répétés en classe" },
+      { type: "WARNING", title: "Retard non justifié" },
+      { type: "WARNING", title: "Devoir non rendu" },
+      { type: "OBSERVATION", title: "Tenue non conforme" },
+      { type: "REPRIMAND", title: "Insolence envers un surveillant" },
+      { type: "DETENTION", title: "Bagarre dans la cour" },
+    ];
+    const statuses = ["PENDING", "ACTIVE", "RESOLVED", "RESOLVED"] as const;
+    await prisma.disciplineRecord.createMany({
+      data: Array.from({ length: 20 }, (_, i) => {
+        const c = cases[i % cases.length];
+        const status = statuses[i % statuses.length];
+        return {
+          establishmentId: establishment.id,
+          studentId: allStudentIds[(i * 23) % allStudentIds.length],
+          reportedById: directorUser?.id ?? null,
+          type: c.type,
+          status,
+          title: c.title,
+          description: "Fiche générée par le seed de développement.",
+          incidentDate: new Date(2025, 8, rint(2, 25)),
+          resolution: status === "RESOLVED" ? "Convocation des parents effectuée" : null,
+          resolvedAt: status === "RESOLVED" ? new Date(2025, 8, rint(26, 30)) : null,
+        };
+      }),
+    });
+  }
+
   const counts = {
     users: await prisma.user.count(),
     academicYears: await prisma.academicYear.count({
@@ -549,8 +889,26 @@ async function main() {
     enrollments: await prisma.enrollment.count({
       where: { establishmentId: establishment.id },
     }),
+    assignments: await prisma.teacherAssignment.count({
+      where: { establishmentId: establishment.id },
+    }),
+    exams: await prisma.exam.count({
+      where: { establishmentId: establishment.id },
+    }),
+    grades: await prisma.grade.count({
+      where: { establishmentId: establishment.id },
+    }),
+    attendances: await prisma.attendance.count({
+      where: { establishmentId: establishment.id },
+    }),
+    schedules: await prisma.schedule.count({
+      where: { establishmentId: establishment.id },
+    }),
+    discipline: await prisma.disciplineRecord.count({
+      where: { establishmentId: establishment.id },
+    }),
   };
-  console.log(`Seed étapes 1+2 OK — ${establishment.slug}`, counts);
+  console.log(`Seed étapes 1+2+3 OK — ${establishment.slug}`, counts);
   console.log(`Comptes test : ${ACCOUNTS.map((a) => a.email).join(", ")} / ${TEST_PASSWORD}`);
 }
 
