@@ -11,7 +11,7 @@ function isChildActive(pathname: string, to: string) {
 }
 
 /**
- * Entrée parente (flyout façon EPL) : même style que les feuilles,
+ * Entrée parente : même style que les feuilles,
  * survol → panneau des sous-pages, clic → épingle le panneau ouvert
  * (ligne en style actif), drawer mobile → sous-liste inline.
  */
@@ -36,8 +36,7 @@ export function NavParentItem({
 
   const children = item.children;
   const active =
-    children.some((child) => isChildActive(pathname, child.to)) ||
-    flyoutOpen;
+    children.some((child) => isChildActive(pathname, child.to)) || flyoutOpen;
 
   const cancelClose = () => {
     if (closeTimeout.current) clearTimeout(closeTimeout.current);
@@ -120,7 +119,7 @@ export function NavParentItem({
         aria-haspopup="menu"
         aria-label={`${item.label} — ${children.length} sous-pages`}
         className={[
-          "group flex w-full items-center gap-p2 h-8 rounded-r2 px-p2 text-r12 transition-colors",
+          "group flex w-full items-center gap-p2 h-8 rounded-r2 px-p2 text-r14 cursor-pointer transition-colors",
           collapsed ? "lg:justify-center" : "",
           active
             ? "bg-(--skools-interactive-active-bg) text-(--skools-text-primary) font-medium"
@@ -131,7 +130,10 @@ export function NavParentItem({
       >
         <Icon component={item.icon} size={18} className="shrink-0" />
         <span
-          className={["truncate flex-1 min-w-0 text-left", collapsed ? "lg:hidden" : ""]
+          className={[
+            "truncate flex-1 min-w-0 text-left",
+            collapsed ? "lg:hidden" : "",
+          ]
             .filter(Boolean)
             .join(" ")}
         >
