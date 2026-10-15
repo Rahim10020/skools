@@ -47,13 +47,6 @@ en place correctement. ne pas oublier de mettre a jour les skeletons s'il le fau
 que les utilisateurs n'aient pas a le faire tout le temps. analyse moi ca et propose moi des 
 idees et ensuite on va mettre en place un plan pour tout coder proprement.
 
-- dans la sidebar de l'epl, tu vois que quand on fais le hover sur une sidebar item (
-    un item de navigation), on a le tooltip ou bien (je ne sais pas comment on l'appelle) 
-    qui viens a droite de la sidebar et contient le nom de l'item dont on fais le hover 
-    ou bien les differents options qu'il fournit. dis moi si tu vois et comprends ce que 
-    je veux dire et dis moi si c'est bon de faire la meme chose dans skools et ensuite 
-    s'il faut le faire, tu vas me donner un plan pour le mettre en place correctement.
-
 - voir s'il faut gerer le menu mobile comme c'est fais sur ecom.saas.
 
 - voir si ce serait une bonne idee de gerer la pagination des listes comme c'est fais dans epl.
