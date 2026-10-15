@@ -607,26 +607,26 @@
   display: none;
 }
 
-/* Scrollbar visible uniquement au survol de la zone de liste (sidebar) */
+/* Scrollbar sidebar : gouttière réservée en permanence (aucun reflow au
+   survol — ni champ de recherche ni icônes ne bougent). Pouce visible
+   uniquement au survol de la zone de liste. */
+aside[data-slot="sidebar-wrapper"] .sidebar-scrollbar {
+  scrollbar-gutter: stable;
+  scrollbar-width: thin;
+  scrollbar-color: transparent transparent;
+}
+
+aside[data-slot="sidebar-wrapper"] .sidebar-scrollbar:hover {
+  scrollbar-color: var(--skools-border-subtle) transparent;
+}
+
 aside[data-slot="sidebar-wrapper"] .sidebar-scrollbar::-webkit-scrollbar {
-  width: 0;
+  width: 6px;
   background: transparent;
   border-radius: 0;
 }
 
-aside[data-slot="sidebar-wrapper"] .sidebar-scrollbar:hover::-webkit-scrollbar {
-  scrollbar-width: thin;
-  background: var(--skools-border-subtle) var(--skools-app-bg);
-  scrollbar-arrow-color: transparent;
-}
-
-aside[data-slot="sidebar-wrapper"] .sidebar-scrollbar:hover {
-  padding-right: 4px;
-}
-
-aside[data-slot="sidebar-wrapper"] .sidebar-scrollbar:hover::-webkit-scrollbar {
-  width: 6px;
-  border-radius: 0;
+aside[data-slot="sidebar-wrapper"] .sidebar-scrollbar::-webkit-scrollbar-thumb {
   background: transparent;
 }
 

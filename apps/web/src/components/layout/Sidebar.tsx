@@ -5,7 +5,6 @@ import { cx } from "../../lib/cx";
 import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
-  SIDEBAR_STATIC_SECTION,
   SIDEBAR_ENTRIES,
   isNavParent,
   type SidebarNavEntry,
@@ -67,10 +66,6 @@ function CollapseButton({
   );
 }
 
-type NavRow =
-  | { kind: "entry"; entry: SidebarNavEntry }
-  | { kind: "section"; title: string; items: SidebarNavEntry[] };
-
 /**
  * Filtre générique : garde les feuilles vérifiant `keepLeaf`, les parents
  * avec au moins un enfant gardé (ou vérifiant `keepParentLabel` eux-mêmes).
@@ -126,15 +121,7 @@ export function Sidebar({
         (item) => canAccess(item.to, role),
         () => false,
       );
-  const staticItems = establishmentId
-    ? pruneEntries(
-        SIDEBAR_STATIC_SECTION.items,
-        (item) => canAccess(item.to, role),
-        () => false,
-      )
-    : [];
   const bottomItems = BOTTOM_NAV.filter((item) => canAccess(item.to, role));
-
   // Recherche : filtre insensible aux accents sur libellés + enfants.
   const normalizedQuery = normalizeText(query.trim());
   const searching = normalizedQuery.length > 0;
@@ -143,29 +130,7 @@ export function Sidebar({
   const visibleEntries = searching
     ? pruneEntries(entries, (item) => matches(item.label), matches)
     : entries;
-  const visibleStaticItems = searching
-    ? pruneEntries(staticItems, (item) => matches(item.label), matches)
-    : staticItems;
-  const hasResults = visibleStaticItems.length > 0 || visibleEntries.length > 0;
-
-  // Vue d'ensemble d'abord, section Année Scolaire ensuite, puis le reste.
-  const rows: NavRow[] = [
-    ...visibleEntries
-      .filter((entry) => !isNavParent(entry) && entry.to === ROUTES.dashboard)
-      .map((entry) => ({ kind: "entry" as const, entry })),
-    ...(visibleStaticItems.length > 0
-      ? [
-          {
-            kind: "section" as const,
-            title: SIDEBAR_STATIC_SECTION.title,
-            items: visibleStaticItems,
-          },
-        ]
-      : []),
-    ...visibleEntries
-      .filter((entry) => isNavParent(entry) || entry.to !== ROUTES.dashboard)
-      .map((entry) => ({ kind: "entry" as const, entry })),
-  ];
+  const hasResults = visibleEntries.length > 0;
 
   function renderEntry(entry: SidebarNavEntry) {
     // Parent à un seul enfant visible : lien direct vers l'enfant.
@@ -270,25 +235,7 @@ export function Sidebar({
           </p>
         ) : (
           <div className="flex flex-col gap-p1">
-            {rows.map((row) =>
-              row.kind === "entry" ? (
-                renderEntry(row.entry)
-              ) : (
-                <div key={row.title} className="mt-p4">
-                  <p
-                    className={cx(
-                      "px-p2 mb-p2 text-[11px] font-medium uppercase tracking-wide text-(--skools-text-muted)",
-                      collapsed && "lg:hidden",
-                    )}
-                  >
-                    {row.title}
-                  </p>
-                  <div className="flex flex-col gap-p1">
-                    {row.items.map((item) => renderEntry(item))}
-                  </div>
-                </div>
-              ),
-            )}
+            {visibleEntries.map((entry) => renderEntry(entry))}
           </div>
         )}
         {bottomItems.length > 0 && (

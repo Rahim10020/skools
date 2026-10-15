@@ -46,54 +46,39 @@ export function isNavParent(entry: SidebarNavEntry): entry is SidebarNavParent {
 }
 
 /**
- * Section statique Année Scolaire : toujours dépliée, titre non cliquable,
- * sans chevron. Fonctionnement conservé tel quel.
- */
-export interface SidebarNavSection {
-  title: string;
-  items: SidebarNavEntry[];
-}
-
-/**
  * Navigation du shell. Organisation façon matrice (docs/access-matrix.md) :
- * recherche, Vue d'ensemble, section statique Année Scolaire, entrées
- * parentes à flyout (Personnes, Pédagogie, Vie scolaire), pages directes.
+ * recherche, Vue d'ensemble, ex-section Année Scolaire dissoute en liste
+ * plate, entrées parentes à flyout (Personnes, Pédagogie, Vie scolaire),
+ * pages directes.
  * Filtrage par rôle via `canAccess` (matrice docs/access-matrix.md) dans Sidebar.
  * "Utilisateurs & rôles" n'est visible que pour DIRECTOR.
  */
-export const SIDEBAR_STATIC_SECTION: SidebarNavSection = {
-  title: "Année Scolaire",
-  items: [
-    {
-      label: "Structures",
-      icon: FolderIcon,
-      children: [
-        {
-          to: ROUTES.academicYears,
-          label: "Années scolaires",
-          icon: CalendarIcon,
-        },
-        { to: ROUTES.cycles, label: "Cycles", icon: FolderIcon },
-        { to: ROUTES.levels, label: "Niveaux", icon: FilterIcon },
-        { to: ROUTES.series, label: "Séries", icon: FileIcon },
-        { to: ROUTES.classrooms, label: "Classes", icon: DoorIcon },
-      ],
-    },
-    {
-      label: "Matières & périodes",
-      icon: NotePadIcon,
-      children: [
-        { to: ROUTES.subjects, label: "Matières", icon: NotePadIcon },
-        { to: ROUTES.periods, label: "Périodes", icon: ClockIcon },
-      ],
-    },
-    { to: ROUTES.schedules, label: "Emplois du temps", icon: DateIcon },
-  ],
-};
-
-/** Entrées plates : feuille directe ou parent à flyout. */
 export const SIDEBAR_ENTRIES: SidebarNavEntry[] = [
   { to: ROUTES.dashboard, label: "Tableau de bord", icon: DashboardIcon },
+  {
+    label: "Structures",
+    icon: FolderIcon,
+    children: [
+      {
+        to: ROUTES.academicYears,
+        label: "Années scolaires",
+        icon: CalendarIcon,
+      },
+      { to: ROUTES.cycles, label: "Cycles", icon: FolderIcon },
+      { to: ROUTES.levels, label: "Niveaux", icon: FilterIcon },
+      { to: ROUTES.series, label: "Séries", icon: FileIcon },
+      { to: ROUTES.classrooms, label: "Classes", icon: DoorIcon },
+    ],
+  },
+  {
+    label: "Matières & périodes",
+    icon: NotePadIcon,
+    children: [
+      { to: ROUTES.subjects, label: "Matières", icon: NotePadIcon },
+      { to: ROUTES.periods, label: "Périodes", icon: ClockIcon },
+    ],
+  },
+  { to: ROUTES.schedules, label: "Emplois du temps", icon: DateIcon },
   {
     label: "Personnes",
     icon: ContactsIcon,

@@ -1,18 +1,19 @@
-import { useRef, useState } from "react";
-import { Link, useLocation, useNavigate } from "react-router-dom";
+import { useEffect, useRef, useState } from "react";
+import { Link, useLocation } from "react-router-dom";
 import type { SidebarNavParent } from "./layout/sidebar-nav";
 import { Icon } from "./icons/Icon";
 import { FlyoutPanel } from "./FlyoutPanel";
 
-const FLYOUT_CLOSE_MS = 150;
+const FLYOUT_CLOSE_MS = 200;
 
 function isChildActive(pathname: string, to: string) {
   return pathname === to || pathname.startsWith(`${to}/`);
 }
 
 /**
- * Entrée parente (flyout façon EPL) : survol → panneau des sous-pages,
- * clic → première sous-page accessible, drawer mobile → sous-liste inline.
+ * Entrée parente (flyout façon EPL) : même style que les feuilles,
+ * survol → panneau des sous-pages, clic → épingle le panneau ouvert
+ * (ligne en style actif), drawer mobile → sous-liste inline.
  */
 export function NavParentItem({
   item,
@@ -24,17 +25,19 @@ export function NavParentItem({
   onNavigate?: () => void;
 }) {
   const { pathname } = useLocation();
-  const navigate = useNavigate();
   const [flyoutOpen, setFlyoutOpen] = useState(false);
+  const [pinned, setPinned] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(() =>
     item.children.some((child) => isChildActive(pathname, child.to)),
   );
   const triggerRef = useRef<HTMLDivElement>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
   const closeTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const children = item.children;
-  const active = children.some((child) => isChildActive(pathname, child.to));
-  const first = children[0];
+  const active =
+    children.some((child) => isChildActive(pathname, child.to)) ||
+    flyoutOpen;
 
   const cancelClose = () => {
     if (closeTimeout.current) clearTimeout(closeTimeout.current);
@@ -42,19 +45,61 @@ export function NavParentItem({
 
   const scheduleClose = () => {
     cancelClose();
-    closeTimeout.current = setTimeout(() => setFlyoutOpen(false), FLYOUT_CLOSE_MS);
+    closeTimeout.current = setTimeout(() => {
+      if (!pinned) setFlyoutOpen(false);
+    }, FLYOUT_CLOSE_MS);
+  };
+
+  const close = () => {
+    cancelClose();
+    setPinned(false);
+    setFlyoutOpen(false);
   };
 
   const handleClick = () => {
-    // Desktop : navigation directe. Mobile (drawer tactile) : sous-liste inline.
-    if (window.matchMedia("(min-width: 1024px)").matches) {
-      setFlyoutOpen(false);
-      onNavigate?.();
-      navigate(first.to);
-    } else {
+    // Mobile (drawer tactile) : sous-liste inline.
+    if (!window.matchMedia("(min-width: 1024px)").matches) {
       setMobileOpen((v) => !v);
+      return;
+    }
+    // Desktop : épingle / désépingle le panneau (pas de navigation).
+    cancelClose();
+    if (flyoutOpen && pinned) {
+      close();
+    } else {
+      setPinned(true);
+      setFlyoutOpen(true);
     }
   };
+
+  // Clic extérieur (trigger + panneau) : ferme et désépingle.
+  useEffect(() => {
+    if (!flyoutOpen) return;
+    const closePanel = () => {
+      if (closeTimeout.current) clearTimeout(closeTimeout.current);
+      setPinned(false);
+      setFlyoutOpen(false);
+    };
+    const onPointerDown = (event: PointerEvent) => {
+      const target = event.target as Node | null;
+      if (
+        target &&
+        !triggerRef.current?.contains(target) &&
+        !panelRef.current?.contains(target)
+      ) {
+        closePanel();
+      }
+    };
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") closePanel();
+    };
+    document.addEventListener("pointerdown", onPointerDown);
+    document.addEventListener("keydown", onKeyDown);
+    return () => {
+      document.removeEventListener("pointerdown", onPointerDown);
+      document.removeEventListener("keydown", onKeyDown);
+    };
+  }, [flyoutOpen]);
 
   const row = (
     <div
@@ -65,7 +110,7 @@ export function NavParentItem({
       }}
       onMouseLeave={scheduleClose}
       onKeyDown={(e) => {
-        if (e.key === "Escape") setFlyoutOpen(false);
+        if (e.key === "Escape") close();
       }}
     >
       <button
@@ -111,9 +156,14 @@ export function NavParentItem({
         title={item.label}
         items={children}
         triggerRef={triggerRef}
+        panelRef={panelRef}
         open={flyoutOpen}
-        onOpenChange={setFlyoutOpen}
-        onNavigate={onNavigate}
+        onHoverEnter={cancelClose}
+        onHoverLeave={scheduleClose}
+        onSelect={() => {
+          close();
+          onNavigate?.();
+        }}
       />
       {!collapsed && mobileOpen && (
         <div className="mt-p1 flex flex-col gap-p1 lg:hidden">

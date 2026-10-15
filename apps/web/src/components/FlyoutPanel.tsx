@@ -5,58 +5,65 @@ import type { SidebarNavChild } from "./layout/sidebar-nav";
 import { Icon } from "./icons/Icon";
 import { Separator } from "./ui/separator";
 
-const SIDE_OFFSET = 8;
+const SIDE_OVERLAP = 2;
 
 /**
  * Panneau flyout façon EPL : au survol d'une entrée parente, affiche ses
  * sous-pages à droite, en portal (pas d'écrasement du layout).
- * Pont de survol 150 ms : le pointeur peut voyager jusqu'au panneau.
+ * Le minuteur de fermeture est possédé par le parent (`NavParentItem`) :
+ * ce panneau ne fait que signaler les entrées/sorties du pointeur.
+ * Chevauchement de 2px avec le déclencheur : aucune zone morte à traverser.
  */
 export function FlyoutPanel({
   title,
   items,
   triggerRef,
+  panelRef,
   open,
-  onOpenChange,
-  onNavigate,
+  onHoverEnter,
+  onHoverLeave,
+  onSelect,
 }: {
   title: string;
   items: SidebarNavChild[];
   triggerRef: React.RefObject<HTMLElement | null>;
+  panelRef: React.RefObject<HTMLDivElement | null>;
   open: boolean;
-  onOpenChange: (open: boolean) => void;
-  onNavigate?: () => void;
+  onHoverEnter: () => void;
+  onHoverLeave: () => void;
+  onSelect: () => void;
 }) {
-  const contentRef = useRef<HTMLDivElement>(null);
-  const closeTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const fallbackRef = useRef<HTMLDivElement>(null);
+  const contentRef = panelRef ?? fallbackRef;
   const [position, setPosition] = useState({ top: 0, left: 0 });
   const { pathname } = useLocation();
 
-  const cancelClose = () => {
-    if (closeTimeout.current) clearTimeout(closeTimeout.current);
-  };
-
-  const scheduleClose = () => {
-    cancelClose();
-    closeTimeout.current = setTimeout(() => onOpenChange(false), 150);
-  };
-
   useLayoutEffect(() => {
     if (!open || !triggerRef.current || !contentRef.current) return;
-    const trigger = triggerRef.current.getBoundingClientRect();
-    const content = contentRef.current.getBoundingClientRect();
-    let top = trigger.top + trigger.height / 2 - content.height / 2;
-    let left = trigger.right + SIDE_OFFSET;
-    if (left + content.width > window.innerWidth) {
-      left = window.innerWidth - content.width - SIDE_OFFSET;
-    }
-    if (left < 0) left = SIDE_OFFSET;
-    if (top < 0) top = SIDE_OFFSET;
-    if (top + content.height > window.innerHeight) {
-      top = window.innerHeight - content.height - SIDE_OFFSET;
-    }
-    setPosition({ top, left });
-  }, [open, triggerRef, items.length]);
+    const place = () => {
+      const trigger = triggerRef.current!.getBoundingClientRect();
+      const content = contentRef.current!.getBoundingClientRect();
+      let top = trigger.top + trigger.height / 2 - content.height / 2;
+      // Chevauche le déclencheur : pas de vide à traverser au pointeur.
+      let left = trigger.right - SIDE_OVERLAP;
+      if (left + content.width > window.innerWidth) {
+        left = window.innerWidth - content.width - SIDE_OVERLAP;
+      }
+      if (left < 0) left = SIDE_OVERLAP;
+      if (top < 0) top = SIDE_OVERLAP;
+      if (top + content.height > window.innerHeight) {
+        top = window.innerHeight - content.height - SIDE_OVERLAP;
+      }
+      setPosition({ top, left });
+    };
+    place();
+    window.addEventListener("scroll", place, true);
+    window.addEventListener("resize", place);
+    return () => {
+      window.removeEventListener("scroll", place, true);
+      window.removeEventListener("resize", place);
+    };
+  }, [open, triggerRef, contentRef, items.length]);
 
   if (!open) return null;
 
@@ -65,8 +72,8 @@ export function FlyoutPanel({
       ref={contentRef}
       role="menu"
       aria-label={title}
-      onMouseEnter={cancelClose}
-      onMouseLeave={scheduleClose}
+      onMouseEnter={onHoverEnter}
+      onMouseLeave={onHoverLeave}
       className="fixed z-50 flex w-[200px] flex-col gap-p2 rounded-r2 border border-(--skools-border-subtle) bg-(--skools-sidebar-bg) px-p2 py-p2 shadow-xl"
       style={{ top: `${position.top}px`, left: `${position.left}px` }}
     >
@@ -88,10 +95,7 @@ export function FlyoutPanel({
               to={item.to}
               role="menuitem"
               aria-current={active ? "page" : undefined}
-              onClick={() => {
-                onOpenChange(false);
-                onNavigate?.();
-              }}
+              onClick={onSelect}
               className={[
                 "flex h-8 items-center gap-p2 rounded-r2 px-p2 text-r12 transition-colors",
                 active
