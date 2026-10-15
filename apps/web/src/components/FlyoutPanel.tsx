@@ -5,10 +5,10 @@ import type { SidebarNavChild } from "./layout/sidebar-nav";
 import { Icon } from "./icons/Icon";
 import { Separator } from "./ui/separator";
 
-const SIDE_OVERLAP = 2;
+const SIDE_OFFSET = 12;
 
 /**
- * Panneau flyout façon EPL : au survol d'une entrée parente, affiche ses
+ * Panneau flyout : au survol d'une entrée parente, affiche ses
  * sous-pages à droite, en portal (pas d'écrasement du layout).
  * Le minuteur de fermeture est possédé par le parent (`NavParentItem`) :
  * ce panneau ne fait que signaler les entrées/sorties du pointeur.
@@ -44,15 +44,14 @@ export function FlyoutPanel({
       const trigger = triggerRef.current!.getBoundingClientRect();
       const content = contentRef.current!.getBoundingClientRect();
       let top = trigger.top + trigger.height / 2 - content.height / 2;
-      // Chevauche le déclencheur : pas de vide à traverser au pointeur.
-      let left = trigger.right - SIDE_OVERLAP;
+      let left = trigger.right + SIDE_OFFSET;
       if (left + content.width > window.innerWidth) {
-        left = window.innerWidth - content.width - SIDE_OVERLAP;
+        left = window.innerWidth - content.width - SIDE_OFFSET;
       }
-      if (left < 0) left = SIDE_OVERLAP;
-      if (top < 0) top = SIDE_OVERLAP;
+      if (left < 0) left = SIDE_OFFSET;
+      if (top < 0) top = SIDE_OFFSET;
       if (top + content.height > window.innerHeight) {
-        top = window.innerHeight - content.height - SIDE_OVERLAP;
+        top = window.innerHeight - content.height - SIDE_OFFSET;
       }
       setPosition({ top, left });
     };
@@ -74,14 +73,14 @@ export function FlyoutPanel({
       aria-label={title}
       onMouseEnter={onHoverEnter}
       onMouseLeave={onHoverLeave}
-      className="fixed z-50 flex w-[200px] flex-col gap-p2 rounded-r2 border border-(--skools-border-subtle) bg-(--skools-sidebar-bg) px-p2 py-p2 shadow-xl"
+      className="fixed z-50 flex w-50 flex-col gap-p2 rounded-r2 border border-(--skools-border-subtle) bg-(--skools-sidebar-bg) px-p2 py-p2 shadow-lg"
       style={{ top: `${position.top}px`, left: `${position.left}px` }}
     >
       <div className="flex flex-col">
         <p className="px-p2 text-[11px] font-medium uppercase tracking-wide text-(--skools-text-muted)">
           {title}
         </p>
-        <div className="mt-p1">
+        <div className="mt-p2">
           <Separator />
         </div>
       </div>
