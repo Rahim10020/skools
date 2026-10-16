@@ -101,7 +101,7 @@ export function ListHeader({
           </p>
         )}
         {description && (
-          <p className="text-r14 text-(--skools-text-muted) mt-p1">
+          <p className="text-r14 text-(--skools-text-muted) mt-p2">
             {description}
           </p>
         )}
@@ -142,7 +142,7 @@ export function ListHeader({
               onClick={selection.onClear}
               className="text-[12px] text-(--skools-text-muted) hover:text-(--skools-text-primary) transition-all cursor-pointer"
             >
-              Effacer
+              Annuler
             </button>
           </div>
         ) : (

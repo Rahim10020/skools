@@ -78,7 +78,7 @@ export function FilterDropdown({
         <div
           role="menu"
           aria-label={label}
-          className="absolute top-full left-0 z-50 mt-2 min-w-max bg-(--skools-sidebar-bg) border border-(--skools-border-subtle) rounded-r2 shadow-lg p-1 flex flex-col gap-1"
+          className="absolute top-full left-0 z-50 mt-2 min-w-max bg-(--skools-app-bg) border border-(--skools-border-subtle) rounded-r2 shadow-lg p-1 flex flex-col gap-1"
         >
           <button
             type="button"
