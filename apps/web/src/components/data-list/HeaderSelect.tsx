@@ -77,7 +77,7 @@ export function HeaderSelect({
         <div
           role="menu"
           aria-label="Filtres de sélection"
-          className="absolute top-full left-0 z-50 mt-1 min-w-36 bg-(--skools-sidebar-bg) border border-(--skools-border-subtle) rounded-r2 shadow-lg p-1 flex flex-col gap-1"
+          className="absolute top-full left-0 z-50 mt-3 min-w-36 bg-(--skools-app-bg) border border-(--skools-border-subtle) rounded-r2 shadow-lg p-1 flex flex-col gap-1"
         >
           {(
             [

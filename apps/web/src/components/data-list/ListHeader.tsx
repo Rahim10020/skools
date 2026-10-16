@@ -101,7 +101,7 @@ export function ListHeader({
           </p>
         )}
         {description && (
-          <p className="text-r14 text-(--skools-text-muted) mt-p2">
+          <p className="text-r14 text-(--skools-text-muted) mt-p2 max-w-sm">
             {description}
           </p>
         )}
