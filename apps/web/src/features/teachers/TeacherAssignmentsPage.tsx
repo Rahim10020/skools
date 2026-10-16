@@ -9,18 +9,8 @@ import { useAuthStore } from "../../stores/auth-store";
 import { PageHeader } from "../../layouts/PageHeader";
 import { Button } from "../../components/ui/button";
 import { Card } from "../../components/ui/card";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableCellPrimary,
-  TableContainer,
-  TableHeader,
-  TableHeaderCell,
-  TableRow,
-} from "../../components/ui/table";
 import { Select } from "../../components/ui/select";
-import { Badge } from "../../components/ui/badge";
+import { DataList } from "../../components/data-list/DataList";
 import { Modal } from "../../components/ui/use-modal";
 import { EmptyState, ErrorState } from "../../components/ui/empty-state";
 import { Skeleton } from "../../components/ui/skeleton";
@@ -252,61 +242,51 @@ export default function TeacherAssignmentsPage() {
             }
           />
         ) : (
-          <TableContainer>
-            <Table>
-              <TableHeader>
-                <tr>
-                  {!isTeacher && <TableHeaderCell>Enseignant</TableHeaderCell>}
-                  <TableHeaderCell>Matière</TableHeaderCell>
-                  <TableHeaderCell>Classe</TableHeaderCell>
-                  <TableHeaderCell>Année scolaire</TableHeaderCell>
-                  {!isTeacher && (
-                    <TableHeaderCell>
-                      <span className="sr-only">Actions</span>
-                    </TableHeaderCell>
-                  )}
-                </tr>
-              </TableHeader>
-              <TableBody>
-                {assignments.map((assignment) => (
-                  <TableRow key={assignment.id}>
-                    {!isTeacher && (
-                      <TableCellPrimary>
-                        {assignment.teacher.lastName}{" "}
-                        {assignment.teacher.firstName}
-                      </TableCellPrimary>
-                    )}
-                    <TableCellPrimary>
-                      {assignment.subject.name}
-                    </TableCellPrimary>
-                    <TableCell>{assignment.classroom.name}</TableCell>
-                    <TableCell>
-                      <span className="inline-flex items-center gap-p2">
-                        {assignment.academicYear.name}
-                        {assignment.academicYear.isCurrent && (
-                          <Badge variant="success">En cours</Badge>
-                        )}
-                      </span>
-                    </TableCell>
-                    {!isTeacher && (
-                      <TableCell>
-                        <div className="flex justify-end">
-                          <button
-                            type="button"
-                            aria-label={`Retirer l'affectation de ${assignment.teacher.firstName} ${assignment.teacher.lastName}`}
-                            onClick={() => setRemoveTarget(assignment)}
-                            className="text-r12 font-medium text-(--common-red) hover:underline"
-                          >
-                            Retirer
-                          </button>
-                        </div>
-                      </TableCell>
-                    )}
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </TableContainer>
+          <DataList
+            items={assignments}
+            columns={[
+              ...(!isTeacher
+                ? [
+                    {
+                      header: "Enseignant",
+                      primary: true,
+                      render: (assignment: TeacherAssignment) =>
+                        `${assignment.teacher.lastName} ${assignment.teacher.firstName}`,
+                    },
+                  ]
+                : []),
+              {
+                header: "Matière",
+                primary: isTeacher,
+                render: (assignment: TeacherAssignment) =>
+                  assignment.subject.name,
+              },
+              {
+                header: "Classe",
+                render: (assignment: TeacherAssignment) =>
+                  assignment.classroom.name,
+              },
+              {
+                header: "Année scolaire",
+                render: (assignment: TeacherAssignment) =>
+                  assignment.academicYear.name,
+              },
+            ]}
+            idOf={(assignment) => assignment.id}
+            nameOf={(assignment) =>
+              `${assignment.subject.name} en ${assignment.classroom.name}`
+            }
+            statusPill={(assignment) =>
+              assignment.academicYear.isCurrent
+                ? { label: "En cours", variant: "success" as const }
+                : null
+            }
+            readOnly={isTeacher}
+            onDelete={
+              isTeacher ? undefined : (assignment) => setRemoveTarget(assignment)
+            }
+            actionLabels={{ remove: "Retirer" }}
+          />
         )}
       </div>
 

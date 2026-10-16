@@ -4,16 +4,7 @@ import { KEYS } from "../../lib/query-keys";
 import { useQuery } from "@tanstack/react-query";
 import api, { getErrorMessage } from "../../lib/api";
 import { PageHeader } from "../../layouts/PageHeader";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableCellPrimary,
-  TableContainer,
-  TableHeader,
-  TableHeaderCell,
-  TableRow,
-} from "../../components/ui/table";
+import { DataList } from "../../components/data-list/DataList";
 import { EmptyState, ErrorState } from "../../components/ui/empty-state";
 import { Skeleton } from "../../components/ui/skeleton";
 
@@ -92,28 +83,28 @@ export default function MyGradesPage() {
           description="Les notes saisies par vos enseignants apparaîtront ici."
         />
       ) : (
-        <TableContainer>
-          <Table>
-            <TableHeader>
-              <tr>
-                <TableHeaderCell>Examen</TableHeaderCell>
-                <TableHeaderCell>Matière</TableHeaderCell>
-                <TableHeaderCell>Note</TableHeaderCell>
-                <TableHeaderCell>Appréciation</TableHeaderCell>
-              </tr>
-            </TableHeader>
-            <TableBody>
-              {grades.map((grade) => (
-                <TableRow key={grade.id}>
-                  <TableCellPrimary>{grade.exam.name}</TableCellPrimary>
-                  <TableCell>{grade.exam.subject.name}</TableCell>
-                  <TableCell>{formatScore(grade)}</TableCell>
-                  <TableCell>{grade.appreciation || "—"}</TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </TableContainer>
+        <DataList
+          items={grades}
+          columns={[
+            {
+              header: "Examen",
+              primary: true,
+              render: (grade) => grade.exam.name,
+            },
+            {
+              header: "Matière",
+              render: (grade) => grade.exam.subject.name,
+            },
+            { header: "Note", render: formatScore },
+            {
+              header: "Appréciation",
+              render: (grade) => grade.appreciation || "—",
+            },
+          ]}
+          idOf={(grade) => grade.id}
+          nameOf={(grade) => grade.exam.name}
+          readOnly
+        />
       )}
     </div>
   );

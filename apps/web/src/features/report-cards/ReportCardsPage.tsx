@@ -11,16 +11,7 @@ import { useEffectiveChildId, useMyChildren } from "../../lib/my-children";
 import { PageHeader } from "../../layouts/PageHeader";
 import { Button } from "../../components/ui/button";
 import { Card } from "../../components/ui/card";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableCellPrimary,
-  TableContainer,
-  TableHeader,
-  TableHeaderCell,
-  TableRow,
-} from "../../components/ui/table";
+import { DataList } from "../../components/data-list/DataList";
 import { Select } from "../../components/ui/select";
 import { EmptyState, ErrorState } from "../../components/ui/empty-state";
 import { Skeleton } from "../../components/ui/skeleton";
@@ -315,35 +306,37 @@ export default function ReportCardsPage() {
                           description="Aucune note saisie pour cet élève sur cette année."
                         />
                       ) : (
-                        <TableContainer>
-                          <Table>
-                            <TableHeader>
-                              <tr>
-                                <TableHeaderCell>Matière</TableHeaderCell>
-                                <TableHeaderCell>Moyenne</TableHeaderCell>
-                                <TableHeaderCell>Nb notes</TableHeaderCell>
-                              </tr>
-                            </TableHeader>
-                            <TableBody>
-                              {studentReport.subjects.map((subject) => (
-                                <TableRow key={subject.subjectId}>
-                                  <TableCellPrimary>
-                                    {subject.subjectName}
-                                    {subject.subjectCode && (
-                                      <span className="text-(--skools-text-muted) ml-1">
-                                        ({subject.subjectCode})
-                                      </span>
-                                    )}
-                                  </TableCellPrimary>
-                                  <TableCell>
-                                    {formatAverage(subject.average)}
-                                  </TableCell>
-                                  <TableCell>{subject.gradesCount}</TableCell>
-                                </TableRow>
-                              ))}
-                            </TableBody>
-                          </Table>
-                        </TableContainer>
+                        <DataList
+                          items={studentReport.subjects}
+                          columns={[
+                            {
+                              header: "Matière",
+                              primary: true,
+                              render: (subject) => (
+                                <>
+                                  {subject.subjectName}
+                                  {subject.subjectCode && (
+                                    <span className="text-(--skools-text-muted) ml-1">
+                                      ({subject.subjectCode})
+                                    </span>
+                                  )}
+                                </>
+                              ),
+                            },
+                            {
+                              header: "Moyenne",
+                              render: (subject) =>
+                                formatAverage(subject.average),
+                            },
+                            {
+                              header: "Nb notes",
+                              render: (subject) => subject.gradesCount,
+                            },
+                          ]}
+                          idOf={(subject) => subject.subjectId}
+                          nameOf={(subject) => subject.subjectName}
+                          readOnly
+                        />
                       )}
                     </div>
                   )}
@@ -369,36 +362,42 @@ export default function ReportCardsPage() {
                       description="Vérifiez les inscriptions pour cette classe et cette année."
                     />
                   ) : (
-                    <TableContainer>
-                      <Table>
-                        <TableHeader>
-                          <tr>
-                            <TableHeaderCell>Rang</TableHeaderCell>
-                            <TableHeaderCell>Élève</TableHeaderCell>
-                            <TableHeaderCell>Matricule</TableHeaderCell>
-                            <TableHeaderCell>Matières</TableHeaderCell>
-                            <TableHeaderCell>Moyenne générale</TableHeaderCell>
-                          </tr>
-                        </TableHeader>
-                        <TableBody>
-                          {overview.map((item, index) => (
-                            <TableRow key={item.student.id}>
-                              <TableCellPrimary>{index + 1}</TableCellPrimary>
-                              <TableCell>
-                                {item.student.lastName} {item.student.firstName}
-                              </TableCell>
-                              <TableCell>
-                                {item.student.matricule || "—"}
-                              </TableCell>
-                              <TableCell>{item.subjectsCount}</TableCell>
-                              <TableCell>
-                                {formatAverage(item.generalAverage)}
-                              </TableCell>
-                            </TableRow>
-                          ))}
-                        </TableBody>
-                      </Table>
-                    </TableContainer>
+                    <DataList
+                      items={overview.map((item, index) => ({
+                        ...item,
+                        rank: index + 1,
+                      }))}
+                      columns={[
+                        {
+                          header: "Rang",
+                          primary: true,
+                          render: (item) => item.rank,
+                        },
+                        {
+                          header: "Élève",
+                          render: (item) =>
+                            `${item.student.lastName} ${item.student.firstName}`,
+                        },
+                        {
+                          header: "Matricule",
+                          render: (item) => item.student.matricule || "—",
+                        },
+                        {
+                          header: "Matières",
+                          render: (item) => item.subjectsCount,
+                        },
+                        {
+                          header: "Moyenne générale",
+                          render: (item) =>
+                            formatAverage(item.generalAverage),
+                        },
+                      ]}
+                      idOf={(item) => item.student.id}
+                      nameOf={(item) =>
+                        `${item.student.lastName} ${item.student.firstName}`
+                      }
+                      readOnly
+                    />
                   )}
                 </>
               )}

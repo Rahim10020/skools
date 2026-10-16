@@ -13,16 +13,6 @@ export type { CheckboxProps } from "./checkbox";
 export { Badge } from "./badge";
 export type { BadgeVariant } from "./badge";
 export { Card, CardHeader, CardTitle } from "./card";
-export {
-  TableContainer,
-  Table,
-  TableHeader,
-  TableHeaderCell,
-  TableBody,
-  TableRow,
-  TableCell,
-  TableCellPrimary,
-} from "./table";
 export { Pagination } from "./pagination";
 export { Avatar } from "./avatar";
 export { Separator } from "./separator";

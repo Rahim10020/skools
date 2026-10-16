@@ -9,19 +9,13 @@ import { useAuthStore } from "../../stores/auth-store";
 import { PageHeader } from "../../layouts/PageHeader";
 import { Button } from "../../components/ui/button";
 import { Card } from "../../components/ui/card";
+import { DataList } from "../../components/data-list/DataList";
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableCellPrimary,
-  TableContainer,
-  TableHeader,
-  TableHeaderCell,
-  TableRow,
-} from "../../components/ui/table";
+  StatusPill,
+  type StatusPillVariant,
+} from "../../components/data-list/StatusPill";
 import { Select } from "../../components/ui/select";
 import { Input } from "../../components/ui/input";
-import { Badge } from "../../components/ui/badge";
 import { EmptyState, ErrorState } from "../../components/ui/empty-state";
 import { Skeleton } from "../../components/ui/skeleton";
 import { toast } from "../../components/ui/toast";
@@ -30,6 +24,13 @@ import {
   ATTENDANCE_STATUSES as STATUSES,
   type AttendanceStatus,
 } from "./status-meta";
+
+const ATTENDANCE_PILL: Record<AttendanceStatus, StatusPillVariant> = {
+  PRESENT: "success",
+  ABSENT: "destructive",
+  LATE: "neutral",
+  EXCUSED: "default",
+};
 
 interface ExistingAttendance {
   studentId: string;
@@ -229,103 +230,96 @@ export default function AttendancesPage() {
             <div className="flex flex-col gap-p4">
               <div className="flex flex-wrap gap-p2" aria-live="polite">
                 {counts.map(({ status, count }) => (
-                  <Badge
+                  <StatusPill
                     key={status}
+                    label={`${STATUS_META[status].label} : ${count}`}
                     variant={
-                      count > 0
-                        ? status === "PRESENT"
-                          ? "success"
-                          : status === "ABSENT"
-                            ? "destructive"
-                            : status === "LATE"
-                              ? "warning"
-                              : "default"
-                        : "neutral"
+                      (count > 0
+                        ? ATTENDANCE_PILL[status]
+                        : "neutral") as StatusPillVariant
                     }
-                  >
-                    {STATUS_META[status].label} : {count}
-                  </Badge>
+                  />
                 ))}
               </div>
 
-              <TableContainer>
-                <Table>
-                  <TableHeader>
-                    <tr>
-                      <TableHeaderCell>Élève</TableHeaderCell>
-                      <TableHeaderCell>Matricule</TableHeaderCell>
-                      <TableHeaderCell>Statut</TableHeaderCell>
-                    </tr>
-                  </TableHeader>
-                  <TableBody>
-                    {studentsInClass.map((student) => {
+              <DataList
+                items={studentsInClass}
+                columns={[
+                  {
+                    header: "Élève",
+                    primary: true,
+                    render: (student) =>
+                      `${student.lastName} ${student.firstName}`,
+                  },
+                  {
+                    header: "Matricule",
+                    render: (student) => student.matricule || "—",
+                  },
+                  {
+                    header: "Statut",
+                    render: (student) => {
                       const status = statuses[student.id] ?? "PRESENT";
                       return (
-                        <TableRow key={student.id}>
-                          <TableCellPrimary>
-                            {student.lastName} {student.firstName}
-                          </TableCellPrimary>
-                          <TableCell>{student.matricule || "—"}</TableCell>
-                          <TableCell>
-                            <select
-                              aria-label={`Statut de ${student.firstName} ${student.lastName}`}
-                              value={status}
-                              onChange={(e) =>
-                                setStatuses((prev) => ({
-                                  ...prev,
-                                  [student.id]: e.target
-                                    .value as AttendanceStatus,
-                                }))
-                              }
-                              disabled={readOnly || saveMutation.isPending}
-                              className={[
-                                "rounded-(--radius-r1) border border-(--skools-border-subtle) px-2 py-1 text-r14 outline-none disabled:opacity-50",
-                                STATUS_META[status].selectClass,
-                              ].join(" ")}
-                            >
-                              {STATUSES.map((option) => (
-                                <option key={option} value={option}>
-                                  {STATUS_META[option].label}
-                                </option>
-                              ))}
-                            </select>
-                          </TableCell>
-                        </TableRow>
-                      );
-                    })}
-                  </TableBody>
-                </Table>
-
-                <div className="px-p6 py-4 border-t border-(--skools-border-subtle)">
-                  {readOnly ? (
-                    <p className="text-r14 text-(--skools-text-muted)">
-                      Lecture seule : l'appel est réservé à la direction, aux
-                      enseignants et aux surveillants.
-                    </p>
-                  ) : (
-                    <>
-                      {submitError && (
-                        <p
-                          role="alert"
-                          className="text-r14 text-(--common-red) mb-p3"
+                        <select
+                          aria-label={`Statut de ${student.firstName} ${student.lastName}`}
+                          value={status}
+                          onChange={(e) =>
+                            setStatuses((prev) => ({
+                              ...prev,
+                              [student.id]: e.target
+                                .value as AttendanceStatus,
+                            }))
+                          }
+                          disabled={readOnly || saveMutation.isPending}
+                          className={[
+                            "rounded-(--radius-r1) border border-(--skools-border-subtle) px-2 py-1 text-r14 outline-none disabled:opacity-50",
+                            STATUS_META[status].selectClass,
+                          ].join(" ")}
                         >
-                          {submitError}
-                        </p>
-                      )}
-                      <Button
-                        fullWidth={false}
-                        variant={saveMutation.isPending ? "loading" : "primary"}
-                        disabled={saveMutation.isPending}
-                        onClick={() => saveMutation.mutate()}
+                          {STATUSES.map((option) => (
+                            <option key={option} value={option}>
+                              {STATUS_META[option].label}
+                            </option>
+                          ))}
+                        </select>
+                      );
+                    },
+                  },
+                ]}
+                idOf={(student) => student.id}
+                nameOf={(student) => `${student.lastName} ${student.firstName}`}
+                readOnly
+              />
+
+              <div className="pt-p2 border-t-[0.4px] border-(--skools-border-subtle)">
+                {readOnly ? (
+                  <p className="text-r14 text-(--skools-text-muted)">
+                    Lecture seule : l'appel est réservé à la direction, aux
+                    enseignants et aux surveillants.
+                  </p>
+                ) : (
+                  <>
+                    {submitError && (
+                      <p
+                        role="alert"
+                        className="text-r14 text-(--common-red) mb-p3"
                       >
-                        {saveMutation.isPending
-                          ? "Enregistrement…"
-                          : "Enregistrer les présences"}
-                      </Button>
-                    </>
-                  )}
-                </div>
-              </TableContainer>
+                        {submitError}
+                      </p>
+                    )}
+                    <Button
+                      fullWidth={false}
+                      variant={saveMutation.isPending ? "loading" : "primary"}
+                      disabled={saveMutation.isPending}
+                      onClick={() => saveMutation.mutate()}
+                    >
+                      {saveMutation.isPending
+                        ? "Enregistrement…"
+                        : "Enregistrer les présences"}
+                    </Button>
+                  </>
+                )}
+              </div>
             </div>
           )}
         </div>

@@ -9,20 +9,21 @@ import { ChildSelector } from "../../components/ChildSelector";
 import { useEffectiveChildId, useMyChildren } from "../../lib/my-children";
 import { formatDateFr } from "../../components/crud/crud-helpers";
 import { PageHeader } from "../../layouts/PageHeader";
-import { Badge } from "../../components/ui/badge";
+import { DataList } from "../../components/data-list/DataList";
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableCellPrimary,
-  TableContainer,
-  TableHeader,
-  TableHeaderCell,
-  TableRow,
-} from "../../components/ui/table";
+  StatusPill,
+  type StatusPillVariant,
+} from "../../components/data-list/StatusPill";
 import { EmptyState, ErrorState } from "../../components/ui/empty-state";
 import { Skeleton } from "../../components/ui/skeleton";
 import { ATTENDANCE_STATUS_META, type AttendanceStatus } from "./status-meta";
+
+const ATTENDANCE_PILL: Record<AttendanceStatus, StatusPillVariant> = {
+  PRESENT: "success",
+  ABSENT: "destructive",
+  LATE: "neutral",
+  EXCUSED: "default",
+};
 
 interface AttendanceHistoryItem {
   id: string;
@@ -112,49 +113,35 @@ export default function MyAbsencesPage() {
         <div className="flex flex-col gap-p4">
           <div className="flex flex-wrap gap-p2" aria-live="polite">
             {counts.map(({ status, count }) => (
-              <Badge
+              <StatusPill
                 key={status}
-                variant={
-                  count > 0
-                    ? status === "PRESENT"
-                      ? "success"
-                      : status === "ABSENT"
-                        ? "destructive"
-                        : status === "LATE"
-                          ? "warning"
-                          : "default"
-                    : "neutral"
-                }
-              >
-                {ATTENDANCE_STATUS_META[status].label} : {count}
-              </Badge>
+                label={`${ATTENDANCE_STATUS_META[status].label} : ${count}`}
+                variant={count > 0 ? ATTENDANCE_PILL[status] : "neutral"}
+              />
             ))}
           </div>
 
-          <TableContainer>
-            <Table>
-              <TableHeader>
-                <tr>
-                  <TableHeaderCell>Date</TableHeaderCell>
-                  <TableHeaderCell>Classe</TableHeaderCell>
-                  <TableHeaderCell>Statut</TableHeaderCell>
-                </tr>
-              </TableHeader>
-              <TableBody>
-                {items.map((item) => (
-                  <TableRow key={item.id}>
-                    <TableCellPrimary>
-                      {formatDateFr(item.date)}
-                    </TableCellPrimary>
-                    <TableCell>{item.classroom.name}</TableCell>
-                    <TableCell>
-                      {ATTENDANCE_STATUS_META[item.status].label}
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </TableContainer>
+          <DataList
+            items={items}
+            columns={[
+              {
+                header: "Date",
+                primary: true,
+                render: (item) => formatDateFr(item.date),
+              },
+              {
+                header: "Classe",
+                render: (item) => item.classroom.name,
+              },
+            ]}
+            idOf={(item) => item.id}
+            nameOf={(item) => formatDateFr(item.date)}
+            statusPill={(item) => ({
+              label: ATTENDANCE_STATUS_META[item.status].label,
+              variant: ATTENDANCE_PILL[item.status],
+            })}
+            readOnly
+          />
         </div>
       )}
     </div>

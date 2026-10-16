@@ -6,16 +6,7 @@ import api, { getErrorMessage } from "../../lib/api";
 import { PageHeader } from "../../layouts/PageHeader";
 import { Button } from "../../components/ui/button";
 import { Card } from "../../components/ui/card";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableCellPrimary,
-  TableContainer,
-  TableHeader,
-  TableHeaderCell,
-  TableRow,
-} from "../../components/ui/table";
+import { DataList } from "../../components/data-list/DataList";
 import { Select } from "../../components/ui/select";
 import {
   RELATION_LABELS,
@@ -23,7 +14,6 @@ import {
   type ParentRelation,
 } from "./relations";
 import { Checkbox } from "../../components/ui/checkbox";
-import { Badge } from "../../components/ui/badge";
 import { Modal } from "../../components/ui/use-modal";
 import { EmptyState, ErrorState } from "../../components/ui/empty-state";
 import { Skeleton } from "../../components/ui/skeleton";
@@ -179,55 +169,37 @@ export default function LinkParentStudentPage() {
                   description="Utilisez le formulaire ci-dessous pour lier un parent à cet élève."
                 />
               ) : (
-                <TableContainer>
-                  <Table>
-                    <TableHeader>
-                      <tr>
-                        <TableHeaderCell>Parent</TableHeaderCell>
-                        <TableHeaderCell>Téléphone</TableHeaderCell>
-                        <TableHeaderCell>Lien</TableHeaderCell>
-                        <TableHeaderCell>Principal</TableHeaderCell>
-                        <TableHeaderCell>
-                          <span className="sr-only">Actions</span>
-                        </TableHeaderCell>
-                      </tr>
-                    </TableHeader>
-                    <TableBody>
-                      {links.map((link) => (
-                        <TableRow key={link.id}>
-                          <TableCellPrimary>
-                            {link.parent.lastName} {link.parent.firstName}
-                          </TableCellPrimary>
-                          <TableCell>{link.parent.phone || "—"}</TableCell>
-                          <TableCell>
-                            {RELATION_LABELS[link.relation] ?? link.relation}
-                          </TableCell>
-                          <TableCell>
-                            {link.isPrimary ? (
-                              <Badge variant="success">Principal</Badge>
-                            ) : (
-                              <span className="text-(--skools-text-muted)">
-                                —
-                              </span>
-                            )}
-                          </TableCell>
-                          <TableCell>
-                            <div className="flex justify-end">
-                              <button
-                                type="button"
-                                aria-label={`Dissocier ${link.parent.firstName} ${link.parent.lastName}`}
-                                onClick={() => setUnlinkTarget(link)}
-                                className="text-r12 font-medium text-(--common-red) hover:underline"
-                              >
-                                Dissocier
-                              </button>
-                            </div>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </TableContainer>
+                <DataList
+                  items={links}
+                  columns={[
+                    {
+                      header: "Parent",
+                      primary: true,
+                      render: (link) =>
+                        `${link.parent.lastName} ${link.parent.firstName}`,
+                    },
+                    {
+                      header: "Téléphone",
+                      render: (link) => link.parent.phone || "—",
+                    },
+                    {
+                      header: "Lien",
+                      render: (link) =>
+                        RELATION_LABELS[link.relation] ?? link.relation,
+                    },
+                  ]}
+                  idOf={(link) => link.id}
+                  nameOf={(link) =>
+                    `${link.parent.lastName} ${link.parent.firstName}`
+                  }
+                  statusPill={(link) =>
+                    link.isPrimary
+                      ? { label: "Principal", variant: "success" as const }
+                      : null
+                  }
+                  onDelete={(link) => setUnlinkTarget(link)}
+                  actionLabels={{ remove: "Dissocier" }}
+                />
               )}
             </div>
           </Card>

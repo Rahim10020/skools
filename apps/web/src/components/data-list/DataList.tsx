@@ -37,6 +37,7 @@ export function DataList<T>({
   onDelete,
   hideActionsFor,
   rowTo,
+  actionLabels,
 }: {
   items: T[];
   columns: DataColumn<T>[];
@@ -49,10 +50,14 @@ export function DataList<T>({
   onDelete?: (item: T) => void;
   /** Lignes sans actions (ex. son propre compte) : affiche « — ». */
   hideActionsFor?: (item: T) => boolean;
+  /** Libellés des actions ligne (défaut Modifier / Supprimer). */
+  actionLabels?: { edit?: string; remove?: string };
   /** Clic sur la cellule primaire → page détail (l'édition reste en modal). */
   rowTo?: (item: T) => string;
 }) {
   const [menuOpenId, setMenuOpenId] = useState<string | null>(null);
+  const editLabel = actionLabels?.edit ?? "Modifier";
+  const removeLabel = actionLabels?.remove ?? "Supprimer";
   const showActions = !readOnly && (onEdit || onDelete);
   const template = [
     selection ? "24px" : null,
@@ -148,21 +153,21 @@ export function DataList<T>({
                     {onEdit && (
                       <button
                         type="button"
-                        aria-label={`Modifier ${name}`}
+                        aria-label={`${editLabel} ${name}`}
                         onClick={() => onEdit(item)}
                         className="text-r12 font-medium text-(--common-blue) hover:underline cursor-pointer"
                       >
-                        Modifier
+                        {editLabel}
                       </button>
                     )}
                     {onDelete && (
                       <button
                         type="button"
-                        aria-label={`Supprimer ${name}`}
+                        aria-label={`${removeLabel} ${name}`}
                         onClick={() => onDelete(item)}
                         className="text-r12 font-medium text-(--common-red) hover:underline cursor-pointer"
                       >
-                        Supprimer
+                        {removeLabel}
                       </button>
                     )}
                   </span>
@@ -194,7 +199,7 @@ export function DataList<T>({
                             }}
                             className="block w-full rounded-r2 px-p2 py-1.5 text-left text-r12 text-(--common-blue) hover:bg-(--skools-interactive-hover-bg) cursor-pointer"
                           >
-                            Modifier
+                            {editLabel}
                           </button>
                         )}
                         {onDelete && (
@@ -207,7 +212,7 @@ export function DataList<T>({
                             }}
                             className="block w-full rounded-r2 px-p2 py-1.5 text-left text-r12 text-(--common-red) hover:bg-(--skools-interactive-hover-bg) cursor-pointer"
                           >
-                            Supprimer
+                            {removeLabel}
                           </button>
                         )}
                       </span>
