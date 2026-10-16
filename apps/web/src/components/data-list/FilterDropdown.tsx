@@ -48,7 +48,7 @@ export function FilterDropdown({
       document.removeEventListener("mousedown", onPointerDown);
       document.removeEventListener("keydown", onKeyDown);
     };
-  }, [open ]);
+  }, [open]);
 
   const pick = (next: string) => () => {
     onChange(next);
@@ -63,7 +63,7 @@ export function FilterDropdown({
         aria-haspopup="menu"
         aria-expanded={open}
         className={cx(
-          "group flex gap-p2 items-center text-r12 text-(--skools-text-muted) hover:text-(--skools-text-primary) transition-all min-w-max cursor-pointer",
+          "group flex gap-p2 items-center text-r14 text-(--skools-text-muted) hover:text-(--skools-text-primary) transition-all min-w-max cursor-pointer",
           active && "text-(--skools-text-primary)",
         )}
       >

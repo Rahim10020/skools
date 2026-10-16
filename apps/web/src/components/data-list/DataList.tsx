@@ -16,14 +16,14 @@ export interface DataColumn<T> {
 export interface DataSelection {
   has: (id: string) => boolean;
   toggle: (id: string) => void;
-  /** Checkbox global d'en-tête. Absent = cellule d'en-tête vide (le global vit dans la ligne header). */
+  /** Checkbox global d'en-tête. Absent = cellule d'en-tête vide */
   header?: ReactNode;
 }
 
 /**
  * Liste sans carte : fond transparent,
  * hairlines entre les lignes, pastille statut à droite.
- * Hybride Gmail : checkbox fantôme en tête de ligne (hover/focus/sélection),
+ * checkbox fantôme en tête de ligne (hover/focus/sélection),
  * actions au hover sur desktop, menu `•••` sur mobile.
  */
 export function DataList<T>({
@@ -148,7 +148,9 @@ export function DataList<T>({
                 </div>
               ))}
               <div className="flex items-center justify-end gap-p3 min-w-max">
-                {pill && <StatusPill label={pill.label} variant={pill.variant} />}
+                {pill && (
+                  <StatusPill label={pill.label} variant={pill.variant} />
+                )}
                 {showActions && !noActions && (
                   <span className="hidden lg:flex items-center gap-p3 opacity-0 transition-opacity group-hover:opacity-100 focus-within:opacity-100">
                     {onEdit && (
@@ -180,7 +182,9 @@ export function DataList<T>({
                       aria-label={`Options pour ${name}`}
                       aria-haspopup="menu"
                       aria-expanded={menuOpenId === id}
-                      onClick={() => setMenuOpenId((v) => (v === id ? null : id))}
+                      onClick={() =>
+                        setMenuOpenId((v) => (v === id ? null : id))
+                      }
                       className="inline-flex size-8 items-center justify-center rounded-r1 text-r14 text-(--skools-text-muted) hover:bg-(--skools-interactive-hover-bg) cursor-pointer"
                     >
                       •••

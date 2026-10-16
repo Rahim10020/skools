@@ -164,7 +164,7 @@ export function ListHeader({
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder={searchPlaceholder}
                 aria-label={searchPlaceholder}
-                className="px-3 py-1.5 text-xs border border-(--skools-border-subtle) rounded-r2 bg-(--skools-sidebar-bg) text-(--skools-text-primary) placeholder:text-(--skools-text-muted) focus:outline-none focus:ring-2 focus:ring-(--skools-interactive-active-bg)"
+                className="px-3 py-1.5 text-sm border border-(--skools-border-subtle) rounded-r2 bg-transparent text-(--skools-text-primary) placeholder:text-(--skools-text-muted) focus:outline-none focus:ring-2 focus:ring-(--skools-interactive-active-bg)"
               />
             )}
             {extra}
