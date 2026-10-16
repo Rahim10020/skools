@@ -73,7 +73,7 @@ export function FlyoutPanel({
       aria-label={title}
       onMouseEnter={onHoverEnter}
       onMouseLeave={onHoverLeave}
-      className="fixed z-50 flex w-50 flex-col gap-p2 rounded-r2 border border-(--skools-border-subtle) bg-(--skools-sidebar-bg) px-p2 py-p2 shadow-lg"
+      className="fixed z-50 flex w-50 flex-col gap-p2 rounded-r2 border border-(--skools-border-subtle) bg-(--skools-app-bg) px-p2 py-p2 shadow-md"
       style={{ top: `${position.top}px`, left: `${position.left}px` }}
     >
       <div className="flex flex-col">

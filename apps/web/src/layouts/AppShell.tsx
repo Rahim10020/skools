@@ -65,11 +65,18 @@ export function AppShell() {
         />
       )}
 
-      <Sidebar mobileOpen={mobileOpen} onCloseMobile={() => setMobileOpen(false)} />
+      <Sidebar
+        mobileOpen={mobileOpen}
+        onCloseMobile={() => setMobileOpen(false)}
+      />
 
       <div className="flex-1 flex flex-col min-w-0 pt-14 lg:pt-0">
         <Toaster />
-        <main id="contenu" tabIndex={-1} className="flex-1 w-full max-w-[1280px] mx-auto px-p4 sm:px-p10 pt-p13 pb-p10 outline-none">
+        <main
+          id="contenu"
+          tabIndex={-1}
+          className="flex-1 w-full max-w-[1280px] mx-auto px-p4 sm:px-p10 pt-p13 pb-p10 outline-none"
+        >
           <Outlet />
         </main>
       </div>
