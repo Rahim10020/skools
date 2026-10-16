@@ -29,12 +29,15 @@ export function Checkbox({
 
   const visual = active
     ? "rounded-(--radius-r1) bg-(--primary) text-(--common-white)"
-    : "rounded-(--radius-r1) border border-(--skools-border-subtle) bg-transparent";
+    : "rounded-(--radius-r1) border border-(--popup-bg) bg-transparent";
 
   return (
     <label
       htmlFor={id}
-      className={["relative inline-flex shrink-0 items-center gap-p2", disabled ? "opacity-50" : "cursor-pointer"]
+      className={[
+        "relative inline-flex shrink-0 items-center gap-p2",
+        disabled ? "opacity-50" : "cursor-pointer",
+      ]
         .filter(Boolean)
         .join(" ")}
     >

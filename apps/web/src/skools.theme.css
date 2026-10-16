@@ -18,6 +18,7 @@
 
     --skools-bg-primary: var(--primary);
     --popup-bg: var(--black-50);
+    --search-border: var(--black-20);
   }
 
   .dark {
@@ -99,13 +100,23 @@
 }
 
 .skeleton-shimmer {
-  background: linear-gradient(90deg, rgb(0, 0, 0, 0.1) 0%, rgba(255, 255, 255, 0.1) 50%, rgb(0, 0, 0, 0.1) 100%);
+  background: linear-gradient(
+    90deg,
+    rgb(0, 0, 0, 0.1) 0%,
+    rgba(255, 255, 255, 0.1) 50%,
+    rgb(0, 0, 0, 0.1) 100%
+  );
   background-size: 200% 100%;
   animation: shimmer 2s infinite;
 }
 
 .dark .skeleton-shimmer {
-  background: linear-gradient(90deg, rgb(255 255 255 / 0.1) 0%, rgba(255, 255, 255, 0.2) 50%, rgb(255 255 255 / 0.1) 100%);
+  background: linear-gradient(
+    90deg,
+    rgb(255 255 255 / 0.1) 0%,
+    rgba(255, 255, 255, 0.2) 50%,
+    rgb(255 255 255 / 0.1) 100%
+  );
   background-size: 200% 100%;
   animation: shimmer 2s infinite;
 }
