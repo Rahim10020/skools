@@ -31,25 +31,11 @@ les classes dans lesquelles ils ont cours. je veux qu'on prepare ca aussi.
 les informations importantes (a faire exactement comme c'est fait au niveau 
 de epl, je parle bien sur de l'affichage)
 
-- je veux coder les affichages des listes (listes des utilisateurs, des eleves, 
-des classes, des cycles, des niveux etc..) comme c'est fais dans gmail 
-(un checkbox a gauche, les options supprimer et modfier qui ne sont visibles 
-qu'au hover sur une ligne, quand on selectionne un checkbox, on a des options 
-supplementaires qui viennent en haut. On a aussi un checkbox qui permet de tout selectionner 
-en meme temps et de faire certains actions ce checkbox a meme des options de filtres.) 
-je ne veux pas recopier integralement 
-tout ce qui est fais sur gmail. ce qui m'interesse, c'est leur design et 
-le fait qu'ils simplifent la tache a l'utilisateur. Dis moi si c'est possible 
-et si c'est bon de le faire et ensuite on va preparer un plan pour mettre tout ca 
-en place correctement. ne pas oublier de mettre a jour les skeletons s'il le faut.
-
 - j'aimerais que le systeme soi capable de detecter l'annee-scolaire en cours sans 
 que les utilisateurs n'aient pas a le faire tout le temps. analyse moi ca et propose moi des 
 idees et ensuite on va mettre en place un plan pour tout coder proprement.
 
 - voir s'il faut gerer le menu mobile comme c'est fais sur ecom.saas.
-
-- voir si ce serait une bonne idee de gerer la pagination des listes comme c'est fais dans epl.
 
 - bien gerer l'ouverture des notifications quand on clique sur l'icone de notification et qu'on est sur 
 mobile. actuellement aussi sur desktop, j'aimerais que ca s'affiche exactement a droite de la sidebar 
