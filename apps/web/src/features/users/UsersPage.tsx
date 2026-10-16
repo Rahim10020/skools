@@ -7,7 +7,6 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import api, { getErrorMessage } from "../../lib/api";
 import { ROLE_LABELS_FR, roleLabel } from "../../lib/permissions";
 import { useAuthStore } from "../../stores/auth-store";
-import { PageHeader } from "../../layouts/PageHeader";
 import { Button } from "../../components/ui/button";
 import { Input } from "../../components/ui/input";
 import { Select } from "../../components/ui/select";
@@ -86,7 +85,8 @@ export default function UsersPage() {
             }
         >(`${API.userEstablishments}?${memberParams}`)
       ).data;
-      if (Array.isArray(raw)) return { items: raw, total: raw.length, totalPages: 1, serverPage: 1 };
+      if (Array.isArray(raw))
+        return { items: raw, total: raw.length, totalPages: 1, serverPage: 1 };
       return {
         items: raw.data,
         total: raw.pagination.total_count,
@@ -201,7 +201,8 @@ export default function UsersPage() {
   const serverPage = members.data?.serverPage ?? page;
   const pageIds = useMemo(() => items.map((m) => m.id), [items]);
   const pageSelectedCount = pageIds.filter((id) => selection.has(id)).length;
-  const pageAllChecked = pageIds.length > 0 && pageSelectedCount === pageIds.length;
+  const pageAllChecked =
+    pageIds.length > 0 && pageSelectedCount === pageIds.length;
   const pageIndeterminate = pageSelectedCount > 0 && !pageAllChecked;
   // Sécurité : on ne retire jamais son propre accès en masse.
   const bulkIds = selection.selectedIds.filter((id) => {
@@ -244,20 +245,59 @@ export default function UsersPage() {
     exportToCsv("utilisateurs", ["Membre", "Email", "Rôle"], rows);
   };
 
+  const selectAll = (
+    <HeaderSelect
+      checked={pageAllChecked}
+      indeterminate={pageIndeterminate}
+      onToggleAll={() => selection.selectMany(pageIds, !pageAllChecked)}
+      onSelectAll={() => selection.selectMany(pageIds, true)}
+      onSelectNone={() => selection.selectMany(pageIds, false)}
+      onInvert={invertPageSelection}
+    />
+  );
+  const createButton = (
+    <Button
+      variant="tag"
+      fullWidth={false}
+      icon={<PlusIcon className="size-full" />}
+      iconPosition="left"
+      title="Ajouter un membre"
+      onClick={() => setAddOpen(true)}
+    >
+      Ajouter un membre
+    </Button>
+  );
+
   return (
     <div>
-      <PageHeader
+      <ListHeader
         title="Utilisateurs & rôles"
         description="Les comptes membres de l'établissement et leurs rôles. L'utilisateur doit déjà avoir un compte Skools."
-        actions={
-          <Button
-            fullWidth={false}
-            icon={<PlusIcon className="size-full" />}
-            onClick={() => setAddOpen(true)}
-          >
-            Ajouter un membre
-          </Button>
-        }
+        count={members.isPending ? 0 : total}
+        countLabel="membres"
+        filters={[
+          {
+            key: "role",
+            label: "Rôle",
+            value: roleFilter,
+            options: ASSIGNABLE_ROLES,
+            onChange: handleRoleFilter,
+          },
+        ]}
+        searchable
+        searchPlaceholder="Rechercher un membre…"
+        onSearch={handleMemberSearch}
+        selection={{
+          count: selection.selectedCount,
+          canDelete: true,
+          canExport: true,
+          pending: bulkPending,
+          onDelete: () => setBulkConfirmOpen(true),
+          onExport: handleExport,
+          onClear: selection.clear,
+        }}
+        selectAll={selectAll}
+        createButton={createButton}
       />
 
       {members.isError ? (
@@ -275,31 +315,6 @@ export default function UsersPage() {
         />
       ) : (
         <div className="w-full flex flex-col gap-p4 pb-p10">
-          <ListHeader
-            count={total}
-            countLabel="membre"
-            filters={[
-              {
-                key: "role",
-                label: "Rôle",
-                value: roleFilter,
-                options: ASSIGNABLE_ROLES,
-                onChange: handleRoleFilter,
-              },
-            ]}
-            searchable
-            searchPlaceholder="Rechercher un membre…"
-            onSearch={handleMemberSearch}
-            selection={{
-              count: selection.selectedCount,
-              canDelete: true,
-              canExport: true,
-              pending: bulkPending,
-              onDelete: () => setBulkConfirmOpen(true),
-              onExport: handleExport,
-              onClear: selection.clear,
-            }}
-          />
           <DataList
             items={items}
             columns={[
@@ -328,18 +343,6 @@ export default function UsersPage() {
             selection={{
               has: selection.has,
               toggle: selection.toggle,
-              header: (
-                <HeaderSelect
-                  checked={pageAllChecked}
-                  indeterminate={pageIndeterminate}
-                  onToggleAll={() =>
-                    selection.selectMany(pageIds, !pageAllChecked)
-                  }
-                  onSelectAll={() => selection.selectMany(pageIds, true)}
-                  onSelectNone={() => selection.selectMany(pageIds, false)}
-                  onInvert={invertPageSelection}
-                />
-              ),
             }}
             onEdit={openEdit}
             onDelete={setDeleteTarget}

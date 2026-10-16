@@ -46,6 +46,7 @@ export default function TeachersPage() {
       title="Enseignants"
       description="Les enseignants de l'établissement et leurs spécialités."
       itemLabel="enseignant"
+      pluralLabel="enseignants"
       createLabel="Nouvel enseignant"
       queryKey={KEYS.teachers}
       endpoint={API.teachers}

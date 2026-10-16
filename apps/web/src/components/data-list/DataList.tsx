@@ -16,7 +16,8 @@ export interface DataColumn<T> {
 export interface DataSelection {
   has: (id: string) => boolean;
   toggle: (id: string) => void;
-  header: ReactNode;
+  /** Checkbox global d'en-tête. Absent = cellule d'en-tête vide (le global vit dans la ligne header). */
+  header?: ReactNode;
 }
 
 /**
@@ -74,7 +75,7 @@ export function DataList<T>({
         className="grid items-center gap-p3 text-xs text-(--skools-text-muted) mb-p2"
         style={{ gridTemplateColumns: template }}
       >
-        {selection && <span>{selection.header}</span>}
+        {selection && <span>{selection.header ?? null}</span>}
         {columns.map((column) => (
           <p
             key={column.header}

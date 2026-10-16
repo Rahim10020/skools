@@ -89,6 +89,7 @@ export default function ExamsPage() {
       description="Les évaluations : interrogations, devoirs, compositions et examens."
       readOnly={!canWrite}
       itemLabel="examen"
+      pluralLabel="examens"
       createLabel="Nouvel examen"
       queryKey={KEYS.exams}
       endpoint={API.exams}

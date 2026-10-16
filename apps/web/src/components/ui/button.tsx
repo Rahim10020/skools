@@ -6,7 +6,8 @@ export type ButtonVariant =
   | "secondary"
   | "outline"
   | "social"
-  | "loading";
+  | "loading"
+  | "tag";
 
 export type ButtonProps = {
   variant?: ButtonVariant;
@@ -41,6 +42,11 @@ const variantClasses: Record<ButtonVariant, string> = {
     "bg-(--skools-elevated-bg) text-(--skools-text-primary)",
     "cursor-not-allowed",
   ].join(" "),
+  tag: [
+    "bg-(--skools-text-primary)/5 text-(--skools-text-primary)",
+    "hover:bg-(--skools-text-primary)/10",
+    "cursor-pointer",
+  ].join(" "),
 };
 
 export function LoadingDots({ className }: { className?: string }): ReactNode {
@@ -73,6 +79,7 @@ export function Button({
   ...rest
 }: ButtonProps) {
   const isLoading = variant === "loading";
+  const isTag = variant === "tag";
 
   const displayClass = fullWidth ? "flex w-full" : "inline-flex";
   const paddingClass =
@@ -80,18 +87,32 @@ export function Button({
       ? "px-(--spacing-p4) pl-(--spacing-p5)"
       : "px-(--spacing-p5)";
 
-  const baseClasses = [
-    displayClass,
-    "relative",
-    "h-(--size-s10)",
-    paddingClass,
-    "flex items-center justify-center",
-    "rounded-(--radius-r6)",
-    "gap-(--spacing-p1)",
-    "text-r14 leading-none",
-    "select-none transition-colors duration-200",
-    "group",
-  ].join(" ");
+  // Pill compact façon tag (nouveau/ajout) : forme propre, pas le socle plein.
+  const baseClasses = isTag
+    ? [
+        displayClass,
+        "relative",
+        "max-w-[120px]",
+        "px-p3 py-1.5",
+        "items-center",
+        "rounded-full",
+        "gap-p1",
+        "text-r12 tracking-wide",
+        "select-none transition-colors duration-200",
+        "group",
+      ].join(" ")
+    : [
+        displayClass,
+        "relative",
+        "h-(--size-s10)",
+        paddingClass,
+        "flex items-center justify-center",
+        "rounded-(--radius-r6)",
+        "gap-(--spacing-p1)",
+        "text-r14 leading-none",
+        "select-none transition-colors duration-200",
+        "group",
+      ].join(" ");
 
   const disabledClasses =
     disabled && !isLoading
@@ -113,7 +134,11 @@ export function Button({
 
   const iconEl = finalIcon ? (
     <span
-      className={["flex items-center justify-center size-(--size-s5)", iconPushedClasses]
+      className={[
+        "flex items-center justify-center",
+        isTag ? "size-4 shrink-0" : "size-(--size-s5)",
+        iconPushedClasses,
+      ]
         .filter(Boolean)
         .join(" ")}
     >
@@ -133,7 +158,9 @@ export function Button({
       ) : (
         <>
           {iconPosition === "left" && iconEl}
-          {children && <span>{children}</span>}
+          {children && (
+            <span className={isTag ? "truncate" : undefined}>{children}</span>
+          )}
           {iconPosition === "right" && iconEl}
         </>
       )}

@@ -192,6 +192,7 @@ export default function DisciplinePage() {
       }
       readOnly={isFamily}
       itemLabel="fiche disciplinaire"
+      pluralLabel="fiches disciplinaires"
       createLabel="Nouvelle fiche"
       queryKey={isFamily ? KEYS.discipline(familyStudentId) : KEYS.discipline()}
       endpoint={API.discipline}

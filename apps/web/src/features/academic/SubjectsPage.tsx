@@ -28,6 +28,7 @@ export default function SubjectsPage() {
       title="Matières"
       description="Les matières enseignées dans l'établissement."
       itemLabel="matière"
+      pluralLabel="matières"
       createLabel="Nouvelle matière"
       queryKey={KEYS.subjects}
       endpoint={API.subjects}

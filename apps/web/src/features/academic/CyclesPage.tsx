@@ -29,6 +29,7 @@ export default function CyclesPage() {
       title="Cycles"
       description="Les grands cycles d'enseignement (Primaire, Collège, Lycée)."
       itemLabel="cycle"
+      pluralLabel="cycles"
       createLabel="Nouveau cycle"
       queryKey={KEYS.cycles}
       endpoint={API.cycles}

@@ -7,7 +7,6 @@ import {
 } from "react";
 import { useCrudResource, type ListParams } from "../../hooks/use-crud";
 import { getErrorMessage } from "../../lib/api";
-import { PageHeader } from "../../layouts/PageHeader";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
 import { INPUT_BASE, getBg } from "../ui/input-tokens";
@@ -71,6 +70,8 @@ export interface CrudPageProps<T> {
   readOnly?: boolean;
   /** Libellé singulier pour les messages ("année scolaire"). */
   itemLabel: string;
+  /** Libellé pluriel pour le compteur ("années scolaires"). Défaut : itemLabel + "s". */
+  pluralLabel?: string;
   /** Libellé du bouton de création ("Nouvelle année"). */
   createLabel: string;
   emptyDescription?: string;
@@ -375,6 +376,7 @@ export function CrudPage<T>({
   nameOf,
   idOf = defaultIdOf,
   rowTo,
+  pluralLabel,
   pageSize = 10,
   filters = NO_FILTERS,
   statusPill,
@@ -511,22 +513,57 @@ export function CrudPage<T>({
     exportToCsv(csvFilename ?? title.toLowerCase(), csvHeaders, rows);
   };
 
+  const selectAll = (
+    <HeaderSelect
+      checked={pageAllChecked}
+      indeterminate={pageIndeterminate}
+      onToggleAll={() => selection.selectMany(pageIds, !pageAllChecked)}
+      onSelectAll={() => selection.selectMany(pageIds, true)}
+      onSelectNone={() => selection.selectMany(pageIds, false)}
+      onInvert={invertPageSelection}
+    />
+  );
+  const createButton = readOnly ? undefined : (
+    <Button
+      variant="tag"
+      fullWidth={false}
+      icon={<PlusIcon className="size-full" />}
+      iconPosition="left"
+      title={createLabel}
+      onClick={() => setEditing(null)}
+    >
+      {createLabel}
+    </Button>
+  );
+
   return (
     <div>
-      <PageHeader
+      <ListHeader
         title={title}
         description={description}
-        actions={
-          readOnly ? undefined : (
-            <Button
-              fullWidth={false}
-              icon={<PlusIcon className="size-full" />}
-              onClick={() => setEditing(null)}
-            >
-              {createLabel}
-            </Button>
-          )
-        }
+        count={list.isPending ? 0 : total}
+        countLabel={pluralLabel ?? `${itemLabel}s`}
+        filters={filters.map((filter) => ({
+          key: filter.key,
+          label: filter.label,
+          value: filterValues[filter.key] ?? "",
+          options: filter.options,
+          onChange: handleFilterChange(filter.key),
+        }))}
+        searchable={searchPlaceholder !== undefined}
+        searchPlaceholder={searchPlaceholder ?? "Rechercher…"}
+        onSearch={handleSearch}
+        selection={{
+          count: selection.selectedCount,
+          canDelete: !readOnly,
+          canExport,
+          pending: bulkPending,
+          onDelete: () => setBulkConfirmOpen(true),
+          onExport: handleExport,
+          onClear: selection.clear,
+        }}
+        selectAll={selectAll}
+        createButton={createButton}
       />
 
       {toolbarExtra && <div className="mb-p6">{toolbarExtra}</div>}
@@ -551,29 +588,6 @@ export function CrudPage<T>({
         />
       ) : (
         <div className="w-full flex flex-col gap-p4 pb-p10">
-          <ListHeader
-            count={total}
-            countLabel={itemLabel}
-            filters={filters.map((filter) => ({
-              key: filter.key,
-              label: filter.label,
-              value: filterValues[filter.key] ?? "",
-              options: filter.options,
-              onChange: handleFilterChange(filter.key),
-            }))}
-            searchable={searchPlaceholder !== undefined}
-            searchPlaceholder={searchPlaceholder ?? "Rechercher…"}
-            onSearch={handleSearch}
-            selection={{
-              count: selection.selectedCount,
-              canDelete: !readOnly,
-              canExport,
-              pending: bulkPending,
-              onDelete: () => setBulkConfirmOpen(true),
-              onExport: handleExport,
-              onClear: selection.clear,
-            }}
-          />
           <DataList
             items={items}
             columns={columns}
@@ -583,18 +597,6 @@ export function CrudPage<T>({
             selection={{
               has: selection.has,
               toggle: selection.toggle,
-              header: (
-                <HeaderSelect
-                  checked={pageAllChecked}
-                  indeterminate={pageIndeterminate}
-                  onToggleAll={() =>
-                    selection.selectMany(pageIds, !pageAllChecked)
-                  }
-                  onSelectAll={() => selection.selectMany(pageIds, true)}
-                  onSelectNone={() => selection.selectMany(pageIds, false)}
-                  onInvert={invertPageSelection}
-                />
-              ),
             }}
             readOnly={readOnly}
             onEdit={readOnly ? undefined : (item) => setEditing(item)}

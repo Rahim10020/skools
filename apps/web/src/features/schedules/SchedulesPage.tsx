@@ -123,6 +123,7 @@ export default function SchedulesPage() {
       }
       readOnly={isReadOnly}
       itemLabel="créneau"
+      pluralLabel="créneaux"
       createLabel="Nouveau créneau"
       queryKey={KEYS.schedules(filterClassroomId)}
       endpoint={API.schedules}

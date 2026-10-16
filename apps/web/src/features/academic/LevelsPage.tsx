@@ -40,6 +40,7 @@ export default function LevelsPage() {
       title="Niveaux"
       description="Les niveaux rattachés à chaque cycle (6ème, 5ème, Seconde…)."
       itemLabel="niveau"
+      pluralLabel="niveaux"
       createLabel="Nouveau niveau"
       queryKey={KEYS.levels}
       endpoint={API.levels}

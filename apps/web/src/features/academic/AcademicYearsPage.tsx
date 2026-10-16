@@ -35,6 +35,7 @@ export default function AcademicYearsPage() {
       title="Années scolaires"
       description="Définissez les années scolaires et désignez l'année en cours."
       itemLabel="année scolaire"
+      pluralLabel="années scolaires"
       createLabel="Nouvelle année"
       queryKey={KEYS.academicYears}
       endpoint={API.academicYears}

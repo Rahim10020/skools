@@ -41,6 +41,7 @@ export default function ParentsPage() {
       title="Parents"
       description="Les parents et tuteurs, à lier aux élèves depuis la page dédiée."
       itemLabel="parent"
+      pluralLabel="parents"
       createLabel="Nouveau parent"
       queryKey={KEYS.parents}
       endpoint={API.parents}

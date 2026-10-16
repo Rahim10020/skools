@@ -57,6 +57,7 @@ export default function ClassroomsPage() {
       title="Classes"
       description="Les classes de l'établissement, par année, niveau et série."
       itemLabel="classe"
+      pluralLabel="classes"
       createLabel="Nouvelle classe"
       queryKey={KEYS.classrooms}
       endpoint={API.classrooms}

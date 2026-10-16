@@ -34,6 +34,7 @@ export default function SeriesPage() {
       title="Séries"
       description="Les séries rattachées aux niveaux (A, C, D, S, L…)."
       itemLabel="série"
+      pluralLabel="séries"
       createLabel="Nouvelle série"
       queryKey={KEYS.series}
       endpoint={API.series}

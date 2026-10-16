@@ -31,11 +31,14 @@ function useDebouncedValue(value: string, delayMs: number) {
 }
 
 /**
- * Ligne d'en-tête : compteur à gauche, filtres texte + petite
- * recherche à droite. Quand des lignes sont sélectionnées, la zone droite
- * **bascule en actions groupées** (pas de barre ajoutée au-dessus).
+ * En-tête de page liste : grand titre + compteur à gauche, checkbox global,
+ * filtres texte, recherche et bouton de création à droite — le tout sur
+ * une ligne (wrap sur mobile). Quand des lignes sont sélectionnées, la zone
+ * droite **bascule en actions groupées** (pas de barre ajoutée au-dessus).
  */
 export function ListHeader({
+  title,
+  description,
   count,
   countLabel,
   filters = [],
@@ -43,8 +46,12 @@ export function ListHeader({
   searchPlaceholder = "Rechercher…",
   onSearch,
   selection = null,
+  selectAll,
+  createButton,
   extra,
 }: {
+  title?: string;
+  description?: string;
   count: number;
   countLabel: string;
   filters?: ListFilterDef[];
@@ -53,6 +60,10 @@ export function ListHeader({
   /** Appelé avec la valeur debounced (400 ms). */
   onSearch?: (value: string) => void;
   selection?: BulkSelection | null;
+  /** Checkbox global (Toutes / Aucune / Inverser), affiché en tête de zone droite. */
+  selectAll?: ReactNode;
+  /** Bouton de création (pill), affiché en fin de zone droite. */
+  createButton?: ReactNode;
   extra?: ReactNode;
 }) {
   const [search, setSearch] = useState("");
@@ -70,10 +81,31 @@ export function ListHeader({
 
   return (
     <div className="w-full flex items-start lg:items-center justify-between gap-p1 flex-wrap">
-      <p aria-live="polite" className="text-r14 text-(--skools-text-muted)">
-        {count} {countLabel}
-        {count > 1 ? "s" : ""}
-      </p>
+      <div className="min-w-0">
+        {title && (
+          <div className="flex gap-p4 items-center">
+            <h1 className="font-semibold text-sb32 leading-9 text-(--skools-text-primary)">
+              {title}
+            </h1>
+            <p
+              aria-live="polite"
+              className="text-r14 text-(--skools-text-muted) min-w-max"
+            >
+              {count} {countLabel}
+            </p>
+          </div>
+        )}
+        {!title && (
+          <p aria-live="polite" className="text-r14 text-(--skools-text-muted)">
+            {count} {countLabel}
+          </p>
+        )}
+        {description && (
+          <p className="text-r14 text-(--skools-text-muted) mt-p1">
+            {description}
+          </p>
+        )}
+      </div>
       <div className="flex items-center gap-p5 flex-wrap justify-end">
         {selection && selection.count > 0 ? (
           <div
@@ -115,6 +147,7 @@ export function ListHeader({
           </div>
         ) : (
           <>
+            {selectAll}
             {filters.map((filter) => (
               <FilterDropdown
                 key={filter.key}
@@ -135,6 +168,7 @@ export function ListHeader({
               />
             )}
             {extra}
+            {createButton}
           </>
         )}
       </div>

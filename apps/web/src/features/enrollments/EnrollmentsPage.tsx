@@ -64,6 +64,7 @@ export default function EnrollmentsPage() {
       title="Inscriptions"
       description="L'affectation des élèves aux classes pour chaque année scolaire."
       itemLabel="inscription"
+      pluralLabel="inscriptions"
       createLabel="Nouvelle inscription"
       queryKey={KEYS.enrollments}
       endpoint={API.enrollments}

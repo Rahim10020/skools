@@ -48,6 +48,7 @@ export default function PeriodsPage() {
       title="Périodes"
       description="Les périodes d'évaluation de chaque année (trimestres, semestres)."
       itemLabel="période"
+      pluralLabel="périodes"
       createLabel="Nouvelle période"
       queryKey={KEYS.periods}
       endpoint={API.periods}

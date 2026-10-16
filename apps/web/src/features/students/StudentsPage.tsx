@@ -56,6 +56,7 @@ export default function StudentsPage() {
       title="Élèves"
       description="Les dossiers des élèves de l'établissement."
       itemLabel="élève"
+      pluralLabel="élèves"
       createLabel="Nouvel élève"
       queryKey={KEYS.students}
       endpoint={API.students}
