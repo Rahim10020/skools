@@ -18,7 +18,7 @@ export function Pagination({
   const hasPrevious = page > 1;
   const hasNext = page < totalPages;
   const roundBtn =
-    "size-8 inline-flex items-center justify-center rounded-full border border-(--skools-border-subtle) bg-(--skools-sidebar-bg) text-(--skools-text-muted) transition-colors hover:text-(--skools-text-primary) hover:bg-(--skools-interactive-hover-bg) disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-transparent";
+    "size-8 cursor-pointer inline-flex items-center justify-center rounded-full border border-(--skools-border-subtle) bg-(--skools-sidebar-bg) text-(--skools-text-muted) transition-colors hover:text-(--skools-text-primary) hover:bg-(--skools-interactive-hover-bg) disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-transparent";
 
   return (
     <div className="w-max flex items-center justify-center gap-p3 pt-p4">
