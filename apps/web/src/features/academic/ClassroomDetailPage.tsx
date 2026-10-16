@@ -3,11 +3,12 @@ import { useQuery } from "@tanstack/react-query";
 import api, { getErrorMessage } from "../../lib/api";
 import { API, apiPath } from "../../lib/api-endpoints";
 import { ROUTES } from "../../lib/routes";
-import { PageHeader } from "../../layouts/PageHeader";
 import { EmptyState, ErrorState } from "../../components/ui/empty-state";
+import { ListHeader } from "../../components/data-list/ListHeader";
 import { ListSkeleton } from "../../components/data-list/ListSkeleton";
 import { StatusPill } from "../../components/data-list/StatusPill";
 import {
+  DetailContainer,
   DetailFields,
   DetailRow,
   DetailSection,
@@ -66,6 +67,19 @@ export default function ClassroomDetailPage() {
         .data,
     enabled: !!id,
   });
+  // Total pour le compteur du header (langage liste).
+  const classroomsTotal = useQuery({
+    queryKey: ["classrooms-total"],
+    queryFn: async () => {
+      const raw = (
+        await api.get<ClassroomDossier[] | PaginatedList<ClassroomDossier>>(
+          API.classrooms,
+          { params: { limit: 1 } },
+        )
+      ).data;
+      return unwrapList(raw).pagination?.total_count ?? 0;
+    },
+  });
   const enrollments = useQuery({
     queryKey: ["classroom-enrollments", id],
     queryFn: async () => {
@@ -89,10 +103,12 @@ export default function ClassroomDetailPage() {
   if (classroom.isPending) {
     return (
       <div>
-        <PageHeader
-          title="Classe"
+        <ListHeader
+          title="Classes"
           backTo={ROUTES.classrooms}
           backLabel="Classes"
+          count={classroomsTotal.data ?? 0}
+          countLabel="classes"
         />
         <ListSkeleton label="Chargement de la classe" />
       </div>
@@ -102,10 +118,12 @@ export default function ClassroomDetailPage() {
   if (classroom.isError) {
     return (
       <div>
-        <PageHeader
-          title="Classe"
+        <ListHeader
+          title="Classes"
           backTo={ROUTES.classrooms}
           backLabel="Classes"
+          count={classroomsTotal.data ?? 0}
+          countLabel="classes"
         />
         <ErrorState
           title="Impossible de charger cette classe"
@@ -126,14 +144,19 @@ export default function ClassroomDetailPage() {
 
   return (
     <div>
-      <PageHeader
-        title={dossier.name}
-        description={`${dossier.level.name} • ${dossier.academicYear.name}`}
+      <ListHeader
+        title="Classes"
         backTo={ROUTES.classrooms}
         backLabel="Classes"
+        count={classroomsTotal.data ?? 0}
+        countLabel="classes"
       />
 
-      <div className="flex flex-col gap-p8 pb-p10">
+      <DetailContainer>
+        <h2 className="font-semibold text-sb24 leading-9 text-(--skools-text-primary)">
+          {dossier.name}
+        </h2>
+
         <DetailSection title="Informations">
           <DetailFields fields={dossierFields} />
         </DetailSection>
@@ -193,7 +216,7 @@ export default function ClassroomDetailPage() {
             />
           )}
         </DetailSection>
-      </div>
+      </DetailContainer>
     </div>
   );
 }

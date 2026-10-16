@@ -6,12 +6,15 @@ import { API } from "../../lib/api-endpoints";
 import { ROUTES } from "../../lib/routes";
 import { roleLabel } from "../../lib/permissions";
 import { useAuthStore } from "../../stores/auth-store";
-import { PageHeader } from "../../layouts/PageHeader";
 import { Button } from "../../components/ui/button";
 import { EmptyState, ErrorState } from "../../components/ui/empty-state";
+import { ListHeader } from "../../components/data-list/ListHeader";
 import { ListSkeleton } from "../../components/data-list/ListSkeleton";
 import { StatusPill } from "../../components/data-list/StatusPill";
-import { DetailFields } from "../../components/detail/DetailSection";
+import {
+  DetailContainer,
+  DetailFields,
+} from "../../components/detail/DetailSection";
 import { EditMemberRoleModal } from "./EditMemberRoleModal";
 
 interface Member {
@@ -38,18 +41,30 @@ export default function MemberDetailPage() {
   const [editOpen, setEditOpen] = useState(false);
 
   // Pas de `GET /:id` côté API : on lit la liste (tableau brut) et on sélectionne.
+  // Le total sert au compteur du header (langage liste).
   const members = useQuery({
     queryKey: ["member", id],
     queryFn: async () =>
       (await api.get<Member[]>(API.userEstablishments)).data,
     enabled: !!id,
-    select: (rows) => rows.find((row) => row.id === id) ?? null,
+    select: (rows) => ({
+      member: rows.find((row) => row.id === id) ?? null,
+      total: rows.length,
+    }),
   });
+
+  const total = members.data?.total ?? 0;
 
   if (members.isPending) {
     return (
       <div>
-        <PageHeader title="Membre" backTo={ROUTES.users} backLabel="Utilisateurs" />
+        <ListHeader
+          title="Utilisateurs & rôles"
+          backTo={ROUTES.users}
+          backLabel="Utilisateurs"
+          count={0}
+          countLabel="membres"
+        />
         <ListSkeleton label="Chargement du membre" />
       </div>
     );
@@ -58,7 +73,13 @@ export default function MemberDetailPage() {
   if (members.isError) {
     return (
       <div>
-        <PageHeader title="Membre" backTo={ROUTES.users} backLabel="Utilisateurs" />
+        <ListHeader
+          title="Utilisateurs & rôles"
+          backTo={ROUTES.users}
+          backLabel="Utilisateurs"
+          count={0}
+          countLabel="membres"
+        />
         <ErrorState
           title="Impossible de charger ce membre"
           message={getErrorMessage(members.error)}
@@ -68,10 +89,16 @@ export default function MemberDetailPage() {
     );
   }
 
-  if (!members.data) {
+  if (!members.data.member) {
     return (
       <div>
-        <PageHeader title="Membre" backTo={ROUTES.users} backLabel="Utilisateurs" />
+        <ListHeader
+          title="Utilisateurs & rôles"
+          backTo={ROUTES.users}
+          backLabel="Utilisateurs"
+          count={total}
+          countLabel="membres"
+        />
         <EmptyState
           title="Membre introuvable"
           description="Ce membre n'appartient plus à l'établissement ou le lien est invalide."
@@ -80,7 +107,7 @@ export default function MemberDetailPage() {
     );
   }
 
-  const member = members.data;
+  const member = members.data.member;
   const fields: Array<[string, React.ReactNode]> = [
     ["Email", member.user.email],
     [
@@ -101,24 +128,33 @@ export default function MemberDetailPage() {
   const memberName = `${member.user.lastName} ${member.user.firstName}`;
   const isSelf = member.user.id === currentUserId;
 
+  const editButton = isSelf ? undefined : (
+    <Button
+      variant="tag"
+      fullWidth={false}
+      title="Modifier le rôle"
+      onClick={() => setEditOpen(true)}
+    >
+      Modifier le rôle
+    </Button>
+  );
+
   return (
     <div>
-      <PageHeader
-        title={memberName}
-        description={member.user.email}
+      <ListHeader
+        title="Utilisateurs & rôles"
         backTo={ROUTES.users}
         backLabel="Utilisateurs"
-        actions={
-          isSelf ? undefined : (
-            <Button fullWidth={false} onClick={() => setEditOpen(true)}>
-              Modifier le rôle
-            </Button>
-          )
-        }
+        count={total}
+        countLabel="membres"
+        extra={editButton}
       />
-      <div className="pb-p10">
+      <DetailContainer>
+        <h2 className="font-semibold text-sb24 leading-9 text-(--skools-text-primary)">
+          {memberName}
+        </h2>
         <DetailFields fields={fields} />
-      </div>
+      </DetailContainer>
 
       {editOpen && !isSelf && (
         <EditMemberRoleModal

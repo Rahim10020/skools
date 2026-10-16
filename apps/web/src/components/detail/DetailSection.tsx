@@ -1,9 +1,17 @@
 import type { ReactNode } from "react";
 
 /**
- * Socle des pages détail (fiches) : sections titrées + lignes hairline
- * + paires label/valeur. Mêmes classes partout (pas de carte).
+ * Socle des pages détail (fiches) : colonne centrée, sections titrées,
+ * paires label/valeur inline, sous-listes hairline. Mêmes classes partout.
  */
+export function DetailContainer({ children }: { children: ReactNode }) {
+  return (
+    <div className="w-full max-w-[760px] mx-auto flex flex-col gap-p8 pb-p20">
+      {children}
+    </div>
+  );
+}
+
 export function DetailSection({
   title,
   count,
@@ -15,14 +23,14 @@ export function DetailSection({
 }) {
   return (
     <section className="flex flex-col gap-p3">
-      <h2 className="text-sb18 text-(--skools-text-primary)">
+      <h3 className="font-semibold text-sb16 text-(--skools-text-primary) mb-p1">
         {title}
         {count !== undefined && (
           <span className="ml-p2 text-r14 font-normal text-(--skools-text-muted)">
             ({count})
           </span>
         )}
-      </h2>
+      </h3>
       {children}
     </section>
   );
@@ -60,16 +68,13 @@ export function DetailFields({
   fields: Array<[string, ReactNode]>;
 }) {
   return (
-    <dl className="grid grid-cols-1 md:grid-cols-2 gap-x-p6">
+    <dl className="flex flex-col gap-p2">
       {fields.map(([label, value]) => (
-        <div
-          key={label}
-          className="flex items-center justify-between gap-p3 py-p3 border-t-[0.4px] border-(--skools-border-subtle)"
-        >
-          <dt className="text-r12 text-(--skools-text-muted)">{label}</dt>
-          <dd className="text-r14 text-(--skools-text-primary) text-right">
-            {value}
-          </dd>
+        <div key={label} className="min-w-max flex items-center gap-p2">
+          <dt className="font-semibold text-sb14 text-(--skools-text-primary)">
+            {label}
+          </dt>
+          <dd className="text-r14 text-(--skools-text-muted)">{value}</dd>
         </div>
       ))}
     </dl>

@@ -7,15 +7,17 @@ import { KEYS } from "../../lib/query-keys";
 import { ROUTES } from "../../lib/routes";
 import { canManageSchool } from "../../lib/roles";
 import { useAuthStore } from "../../stores/auth-store";
-import { PageHeader } from "../../layouts/PageHeader";
 import { Button } from "../../components/ui/button";
 import { Modal } from "../../components/ui/use-modal";
 import { CrudFormModal } from "../../components/crud/CrudPage";
 import { EmptyState, ErrorState } from "../../components/ui/empty-state";
+import { ListHeader } from "../../components/data-list/ListHeader";
 import { ListSkeleton } from "../../components/data-list/ListSkeleton";
+import { unwrapList, type PaginatedList } from "../../hooks/use-crud";
 import { StatusPill } from "../../components/data-list/StatusPill";
 import { toast } from "../../components/ui/toast";
 import {
+  DetailContainer,
   DetailFields,
   DetailRow,
   DetailSection,
@@ -119,6 +121,19 @@ export default function StudentDetailPage() {
       (await api.get<StudentDossier>(apiPath.withId(API.students, id!))).data,
     enabled: !!id,
   });
+  // Total pour le compteur du header (langage liste, comme EPL).
+  const studentsTotal = useQuery({
+    queryKey: ["students-total"],
+    queryFn: async () => {
+      const raw = (
+        await api.get<StudentDossier[] | PaginatedList<StudentDossier>>(
+          API.students,
+          { params: { limit: 1 } },
+        )
+      ).data;
+      return unwrapList(raw).pagination?.total_count ?? 0;
+    },
+  });
   const enrollments = useQuery({
     queryKey: ["student-enrollments", id],
     queryFn: async () =>
@@ -169,7 +184,13 @@ export default function StudentDetailPage() {
   if (student.isPending) {
     return (
       <div>
-        <PageHeader title="Élève" backTo={ROUTES.students} backLabel="Élèves" />
+        <ListHeader
+          title="Élèves"
+          backTo={ROUTES.students}
+          backLabel="Élèves"
+          count={studentsTotal.data ?? 0}
+          countLabel="élèves"
+        />
         <ListSkeleton label="Chargement du dossier" />
       </div>
     );
@@ -178,7 +199,13 @@ export default function StudentDetailPage() {
   if (student.isError) {
     return (
       <div>
-        <PageHeader title="Élève" backTo={ROUTES.students} backLabel="Élèves" />
+        <ListHeader
+          title="Élèves"
+          backTo={ROUTES.students}
+          backLabel="Élèves"
+          count={studentsTotal.data ?? 0}
+          countLabel="élèves"
+        />
         <ErrorState
           title="Impossible de charger ce dossier"
           message={getErrorMessage(student.error)}
@@ -217,20 +244,26 @@ export default function StudentDetailPage() {
     userId: dossier.userId,
   };
 
+  const editButton = canEdit ? (
+    <Button
+      variant="tag"
+      fullWidth={false}
+      title="Modifier"
+      onClick={() => setEditOpen(true)}
+    >
+      Modifier
+    </Button>
+  ) : undefined;
+
   return (
     <div>
-      <PageHeader
-        title={fullName}
-        description={dossier.matricule ? `Matricule ${dossier.matricule}` : undefined}
+      <ListHeader
+        title="Élèves"
         backTo={ROUTES.students}
         backLabel="Élèves"
-        actions={
-          canEdit ? (
-            <Button fullWidth={false} onClick={() => setEditOpen(true)}>
-              Modifier
-            </Button>
-          ) : undefined
-        }
+        count={studentsTotal.data ?? 0}
+        countLabel="élèves"
+        extra={editButton}
       />
 
       <Modal.Root
@@ -255,7 +288,11 @@ export default function StudentDetailPage() {
         )}
       </Modal.Root>
 
-      <div className="flex flex-col gap-p8 pb-p10">
+      <DetailContainer>
+        <h2 className="font-semibold text-sb24 leading-9 text-(--skools-text-primary)">
+          {fullName}
+        </h2>
+
         <DetailSection title="Dossier">
           <DetailFields fields={dossierFields} />
         </DetailSection>
@@ -381,7 +418,7 @@ export default function StudentDetailPage() {
             />
           )}
         </DetailSection>
-      </div>
+      </DetailContainer>
     </div>
   );
 }

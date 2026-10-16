@@ -3,15 +3,17 @@ import { useQuery } from "@tanstack/react-query";
 import api, { getErrorMessage } from "../../lib/api";
 import { API, apiPath } from "../../lib/api-endpoints";
 import { ROUTES } from "../../lib/routes";
-import { PageHeader } from "../../layouts/PageHeader";
 import { EmptyState, ErrorState } from "../../components/ui/empty-state";
+import { ListHeader } from "../../components/data-list/ListHeader";
 import { ListSkeleton } from "../../components/data-list/ListSkeleton";
 import {
+  DetailContainer,
   DetailFields,
   DetailRow,
   DetailSection,
   HairlineList,
 } from "../../components/detail/DetailSection";
+import { unwrapList, type PaginatedList } from "../../hooks/use-crud";
 
 interface TeacherDossier {
   id: string;
@@ -48,6 +50,19 @@ export default function TeacherDetailPage() {
       (await api.get<TeacherDossier>(apiPath.withId(API.teachers, id!))).data,
     enabled: !!id,
   });
+  // Total pour le compteur du header (langage liste).
+  const teachersTotal = useQuery({
+    queryKey: ["teachers-total"],
+    queryFn: async () => {
+      const raw = (
+        await api.get<TeacherDossier[] | PaginatedList<TeacherDossier>>(
+          API.teachers,
+          { params: { limit: 1 } },
+        )
+      ).data;
+      return unwrapList(raw).pagination?.total_count ?? 0;
+    },
+  });
   const assignments = useQuery({
     queryKey: ["teacher-assignments", id],
     queryFn: async () =>
@@ -59,7 +74,13 @@ export default function TeacherDetailPage() {
   if (teacher.isPending) {
     return (
       <div>
-        <PageHeader title="Enseignant" backTo={ROUTES.teachers} backLabel="Enseignants" />
+        <ListHeader
+          title="Enseignants"
+          backTo={ROUTES.teachers}
+          backLabel="Enseignants"
+          count={teachersTotal.data ?? 0}
+          countLabel="enseignants"
+        />
         <ListSkeleton label="Chargement du dossier" />
       </div>
     );
@@ -68,7 +89,13 @@ export default function TeacherDetailPage() {
   if (teacher.isError) {
     return (
       <div>
-        <PageHeader title="Enseignant" backTo={ROUTES.teachers} backLabel="Enseignants" />
+        <ListHeader
+          title="Enseignants"
+          backTo={ROUTES.teachers}
+          backLabel="Enseignants"
+          count={teachersTotal.data ?? 0}
+          countLabel="enseignants"
+        />
         <ErrorState
           title="Impossible de charger ce dossier"
           message={getErrorMessage(teacher.error)}
@@ -92,14 +119,19 @@ export default function TeacherDetailPage() {
 
   return (
     <div>
-      <PageHeader
-        title={fullName}
-        description={dossier.specialty ?? undefined}
+      <ListHeader
+        title="Enseignants"
         backTo={ROUTES.teachers}
         backLabel="Enseignants"
+        count={teachersTotal.data ?? 0}
+        countLabel="enseignants"
       />
 
-      <div className="flex flex-col gap-p8 pb-p10">
+      <DetailContainer>
+        <h2 className="font-semibold text-sb24 leading-9 text-(--skools-text-primary)">
+          {fullName}
+        </h2>
+
         <DetailSection title="Dossier">
           <DetailFields fields={dossierFields} />
         </DetailSection>
@@ -125,7 +157,7 @@ export default function TeacherDetailPage() {
             />
           )}
         </DetailSection>
-      </div>
+      </DetailContainer>
     </div>
   );
 }
