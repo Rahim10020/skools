@@ -1,4 +1,4 @@
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { FilterDropdown, type FilterOption } from "./FilterDropdown";
 import { DownloadIcon } from "../icons/DownloadIcon";
 import { TrashIcon } from "../icons/TrashIcon";
@@ -57,9 +57,15 @@ export function ListHeader({
 }) {
   const [search, setSearch] = useState("");
   const debouncedSearch = useDebouncedValue(search, 400);
+  // Ne propage que les changements réels : sans ce garde, un `onSearch`
+  // recréé à chaque rendu refait tourner l'effet en boucle (setState ping-pong).
+  const lastSent = useRef<string | null>(null);
 
   useEffect(() => {
-    onSearch?.(debouncedSearch.trim());
+    const value = debouncedSearch.trim();
+    if (lastSent.current === value) return;
+    lastSent.current = value;
+    onSearch?.(value);
   }, [debouncedSearch, onSearch]);
 
   return (

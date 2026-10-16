@@ -27,13 +27,30 @@ export function useRowSelection() {
     });
   }, []);
 
-  const clear = useCallback(() => setSelected(new Set()), []);
+  const clear = useCallback(
+    () =>
+      setSelected((prev) => (prev.size === 0 ? prev : new Set<string>())),
+    [],
+  );
 
   const has = useCallback((id: string) => selected.has(id), [selected]);
 
   const selectedIds = useMemo(() => [...selected], [selected]);
 
-  return { selected, selectedIds, selectedCount: selected.size, toggle, selectMany, clear, has };
+  // Identité stable entre rendus (sinon les callbacks consommateurs recréés
+  // à chaque passe refont tourner les effets qui en dépendent en boucle).
+  return useMemo(
+    () => ({
+      selected,
+      selectedIds,
+      selectedCount: selected.size,
+      toggle,
+      selectMany,
+      clear,
+      has,
+    }),
+    [selected, selectedIds, toggle, selectMany, clear, has],
+  );
 }
 
 export type RowSelection = ReturnType<typeof useRowSelection>;

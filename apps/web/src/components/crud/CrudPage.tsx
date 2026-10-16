@@ -1,4 +1,10 @@
-import { useCallback, useMemo, useState, type FormEvent, type ReactNode } from "react";
+import {
+  useCallback,
+  useMemo,
+  useState,
+  type FormEvent,
+  type ReactNode,
+} from "react";
 import { useCrudResource, type ListParams } from "../../hooks/use-crud";
 import { getErrorMessage } from "../../lib/api";
 import { PageHeader } from "../../layouts/PageHeader";
@@ -346,6 +352,9 @@ function CrudFormModal({
 const defaultIdOf = <T,>(item: T): string =>
   (item as unknown as { id: string }).id;
 
+/** Défaut stable pour `filters` (un `[]` littéral recréerait `params` à chaque rendu). */
+const NO_FILTERS: CrudFilterDef[] = [];
+
 export function CrudPage<T>({
   title,
   description,
@@ -367,7 +376,7 @@ export function CrudPage<T>({
   idOf = defaultIdOf,
   rowTo,
   pageSize = 10,
-  filters = [],
+  filters = NO_FILTERS,
   statusPill,
   searchPlaceholder,
   csvHeaders,
@@ -438,9 +447,7 @@ export function CrudPage<T>({
   const canExport = !!csvHeaders && !!toCsvRow;
 
   const invertPageSelection = () => {
-    const selectedOnPage = new Set(
-      pageIds.filter((id) => selection.has(id)),
-    );
+    const selectedOnPage = new Set(pageIds.filter((id) => selection.has(id)));
     selection.selectMany(
       pageIds.filter((id) => !selectedOnPage.has(id)),
       true,
