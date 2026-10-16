@@ -6,7 +6,7 @@ import { z } from "zod";
 import { useQuery } from "@tanstack/react-query";
 import { CrudPage } from "../../components/crud/CrudPage";
 import { useAuthStore } from "../../stores/auth-store";
-import type { StatusPillVariant } from "../../components/data-list/StatusPill";
+import { EXAM_PUBLISHED_PILL } from "../../lib/status-meta";
 import api from "../../lib/api";
 import {
   formatDateFr,
@@ -116,9 +116,7 @@ export default function ExamsPage() {
         },
       ]}
       statusPill={(exam) =>
-        exam.isPublished
-          ? { label: "Publié", variant: "success" as StatusPillVariant }
-          : { label: "Brouillon", variant: "neutral" as StatusPillVariant }
+        exam.isPublished ? EXAM_PUBLISHED_PILL.published : EXAM_PUBLISHED_PILL.draft
       }
       columns={[
         { header: "Examen", primary: true, render: (exam) => exam.name },

@@ -1,12 +1,40 @@
+import { useState } from "react";
 import { useParams } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import api, { getErrorMessage } from "../../lib/api";
 import { API, apiPath } from "../../lib/api-endpoints";
+import { KEYS } from "../../lib/query-keys";
 import { ROUTES } from "../../lib/routes";
+import { canManageSchool } from "../../lib/roles";
+import { useAuthStore } from "../../stores/auth-store";
 import { PageHeader } from "../../layouts/PageHeader";
+import { Button } from "../../components/ui/button";
+import { Modal } from "../../components/ui/use-modal";
+import { CrudFormModal } from "../../components/crud/CrudPage";
 import { EmptyState, ErrorState } from "../../components/ui/empty-state";
 import { ListSkeleton } from "../../components/data-list/ListSkeleton";
-import { StatusPill, type StatusPillVariant } from "../../components/data-list/StatusPill";
+import { StatusPill } from "../../components/data-list/StatusPill";
+import { toast } from "../../components/ui/toast";
+import {
+  DetailFields,
+  DetailRow,
+  DetailSection,
+  HairlineList,
+} from "../../components/detail/DetailSection";
+import {
+  fullName as studentFullName,
+  studentFields,
+  studentSchema,
+  studentToDefaults,
+  studentToSubmit,
+  type Student,
+} from "./student-form";
+import {
+  ATTENDANCE_PILL,
+  DISCIPLINE_PILL,
+  ENROLLMENT_PILL,
+  RELATION_LABELS,
+} from "../../lib/status-meta";
 import { formatDateFr } from "../../components/crud/crud-helpers";
 
 interface StudentDossier {
@@ -19,6 +47,7 @@ interface StudentDossier {
   placeOfBirth: string | null;
   phone: string | null;
   address: string | null;
+  userId: string | null;
 }
 
 interface EnrollmentRow {
@@ -71,88 +100,18 @@ interface DisciplineRow {
   incidentDate: string;
 }
 
-const RELATION_LABELS: Record<ParentLink["relation"], string> = {
-  FATHER: "Père",
-  MOTHER: "Mère",
-  GUARDIAN: "Tuteur",
-  OTHER: "Autre",
-};
-
-const ENROLLMENT_PILL: Record<EnrollmentRow["status"], { label: string; variant: StatusPillVariant }> = {
-  PENDING: { label: "En attente", variant: "neutral" },
-  APPROVED: { label: "Approuvée", variant: "success" },
-  REJECTED: { label: "Rejetée", variant: "destructive" },
-  WITHDRAWN: { label: "Retirée", variant: "neutral" },
-};
-
-const ATTENDANCE_PILL: Record<AttendanceRow["status"], { label: string; variant: StatusPillVariant }> = {
-  PRESENT: { label: "Présent", variant: "success" },
-  ABSENT: { label: "Absent", variant: "destructive" },
-  LATE: { label: "Retard", variant: "neutral" },
-  EXCUSED: { label: "Excusé", variant: "default" },
-};
-
-const DISCIPLINE_PILL: Record<DisciplineRow["status"], { label: string; variant: StatusPillVariant }> = {
-  PENDING: { label: "En attente", variant: "neutral" },
-  ACTIVE: { label: "En cours", variant: "default" },
-  RESOLVED: { label: "Résolue", variant: "success" },
-  CANCELLED: { label: "Annulée", variant: "neutral" },
-};
-
 function genderLabel(gender: string | null) {
   if (gender === "M") return "Masculin";
   if (gender === "F") return "Féminin";
   return gender || "—";
 }
 
-function Section({
-  title,
-  count,
-  children,
-}: {
-  title: string;
-  count?: number;
-  children: React.ReactNode;
-}) {
-  return (
-    <section className="flex flex-col gap-p3">
-      <h2 className="text-sb18 text-(--skools-text-primary)">
-        {title}
-        {count !== undefined && (
-          <span className="ml-p2 text-r14 font-normal text-(--skools-text-muted)">
-            ({count})
-          </span>
-        )}
-      </h2>
-      {children}
-    </section>
-  );
-}
-
-function Row({
-  primary,
-  secondary,
-  right,
-}: {
-  primary: React.ReactNode;
-  secondary?: React.ReactNode;
-  right?: React.ReactNode;
-}) {
-  return (
-    <div className="grid grid-cols-[minmax(0,1fr)_max-content] items-center gap-p3 py-p2">
-      <div className="min-w-0">
-        <p className="truncate text-r14 text-(--skools-text-primary)">{primary}</p>
-        {secondary && (
-          <p className="truncate text-r12 text-(--skools-text-muted)">{secondary}</p>
-        )}
-      </div>
-      {right && <div className="flex items-center gap-p2">{right}</div>}
-    </div>
-  );
-}
-
 export default function StudentDetailPage() {
   const { id } = useParams<{ id: string }>();
+  const queryClient = useQueryClient();
+  const role = useAuthStore((state) => state.role);
+  const canEdit = canManageSchool(role);
+  const [editOpen, setEditOpen] = useState(false);
 
   const student = useQuery({
     queryKey: ["student", id],
@@ -192,6 +151,21 @@ export default function StudentDetailPage() {
     enabled: !!id && student.isSuccess,
   });
 
+  const updateMutation = useMutation({
+    mutationFn: async (data: Record<string, unknown>) =>
+      (await api.patch(apiPath.withId(API.students, id!), data)).data,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["student", id] });
+      queryClient.invalidateQueries({ queryKey: KEYS.students });
+      toast.success("Modifications enregistrées");
+      setEditOpen(false);
+    },
+    onError: (error) => toast.error(getErrorMessage(error)),
+  });
+
+  const handleUpdate = (values: Record<string, string>) =>
+    updateMutation.mutateAsync(studentToSubmit(values));
+
   if (student.isPending) {
     return (
       <div>
@@ -230,6 +204,19 @@ export default function StudentDetailPage() {
     ["Adresse", dossier.address || "—"],
   ];
 
+  const dossierForForm: Student = {
+    id: dossier.id,
+    firstName: dossier.firstName,
+    lastName: dossier.lastName,
+    matricule: dossier.matricule,
+    gender: dossier.gender,
+    dateOfBirth: dossier.dateOfBirth,
+    placeOfBirth: dossier.placeOfBirth,
+    phone: dossier.phone,
+    address: dossier.address,
+    userId: dossier.userId,
+  };
+
   return (
     <div>
       <PageHeader
@@ -237,106 +224,113 @@ export default function StudentDetailPage() {
         description={dossier.matricule ? `Matricule ${dossier.matricule}` : undefined}
         backTo={ROUTES.students}
         backLabel="Élèves"
+        actions={
+          canEdit ? (
+            <Button fullWidth={false} onClick={() => setEditOpen(true)}>
+              Modifier
+            </Button>
+          ) : undefined
+        }
       />
 
-      <div className="flex flex-col gap-p8 pb-p10">
-        <Section title="Dossier">
-          <dl className="grid grid-cols-1 md:grid-cols-2 gap-x-p6">
-            {dossierFields.map(([label, value]) => (
-              <div
-                key={label}
-                className="flex items-baseline justify-between gap-p3 py-p2 border-t-[0.4px] border-(--skools-border-subtle)"
-              >
-                <dt className="text-r12 text-(--skools-text-muted)">{label}</dt>
-                <dd className="text-r14 text-(--skools-text-primary) text-right">{value}</dd>
-              </div>
-            ))}
-          </dl>
-        </Section>
+      <Modal.Root
+        open={editOpen}
+        onOpenChange={(open) => {
+          if (!open) setEditOpen(false);
+        }}
+      >
+        {editOpen && (
+          <Modal.Content labelledBy="crud-form-title">
+            <CrudFormModal
+              key={dossier.id}
+              title={`Modifier ${studentFullName(dossierForForm)}`}
+              submitLabel="Enregistrer"
+              fields={studentFields}
+              schema={studentSchema}
+              defaults={studentToDefaults(dossierForForm)}
+              pending={updateMutation.isPending}
+              onSubmit={handleUpdate}
+            />
+          </Modal.Content>
+        )}
+      </Modal.Root>
 
-        <Section title="Inscriptions" count={enrollments.data?.length ?? 0}>
+      <div className="flex flex-col gap-p8 pb-p10">
+        <DetailSection title="Dossier">
+          <DetailFields fields={dossierFields} />
+        </DetailSection>
+
+        <DetailSection title="Inscriptions" count={enrollments.data?.length ?? 0}>
           {enrollments.isPending ? (
             <ListSkeleton label="Chargement des inscriptions" rows={2} />
           ) : (enrollments.data ?? []).length === 0 ? (
             <EmptyState title="Aucune inscription" description="Cet élève n'est inscrit dans aucune classe pour le moment." />
           ) : (
-            <div className="flex flex-col">
-              {(enrollments.data ?? []).map((row, idx, arr) => {
+            <HairlineList
+              items={enrollments.data ?? []}
+              idOf={(row) => row.id}
+              render={(row) => {
                 const meta = ENROLLMENT_PILL[row.status];
                 return (
-                  <div key={row.id} className="flex flex-col">
-                    <Row
-                      primary={row.classroom.name}
-                      secondary={row.academicYear.name}
-                      right={<StatusPill label={meta.label} variant={meta.variant} />}
-                    />
-                    {idx < arr.length - 1 && (
-                      <hr className="border-t-[0.4px] border-(--skools-border-subtle) w-full" />
-                    )}
-                  </div>
+                  <DetailRow
+                    primary={row.classroom.name}
+                    secondary={row.academicYear.name}
+                    right={<StatusPill label={meta.label} variant={meta.variant} />}
+                  />
                 );
-              })}
-            </div>
+              }}
+            />
           )}
-        </Section>
+        </DetailSection>
 
-        <Section title="Parents" count={parents.data?.length ?? 0}>
+        <DetailSection title="Parents" count={parents.data?.length ?? 0}>
           {parents.isPending ? (
             <ListSkeleton label="Chargement des parents" rows={2} />
           ) : (parents.data ?? []).length === 0 ? (
             <EmptyState title="Aucun parent lié" description="Utilisez « Lier parents » pour rattacher un parent à cet élève." />
           ) : (
-            <div className="flex flex-col">
-              {(parents.data ?? []).map((link, idx, arr) => (
-                <div key={link.id} className="flex flex-col">
-                  <Row
-                    primary={`${link.parent.lastName} ${link.parent.firstName}`}
-                    secondary={`${RELATION_LABELS[link.relation]}${link.isPrimary ? " • Contact principal" : ""}${link.parent.phone ? ` • ${link.parent.phone}` : ""}`}
-                  />
-                  {idx < arr.length - 1 && (
-                    <hr className="border-t-[0.4px] border-(--skools-border-subtle) w-full" />
-                  )}
-                </div>
-              ))}
-            </div>
+            <HairlineList
+              items={parents.data ?? []}
+              idOf={(link) => link.id}
+              render={(link) => (
+                <DetailRow
+                  primary={`${link.parent.lastName} ${link.parent.firstName}`}
+                  secondary={`${RELATION_LABELS[link.relation]}${link.isPrimary ? " • Contact principal" : ""}${link.parent.phone ? ` • ${link.parent.phone}` : ""}`}
+                />
+              )}
+            />
           )}
-        </Section>
+        </DetailSection>
 
-        <Section title="Dernières notes" count={grades.data?.length ?? 0}>
+        <DetailSection title="Dernières notes" count={grades.data?.length ?? 0}>
           {grades.isPending ? (
             <ListSkeleton label="Chargement des notes" rows={3} />
           ) : (grades.data ?? []).length === 0 ? (
             <EmptyState title="Aucune note" description="Aucune note saisie pour cet élève." />
           ) : (
-            <div className="flex flex-col">
-              {(grades.data ?? []).slice(0, 8).map((grade, idx, arr) => {
-                const shown = arr.slice(0, 8);
-                return (
-                  <div key={grade.id} className="flex flex-col">
-                    <Row
-                      primary={`${grade.exam.subject.name} — ${grade.exam.name}`}
-                      secondary={formatDateFr(grade.exam.examDate)}
-                      right={
-                        grade.isAbsent ? (
-                          <StatusPill label="Absent" variant="destructive" />
-                        ) : (
-                          <span className="text-r14 font-medium text-(--skools-text-primary)">
-                            {grade.score} / {grade.exam.maxScore}
-                          </span>
-                        )
-                      }
-                    />
-                    {idx < shown.length - 1 && (
-                      <hr className="border-t-[0.4px] border-(--skools-border-subtle) w-full" />
-                    )}
-                  </div>
-                );
-              })}
-            </div>
+            <HairlineList
+              items={(grades.data ?? []).slice(0, 8)}
+              idOf={(grade) => grade.id}
+              render={(grade) => (
+                <DetailRow
+                  primary={`${grade.exam.subject.name} — ${grade.exam.name}`}
+                  secondary={formatDateFr(grade.exam.examDate)}
+                  right={
+                    grade.isAbsent ? (
+                      <StatusPill label="Absent" variant="destructive" />
+                    ) : (
+                      <span className="text-r14 font-medium text-(--skools-text-primary)">
+                        {grade.score} / {grade.exam.maxScore}
+                      </span>
+                    )
+                  }
+                />
+              )}
+            />
           )}
-        </Section>
+        </DetailSection>
 
-        <Section title="Présences" count={attendances.data?.length ?? 0}>
+        <DetailSection title="Présences" count={attendances.data?.length ?? 0}>
           {attendances.isPending ? (
             <ListSkeleton label="Chargement des présences" rows={3} />
           ) : (attendances.data ?? []).length === 0 ? (
@@ -347,53 +341,46 @@ export default function StudentDetailPage() {
                 {attendanceCounts.PRESENT ?? 0} présent(s) • {attendanceCounts.ABSENT ?? 0} absent(s) •{" "}
                 {attendanceCounts.LATE ?? 0} retard(s) • {attendanceCounts.EXCUSED ?? 0} excusé(s)
               </p>
-              <div className="flex flex-col">
-                {(attendances.data ?? []).slice(0, 5).map((row, idx, arr) => {
-                  const shown = arr.slice(0, 5);
+              <HairlineList
+                items={(attendances.data ?? []).slice(0, 5)}
+                idOf={(row) => row.id}
+                render={(row) => {
                   const meta = ATTENDANCE_PILL[row.status];
                   return (
-                    <div key={row.id} className="flex flex-col">
-                      <Row
-                        primary={formatDateFr(row.date)}
-                        secondary={row.classroom.name}
-                        right={<StatusPill label={meta.label} variant={meta.variant} />}
-                      />
-                      {idx < shown.length - 1 && (
-                        <hr className="border-t-[0.4px] border-(--skools-border-subtle) w-full" />
-                      )}
-                    </div>
+                    <DetailRow
+                      primary={formatDateFr(row.date)}
+                      secondary={row.classroom.name}
+                      right={<StatusPill label={meta.label} variant={meta.variant} />}
+                    />
                   );
-                })}
-              </div>
+                }}
+              />
             </div>
           )}
-        </Section>
+        </DetailSection>
 
-        <Section title="Discipline" count={discipline.data?.length ?? 0}>
+        <DetailSection title="Discipline" count={discipline.data?.length ?? 0}>
           {discipline.isPending ? (
             <ListSkeleton label="Chargement des fiches" rows={2} />
           ) : (discipline.data ?? []).length === 0 ? (
             <EmptyState title="Rien à signaler" description="Aucune fiche disciplinaire pour cet élève." />
           ) : (
-            <div className="flex flex-col">
-              {(discipline.data ?? []).map((row, idx, arr) => {
+            <HairlineList
+              items={discipline.data ?? []}
+              idOf={(row) => row.id}
+              render={(row) => {
                 const meta = DISCIPLINE_PILL[row.status];
                 return (
-                  <div key={row.id} className="flex flex-col">
-                    <Row
-                      primary={row.title}
-                      secondary={formatDateFr(row.incidentDate)}
-                      right={<StatusPill label={meta.label} variant={meta.variant} />}
-                    />
-                    {idx < arr.length - 1 && (
-                      <hr className="border-t-[0.4px] border-(--skools-border-subtle) w-full" />
-                    )}
-                  </div>
+                  <DetailRow
+                    primary={row.title}
+                    secondary={formatDateFr(row.incidentDate)}
+                    right={<StatusPill label={meta.label} variant={meta.variant} />}
+                  />
                 );
-              })}
-            </div>
+              }}
+            />
           )}
-        </Section>
+        </DetailSection>
       </div>
     </div>
   );

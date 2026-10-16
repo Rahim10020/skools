@@ -4,11 +4,12 @@ import { KEYS } from "../../lib/query-keys";
 import { z } from "zod";
 import { useQuery } from "@tanstack/react-query";
 import { CrudPage } from "../../components/crud/CrudPage";
-import type { StatusPillVariant } from "../../components/data-list/StatusPill";
+import {
+  ENROLLMENT_PILL as STATUS_META,
+  type EnrollmentStatus,
+} from "../../lib/status-meta";
 import api from "../../lib/api";
 import { omitEmptyStrings } from "../../components/crud/crud-helpers";
-
-type EnrollmentStatus = "PENDING" | "APPROVED" | "REJECTED" | "WITHDRAWN";
 
 interface Enrollment {
   id: string;
@@ -26,16 +27,6 @@ interface Enrollment {
   classroom: { id: string; name: string };
   academicYear: { id: string; name: string };
 }
-
-const STATUS_META: Record<
-  EnrollmentStatus,
-  { label: string; variant: StatusPillVariant }
-> = {
-  PENDING: { label: "En attente", variant: "neutral" },
-  APPROVED: { label: "Approuvée", variant: "success" },
-  REJECTED: { label: "Rejetée", variant: "destructive" },
-  WITHDRAWN: { label: "Retirée", variant: "neutral" },
-};
 
 const schema = z.object({
   studentId: z.string().min(1, "Élève requis"),

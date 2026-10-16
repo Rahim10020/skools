@@ -10,27 +10,18 @@ import { PageHeader } from "../../layouts/PageHeader";
 import { Button } from "../../components/ui/button";
 import { Card } from "../../components/ui/card";
 import { DataList } from "../../components/data-list/DataList";
-import {
-  StatusPill,
-  type StatusPillVariant,
-} from "../../components/data-list/StatusPill";
+import { StatusPill } from "../../components/data-list/StatusPill";
 import { Select } from "../../components/ui/select";
 import { Input } from "../../components/ui/input";
 import { EmptyState, ErrorState } from "../../components/ui/empty-state";
 import { Skeleton } from "../../components/ui/skeleton";
 import { toast } from "../../components/ui/toast";
 import {
+  ATTENDANCE_PILL,
   ATTENDANCE_STATUS_META as STATUS_META,
   ATTENDANCE_STATUSES as STATUSES,
   type AttendanceStatus,
-} from "./status-meta";
-
-const ATTENDANCE_PILL: Record<AttendanceStatus, StatusPillVariant> = {
-  PRESENT: "success",
-  ABSENT: "destructive",
-  LATE: "neutral",
-  EXCUSED: "default",
-};
+} from "../../lib/status-meta";
 
 interface ExistingAttendance {
   studentId: string;
@@ -69,8 +60,7 @@ export default function AttendancesPage() {
 
   const classroomsQuery = useQuery({
     queryKey: KEYS.classrooms,
-    queryFn: async () =>
-      (await api.get<IdName[]>(API.classrooms)).data,
+    queryFn: async () => (await api.get<IdName[]>(API.classrooms)).data,
     // Enseignant : classes issues de /teacher-assignments/me (403 sur /classrooms).
     enabled: !isTeacher,
   });
@@ -234,9 +224,7 @@ export default function AttendancesPage() {
                     key={status}
                     label={`${STATUS_META[status].label} : ${count}`}
                     variant={
-                      (count > 0
-                        ? ATTENDANCE_PILL[status]
-                        : "neutral") as StatusPillVariant
+                      count > 0 ? ATTENDANCE_PILL[status].variant : "neutral"
                     }
                   />
                 ))}
@@ -266,8 +254,7 @@ export default function AttendancesPage() {
                           onChange={(e) =>
                             setStatuses((prev) => ({
                               ...prev,
-                              [student.id]: e.target
-                                .value as AttendanceStatus,
+                              [student.id]: e.target.value as AttendanceStatus,
                             }))
                           }
                           disabled={readOnly || saveMutation.isPending}

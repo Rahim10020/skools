@@ -1,6 +1,7 @@
 import { canManageSchool } from "../../lib/roles";
 import { API } from "../../lib/api-endpoints";
 import { KEYS } from "../../lib/query-keys";
+import { ROUTES } from "../../lib/routes";
 import { z } from "zod";
 import { CrudPage } from "../../components/crud/CrudPage";
 import { useAuthStore } from "../../stores/auth-store";
@@ -50,6 +51,7 @@ export default function TeachersPage() {
       createLabel="Nouvel enseignant"
       queryKey={KEYS.teachers}
       endpoint={API.teachers}
+      rowTo={(teacher) => `${ROUTES.teachers}/${teacher.id}`}
       searchPlaceholder="Rechercher un enseignant…"
       columns={[
         { header: "Enseignant", primary: true, render: fullName },

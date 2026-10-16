@@ -1,14 +1,8 @@
 import type { SelectOption } from "../../components/ui/select";
+import { RELATION_LABELS, type ParentRelation } from "../../lib/status-meta";
 
-/** Lien parent ↔ élève (miroir de ParentRelation côté API). */
-export type ParentRelation = "FATHER" | "MOTHER" | "GUARDIAN" | "OTHER";
-
-export const RELATION_LABELS: Record<ParentRelation, string> = {
-  FATHER: "Père",
-  MOTHER: "Mère",
-  GUARDIAN: "Tuteur",
-  OTHER: "Autre",
-};
+export type { ParentRelation };
+export { RELATION_LABELS };
 
 /** Options de select dérivées des labels (source unique). */
 export const RELATION_OPTIONS: SelectOption[] = (

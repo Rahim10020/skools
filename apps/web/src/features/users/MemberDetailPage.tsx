@@ -1,13 +1,18 @@
+import { useState } from "react";
 import { useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import api, { getErrorMessage } from "../../lib/api";
 import { API } from "../../lib/api-endpoints";
 import { ROUTES } from "../../lib/routes";
 import { roleLabel } from "../../lib/permissions";
+import { useAuthStore } from "../../stores/auth-store";
 import { PageHeader } from "../../layouts/PageHeader";
+import { Button } from "../../components/ui/button";
 import { EmptyState, ErrorState } from "../../components/ui/empty-state";
 import { ListSkeleton } from "../../components/data-list/ListSkeleton";
 import { StatusPill } from "../../components/data-list/StatusPill";
+import { DetailFields } from "../../components/detail/DetailSection";
+import { EditMemberRoleModal } from "./EditMemberRoleModal";
 
 interface Member {
   id: string;
@@ -29,6 +34,8 @@ function formatDateTime(value: string) {
 
 export default function MemberDetailPage() {
   const { id } = useParams<{ id: string }>();
+  const currentUserId = useAuthStore((state) => state.user?.id);
+  const [editOpen, setEditOpen] = useState(false);
 
   // Pas de `GET /:id` côté API : on lit la liste (tableau brut) et on sélectionne.
   const members = useQuery({
@@ -91,25 +98,35 @@ export default function MemberDetailPage() {
     ["Membre depuis", formatDateTime(member.createdAt)],
   ];
 
+  const memberName = `${member.user.lastName} ${member.user.firstName}`;
+  const isSelf = member.user.id === currentUserId;
+
   return (
     <div>
       <PageHeader
-        title={`${member.user.lastName} ${member.user.firstName}`}
+        title={memberName}
         description={member.user.email}
         backTo={ROUTES.users}
         backLabel="Utilisateurs"
+        actions={
+          isSelf ? undefined : (
+            <Button fullWidth={false} onClick={() => setEditOpen(true)}>
+              Modifier le rôle
+            </Button>
+          )
+        }
       />
-      <dl className="grid grid-cols-1 md:grid-cols-2 gap-x-p6 pb-p10">
-        {fields.map(([label, value]) => (
-          <div
-            key={label}
-            className="flex items-center justify-between gap-p3 py-p3 border-t-[0.4px] border-(--skools-border-subtle)"
-          >
-            <dt className="text-r12 text-(--skools-text-muted)">{label}</dt>
-            <dd className="text-r14 text-(--skools-text-primary) text-right">{value}</dd>
-          </div>
-        ))}
-      </dl>
+      <div className="pb-p10">
+        <DetailFields fields={fields} />
+      </div>
+
+      {editOpen && !isSelf && (
+        <EditMemberRoleModal
+          key={member.id}
+          member={{ id: member.id, name: memberName, role: member.role }}
+          onClose={() => setEditOpen(false)}
+        />
+      )}
     </div>
   );
 }

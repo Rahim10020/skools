@@ -30,6 +30,20 @@ function isPaginated<T>(payload: unknown): payload is PaginatedList<T> {
   );
 }
 
+/**
+ * Déballe une réponse liste : enveloppe `{ data, pagination }` ou tableau
+ * brut historique. Source unique (partagée avec les pages custom type UsersPage).
+ */
+export function unwrapList<T>(raw: T[] | PaginatedList<T>): {
+  items: T[];
+  pagination: ListPagination | null;
+} {
+  if (isPaginated<T>(raw)) {
+    return { items: raw.data, pagination: raw.pagination };
+  }
+  return { items: raw, pagination: null };
+}
+
 function toListPath(base: string, params?: ListParams) {
   if (!params) return base;
   const search = new URLSearchParams();
@@ -62,10 +76,7 @@ export function useCrudResource<TList>(
     queryKey: [...queryKey, params ?? null] as readonly unknown[],
     queryFn: async () => {
       const raw = (await api.get<TList[] | PaginatedList<TList>>(toListPath(listPath ?? endpoint, params))).data;
-      if (isPaginated<TList>(raw)) {
-        return { items: raw.data, pagination: raw.pagination };
-      }
-      return { items: raw, pagination: null as ListPagination | null };
+      return unwrapList(raw);
     },
   });
 

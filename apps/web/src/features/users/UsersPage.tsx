@@ -1,11 +1,16 @@
-import { ROLES } from "../../lib/roles";
 import { API, apiPath } from "../../lib/api-endpoints";
 import { KEYS } from "../../lib/query-keys";
 import { ROUTES } from "../../lib/routes";
 import { useCallback, useMemo, useState, type FormEvent } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+  unwrapList,
+  type PaginatedList,
+} from "../../hooks/use-crud";
 import api, { getErrorMessage } from "../../lib/api";
-import { ROLE_LABELS_FR, roleLabel } from "../../lib/permissions";
+import { roleLabel } from "../../lib/permissions";
+import { ASSIGNABLE_ROLES } from "./member-roles";
+import { EditMemberRoleModal } from "./EditMemberRoleModal";
 import { useAuthStore } from "../../stores/auth-store";
 import { Button } from "../../components/ui/button";
 import { Input } from "../../components/ui/input";
@@ -32,11 +37,6 @@ interface Member {
   user: { id: string; email: string; firstName: string; lastName: string };
 }
 
-/** Rôles attribuables par un DIRECTOR (matrice : tout sauf SUPER_ADMIN). */
-const ASSIGNABLE_ROLES = Object.keys(ROLE_LABELS_FR)
-  .filter((role) => role !== ROLES.SUPER_ADMIN)
-  .map((role) => ({ label: ROLE_LABELS_FR[role], value: role }));
-
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 const memberName = (member: Member) =>
@@ -50,8 +50,6 @@ export default function UsersPage() {
   const [role, setRole] = useState("");
   const [formError, setFormError] = useState<string | null>(null);
   const [editing, setEditing] = useState<Member | null>(null);
-  const [editRole, setEditRole] = useState("");
-  const [editError, setEditError] = useState<string | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<Member | null>(null);
   const [bulkConfirmOpen, setBulkConfirmOpen] = useState(false);
   const [bulkPending, setBulkPending] = useState(false);
@@ -73,25 +71,16 @@ export default function UsersPage() {
     queryKey: [...KEYS.members, memberParams],
     queryFn: async () => {
       const raw = (
-        await api.get<
-          | Member[]
-          | {
-              data: Member[];
-              pagination: {
-                total_count: number;
-                page: number;
-                total_pages: number;
-              };
-            }
-        >(`${API.userEstablishments}?${memberParams}`)
+        await api.get<Member[] | PaginatedList<Member>>(
+          `${API.userEstablishments}?${memberParams}`,
+        )
       ).data;
-      if (Array.isArray(raw))
-        return { items: raw, total: raw.length, totalPages: 1, serverPage: 1 };
+      const { items, pagination } = unwrapList(raw);
       return {
-        items: raw.data,
-        total: raw.pagination.total_count,
-        totalPages: Math.max(raw.pagination.total_pages, 1),
-        serverPage: raw.pagination.page,
+        items,
+        total: pagination?.total_count ?? items.length,
+        totalPages: Math.max(pagination?.total_pages ?? 1, 1),
+        serverPage: pagination?.page ?? 1,
       };
     },
   });
@@ -121,15 +110,6 @@ export default function UsersPage() {
     mutationFn: async () =>
       (await api.post(API.userEstablishments, { email: email.trim(), role }))
         .data,
-  });
-
-  const editMutation = useMutation({
-    mutationFn: async () =>
-      (
-        await api.patch(apiPath.withId(API.userEstablishments, editing!.id), {
-          role: editRole,
-        })
-      ).data,
   });
 
   const deleteMutation = useMutation({
@@ -162,25 +142,6 @@ export default function UsersPage() {
 
   const openEdit = (member: Member) => {
     setEditing(member);
-    setEditRole(member.role);
-    setEditError(null);
-  };
-
-  const handleEdit = async (event: FormEvent) => {
-    event.preventDefault();
-    if (!editRole) {
-      setEditError("Choisissez un rôle");
-      return;
-    }
-    setEditError(null);
-    try {
-      await editMutation.mutateAsync();
-      invalidate();
-      toast.success("Rôle modifié avec succès");
-      setEditing(null);
-    } catch (error) {
-      setEditError(getErrorMessage(error));
-    }
   };
 
   const handleDelete = async () => {
@@ -435,63 +396,18 @@ export default function UsersPage() {
         )}
       </Modal.Root>
 
-      {/* Changement de rôle */}
-      <Modal.Root
-        open={editing !== null}
-        onOpenChange={(open) => !open && setEditing(null)}
-      >
-        {editing && (
-          <Modal.Content labelledBy="users-edit-title">
-            <Modal.Header>
-              <Modal.Title id="users-edit-title">
-                Modifier le rôle de {memberName(editing)}
-              </Modal.Title>
-            </Modal.Header>
-            <Modal.Body>
-              <form
-                id="users-edit-form"
-                onSubmit={handleEdit}
-                className="flex flex-col gap-p4"
-                noValidate
-              >
-                <div className="flex flex-col gap-p1">
-                  <span className="text-m12 text-(--skools-text-primary)">
-                    Rôle
-                  </span>
-                  <Select
-                    label="Choisir un rôle"
-                    options={ASSIGNABLE_ROLES}
-                    value={editRole}
-                    onChange={setEditRole}
-                    disableSearch
-                  />
-                </div>
-                {editError && (
-                  <p role="alert" className="text-r14 text-(--common-red)">
-                    {editError}
-                  </p>
-                )}
-              </form>
-            </Modal.Body>
-            <Modal.Footer>
-              <Modal.Close>
-                <Button variant="secondary" fullWidth={false}>
-                  Annuler
-                </Button>
-              </Modal.Close>
-              <Button
-                fullWidth={false}
-                type="submit"
-                form="users-edit-form"
-                variant={editMutation.isPending ? "loading" : "primary"}
-                disabled={editMutation.isPending}
-              >
-                Enregistrer
-              </Button>
-            </Modal.Footer>
-          </Modal.Content>
-        )}
-      </Modal.Root>
+      {/* Changement de rôle (modal partagé avec la page détail) */}
+      {editing && (
+        <EditMemberRoleModal
+          key={editing.id}
+          member={{
+            id: editing.id,
+            name: memberName(editing),
+            role: editing.role,
+          }}
+          onClose={() => setEditing(null)}
+        />
+      )}
 
       {/* Retrait */}
       <Modal.Root

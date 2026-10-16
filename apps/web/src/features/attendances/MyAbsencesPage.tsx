@@ -10,20 +10,14 @@ import { useEffectiveChildId, useMyChildren } from "../../lib/my-children";
 import { formatDateFr } from "../../components/crud/crud-helpers";
 import { PageHeader } from "../../layouts/PageHeader";
 import { DataList } from "../../components/data-list/DataList";
-import {
-  StatusPill,
-  type StatusPillVariant,
-} from "../../components/data-list/StatusPill";
+import { StatusPill } from "../../components/data-list/StatusPill";
 import { EmptyState, ErrorState } from "../../components/ui/empty-state";
 import { Skeleton } from "../../components/ui/skeleton";
-import { ATTENDANCE_STATUS_META, type AttendanceStatus } from "./status-meta";
-
-const ATTENDANCE_PILL: Record<AttendanceStatus, StatusPillVariant> = {
-  PRESENT: "success",
-  ABSENT: "destructive",
-  LATE: "neutral",
-  EXCUSED: "default",
-};
+import {
+  ATTENDANCE_PILL,
+  ATTENDANCE_STATUS_META,
+  type AttendanceStatus,
+} from "../../lib/status-meta";
 
 interface AttendanceHistoryItem {
   id: string;
@@ -116,7 +110,9 @@ export default function MyAbsencesPage() {
               <StatusPill
                 key={status}
                 label={`${ATTENDANCE_STATUS_META[status].label} : ${count}`}
-                variant={count > 0 ? ATTENDANCE_PILL[status] : "neutral"}
+                variant={
+                  count > 0 ? ATTENDANCE_PILL[status].variant : "neutral"
+                }
               />
             ))}
           </div>
@@ -136,10 +132,7 @@ export default function MyAbsencesPage() {
             ]}
             idOf={(item) => item.id}
             nameOf={(item) => formatDateFr(item.date)}
-            statusPill={(item) => ({
-              label: ATTENDANCE_STATUS_META[item.status].label,
-              variant: ATTENDANCE_PILL[item.status],
-            })}
+            statusPill={(item) => ATTENDANCE_PILL[item.status]}
             readOnly
           />
         </div>

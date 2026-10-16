@@ -23,6 +23,9 @@ const AcademicYearsPage = lazy(
 const ClassroomsPage = lazy(
   () => import("../features/academic/ClassroomsPage"),
 );
+const ClassroomDetailPage = lazy(
+  () => import("../features/academic/ClassroomDetailPage"),
+);
 const CyclesPage = lazy(() => import("../features/academic/CyclesPage"));
 const LevelsPage = lazy(() => import("../features/academic/LevelsPage"));
 const SeriesPage = lazy(() => import("../features/academic/SeriesPage"));
@@ -33,6 +36,9 @@ const StudentDetailPage = lazy(
   () => import("../features/students/StudentDetailPage"),
 );
 const TeachersPage = lazy(() => import("../features/teachers/TeachersPage"));
+const TeacherDetailPage = lazy(
+  () => import("../features/teachers/TeacherDetailPage"),
+);
 const ParentsPage = lazy(() => import("../features/parents/ParentsPage"));
 const EnrollmentsPage = lazy(
   () => import("../features/enrollments/EnrollmentsPage"),
@@ -123,6 +129,10 @@ export function AppRoutes() {
                     path={ROUTES.classrooms}
                     element={<ClassroomsPage />}
                   />
+                  <Route
+                    path={ROUTES.classroomDetails}
+                    element={<ClassroomDetailPage />}
+                  />
                   <Route path={ROUTES.cycles} element={<CyclesPage />} />
                   <Route path={ROUTES.levels} element={<LevelsPage />} />
                   <Route path={ROUTES.series} element={<SeriesPage />} />
@@ -134,6 +144,10 @@ export function AppRoutes() {
                     element={<StudentDetailPage />}
                   />
                   <Route path={ROUTES.teachers} element={<TeachersPage />} />
+                  <Route
+                    path={ROUTES.teacherDetails}
+                    element={<TeacherDetailPage />}
+                  />
                   <Route path={ROUTES.parents} element={<ParentsPage />} />
                   <Route
                     path={ROUTES.enrollments}

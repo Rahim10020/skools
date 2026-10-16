@@ -136,7 +136,7 @@ function FieldShell({
   );
 }
 
-function CrudFormModal({
+export function CrudFormModal({
   title,
   submitLabel,
   fields,

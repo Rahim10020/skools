@@ -2,6 +2,7 @@ import type { IdName } from "../../types/api";
 import { ROLES } from "../../lib/roles";
 import { API } from "../../lib/api-endpoints";
 import { KEYS } from "../../lib/query-keys";
+import { ROUTES } from "../../lib/routes";
 import { z } from "zod";
 import { useQuery } from "@tanstack/react-query";
 import { CrudPage } from "../../components/crud/CrudPage";
@@ -62,6 +63,7 @@ export default function ClassroomsPage() {
       queryKey={KEYS.classrooms}
       endpoint={API.classrooms}
       pageSize={10}
+      rowTo={(classroom) => `${ROUTES.classrooms}/${classroom.id}`}
       searchPlaceholder="Rechercher une classe…"
       filters={[
         {
@@ -84,7 +86,13 @@ export default function ClassroomsPage() {
         },
       ]}
       csvFilename="classes"
-      csvHeaders={["Classe", "Année scolaire", "Niveau", "Série", "Effectif max"]}
+      csvHeaders={[
+        "Classe",
+        "Année scolaire",
+        "Niveau",
+        "Série",
+        "Effectif max",
+      ]}
       toCsvRow={(classroom) => [
         classroom.name,
         classroom.academicYear.name,
