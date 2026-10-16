@@ -60,20 +60,29 @@ export function DataList<T>({
   const editLabel = actionLabels?.edit ?? "Modifier";
   const removeLabel = actionLabels?.remove ?? "Supprimer";
   const showActions = !readOnly && (onEdit || onDelete);
+  // Grille maîtresse : `subgrid` sur l'en-tête et les lignes garantit
+  // que les titres tombent exactement au début de chaque colonne,
+  // même quand la colonne finale (`max-content`) varie selon les lignes.
+  // Piste checkbox à 40px : contient le HeaderSelect sans débordement.
   const template = [
-    selection ? "24px" : null,
+    selection ? "40px" : null,
     ...columns.map(() => "minmax(0,1fr)"),
     "max-content",
   ]
     .filter(Boolean)
     .join(" ");
+  const subgridRow =
+    "grid items-center gap-p3 [grid-column:1/-1] [grid-template-columns:subgrid]";
 
   return (
-    <div className="w-full flex flex-col">
+    <div
+      role="table"
+      className="w-full grid"
+      style={{ gridTemplateColumns: template }}
+    >
       <div
         role="row"
-        className="grid items-center gap-p3 text-xs text-(--skools-text-muted) mb-p2"
-        style={{ gridTemplateColumns: template }}
+        className={`${subgridRow} text-xs text-(--skools-text-muted) mb-p2`}
       >
         {selection && <span>{selection.header ?? null}</span>}
         {columns.map((column) => (
@@ -96,142 +105,133 @@ export function DataList<T>({
         const pill = statusPill?.(item) ?? null;
         const noActions = hideActionsFor?.(item) ?? false;
         return (
-          <div key={id} className="flex flex-col">
-            <div
-              role="row"
-              className={cx(
-                "group grid items-center gap-p3 py-p3",
-                checked && "bg-(--skools-interactive-active-bg)/40 rounded-r1",
-              )}
-              style={{ gridTemplateColumns: template }}
-            >
-              {selection && (
-                <span
-                  className={cx(
-                    "transition-opacity",
-                    checked
-                      ? "opacity-100"
-                      : "opacity-0 group-hover:opacity-100 focus-within:opacity-100",
-                  )}
-                >
-                  <Checkbox
-                    checked={checked}
-                    onChange={() => selection.toggle(id)}
-                    aria-label={`Sélectionner ${name}`}
-                  />
-                </span>
-              )}
-              {columns.map((column) => (
-                <div
-                  key={column.header}
-                  role="cell"
-                  className={cx(
-                    "min-w-0 text-r14",
-                    column.primary
-                      ? "text-(--skools-text-primary) font-medium"
-                      : "text-(--skools-text-muted) hidden md:block",
-                    column.className,
-                  )}
-                >
-                  {column.primary && rowTo ? (
-                    <Link
-                      to={rowTo(item)}
-                      className="block truncate hover:underline cursor-pointer"
-                    >
-                      {column.render(item)}
-                    </Link>
-                  ) : (
-                    <span className="block truncate">
-                      {column.render(item)}
-                    </span>
-                  )}
-                </div>
-              ))}
-              <div className="flex items-center justify-end gap-p3 min-w-max">
-                {pill && (
-                  <StatusPill label={pill.label} variant={pill.variant} />
+          <div
+            key={id}
+            role="row"
+            className={cx(
+              `group ${subgridRow} py-p3`,
+              checked && "bg-(--skools-interactive-active-bg)/40 rounded-r1",
+              idx < items.length - 1 &&
+                "border-b-[0.4px] border-(--skools-border-subtle)",
+            )}
+          >
+            {selection && (
+              <span
+                className={cx(
+                  "transition-opacity",
+                  checked
+                    ? "opacity-100"
+                    : "opacity-0 group-hover:opacity-100 focus-within:opacity-100",
                 )}
-                {showActions && !noActions && (
-                  <span className="hidden lg:flex items-center gap-p3 opacity-0 transition-opacity group-hover:opacity-100 focus-within:opacity-100">
-                    {onEdit && (
-                      <button
-                        type="button"
-                        aria-label={`${editLabel} ${name}`}
-                        onClick={() => onEdit(item)}
-                        className="text-r12 font-medium text-(--common-blue) hover:underline cursor-pointer"
-                      >
-                        {editLabel}
-                      </button>
-                    )}
-                    {onDelete && (
-                      <button
-                        type="button"
-                        aria-label={`${removeLabel} ${name}`}
-                        onClick={() => onDelete(item)}
-                        className="text-r12 font-medium text-(--common-red) hover:underline cursor-pointer"
-                      >
-                        {removeLabel}
-                      </button>
-                    )}
-                  </span>
+              >
+                <Checkbox
+                  checked={checked}
+                  onChange={() => selection.toggle(id)}
+                  aria-label={`Sélectionner ${name}`}
+                />
+              </span>
+            )}
+            {columns.map((column) => (
+              <div
+                key={column.header}
+                role="cell"
+                className={cx(
+                  "min-w-0 text-r14",
+                  column.primary
+                    ? "text-(--skools-text-primary) font-medium"
+                    : "text-(--skools-text-muted) hidden md:block",
+                  column.className,
                 )}
-                {showActions && !noActions && (
-                  <span className="relative lg:hidden">
-                    <button
-                      type="button"
-                      aria-label={`Options pour ${name}`}
-                      aria-haspopup="menu"
-                      aria-expanded={menuOpenId === id}
-                      onClick={() =>
-                        setMenuOpenId((v) => (v === id ? null : id))
-                      }
-                      className="inline-flex size-8 items-center justify-center rounded-r1 text-r14 text-(--skools-text-muted) hover:bg-(--skools-interactive-hover-bg) cursor-pointer"
-                    >
-                      •••
-                    </button>
-                    {menuOpenId === id && (
-                      <span
-                        role="menu"
-                        className="absolute right-0 top-full z-30 mt-1 min-w-36 flex flex-col gap-1 rounded-r2 border border-(--skools-border-subtle) bg-(--skools-sidebar-bg) p-1 shadow-lg"
-                      >
-                        {onEdit && (
-                          <button
-                            type="button"
-                            role="menuitem"
-                            onClick={() => {
-                              setMenuOpenId(null);
-                              onEdit(item);
-                            }}
-                            className="block w-full rounded-r2 px-p2 py-1.5 text-left text-r12 text-(--common-blue) hover:bg-(--skools-interactive-hover-bg) cursor-pointer"
-                          >
-                            {editLabel}
-                          </button>
-                        )}
-                        {onDelete && (
-                          <button
-                            type="button"
-                            role="menuitem"
-                            onClick={() => {
-                              setMenuOpenId(null);
-                              onDelete(item);
-                            }}
-                            className="block w-full rounded-r2 px-p2 py-1.5 text-left text-r12 text-(--common-red) hover:bg-(--skools-interactive-hover-bg) cursor-pointer"
-                          >
-                            {removeLabel}
-                          </button>
-                        )}
-                      </span>
-                    )}
-                  </span>
-                )}
-                {showActions && noActions && (
-                  <span className="text-r12 text-(--skools-text-muted)">-</span>
+              >
+                {column.primary && rowTo ? (
+                  <Link
+                    to={rowTo(item)}
+                    className="block truncate hover:underline cursor-pointer"
+                  >
+                    {column.render(item)}
+                  </Link>
+                ) : (
+                  <span className="block truncate">{column.render(item)}</span>
                 )}
               </div>
+            ))}
+            <div className="flex items-center justify-end gap-p3 min-w-max">
+              {pill && <StatusPill label={pill.label} variant={pill.variant} />}
+              {showActions && !noActions && (
+                <span className="hidden lg:flex items-center gap-p3 opacity-0 transition-opacity group-hover:opacity-100 focus-within:opacity-100">
+                  {onEdit && (
+                    <button
+                      type="button"
+                      aria-label={`${editLabel} ${name}`}
+                      onClick={() => onEdit(item)}
+                      className="text-r12 font-medium text-(--common-blue) hover:underline cursor-pointer"
+                    >
+                      {editLabel}
+                    </button>
+                  )}
+                  {onDelete && (
+                    <button
+                      type="button"
+                      aria-label={`${removeLabel} ${name}`}
+                      onClick={() => onDelete(item)}
+                      className="text-r12 font-medium text-(--common-red) hover:underline cursor-pointer"
+                    >
+                      {removeLabel}
+                    </button>
+                  )}
+                </span>
+              )}
+              {showActions && !noActions && (
+                <span className="relative lg:hidden">
+                  <button
+                    type="button"
+                    aria-label={`Options pour ${name}`}
+                    aria-haspopup="menu"
+                    aria-expanded={menuOpenId === id}
+                    onClick={() => setMenuOpenId((v) => (v === id ? null : id))}
+                    className="inline-flex size-8 items-center justify-center rounded-r1 text-r14 text-(--skools-text-muted) hover:bg-(--skools-interactive-hover-bg) cursor-pointer"
+                  >
+                    •••
+                  </button>
+                  {menuOpenId === id && (
+                    <span
+                      role="menu"
+                      className="absolute right-0 top-full z-30 mt-1 min-w-36 flex flex-col gap-1 rounded-r2 border border-(--skools-border-subtle) bg-(--skools-sidebar-bg) p-1 shadow-lg"
+                    >
+                      {onEdit && (
+                        <button
+                          type="button"
+                          role="menuitem"
+                          onClick={() => {
+                            setMenuOpenId(null);
+                            onEdit(item);
+                          }}
+                          className="block w-full rounded-r2 px-p2 py-1.5 text-left text-r12 text-(--common-blue) hover:bg-(--skools-interactive-hover-bg) cursor-pointer"
+                        >
+                          {editLabel}
+                        </button>
+                      )}
+                      {onDelete && (
+                        <button
+                          type="button"
+                          role="menuitem"
+                          onClick={() => {
+                            setMenuOpenId(null);
+                            onDelete(item);
+                          }}
+                          className="block w-full rounded-r2 px-p2 py-1.5 text-left text-r12 text-(--common-red) hover:bg-(--skools-interactive-hover-bg) cursor-pointer"
+                        >
+                          {removeLabel}
+                        </button>
+                      )}
+                    </span>
+                  )}
+                </span>
+              )}
+              {showActions && noActions && (
+                <span className="text-r12 text-(--skools-text-muted)">-</span>
+              )}
             </div>
-            {idx < items.length - 1 && (
-              <hr className="border-t-[0.4px] border-(--skools-border-subtle) w-full" />
-            )}
           </div>
         );
       })}
