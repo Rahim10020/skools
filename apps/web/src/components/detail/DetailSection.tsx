@@ -35,8 +35,8 @@ export function DetailSection({
   children: ReactNode;
 }) {
   return (
-    <section className="flex flex-col gap-p3">
-      <h3 className="font-semibold text-sb16 text-(--skools-text-primary) mb-p1">
+    <section className="flex flex-col gap-p4">
+      <h3 className="font-semibold text-sb18 text-(--skools-text-primary) mb-p1">
         {title}
         {count !== undefined && (
           <span className="ml-p2 text-r14 font-normal text-(--skools-text-muted)">
@@ -109,9 +109,9 @@ export function DetailFields({
   return (
     <dl className="flex flex-col gap-p2">
       {fields.map(([label, value]) => (
-        <div key={label} className="min-w-max flex items-center gap-p2">
-          <dt className="font-semibold text-sb14 text-(--skools-text-primary)">
-            {label}
+        <div key={label} className="min-w-max flex items-center gap-p3">
+          <dt className="font-medium text-m16 text-(--skools-text-primary)">
+            {label}:
           </dt>
           <dd className="text-r14 text-(--skools-text-muted)">{value}</dd>
         </div>
