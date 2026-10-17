@@ -52,8 +52,10 @@ function timeAgoFr(iso: string): string {
  */
 export function NotificationsBell({
   collapsed = false,
+  onOpen,
 }: {
   collapsed?: boolean;
+  onOpen?: () => void;
 }) {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -112,14 +114,18 @@ export function NotificationsBell({
   const handleOpen = (item: AppNotification) => {
     if (!item.readAt) readMutation.mutate(item.id);
     setOpen(false);
-    // Garde-fou : un lien inconnu ne navigue jamais (pas de 404 silencieuse).
     if (item.link && isKnownRoute(item.link)) navigate(item.link);
+  };
+
+  const togglePanel = () => {
+    if (!open && onOpen) onOpen();
+    setOpen((v) => !v);
   };
 
   return (
     <div ref={rootRef} className="relative">
       <IconButton
-        onClick={() => setOpen((v) => !v)}
+        onClick={togglePanel}
         aria-label={
           unread > 0 ? `Notifications (${unread} non lue(s))` : "Notifications"
         }
@@ -144,8 +150,12 @@ export function NotificationsBell({
           role="dialog"
           aria-label="Notifications"
           className={[
-            "fixed z-50 flex max-h-[70vh] w-[320px] max-w-[calc(100vw-2rem)] flex-col overflow-hidden rounded-r3 border border-(--skools-border-subtle) bg-(--skools-sidebar-bg) shadow-xl",
-            collapsed ? "left-14 bottom-4" : "left-4 bottom-4 lg:left-auto",
+            "fixed z-50 flex max-h-[70vh] w-[320px] max-w-[calc(100vw-2rem)] flex-col overflow-hidden rounded-r3 border border-(--skools-border-subtle) bg-(--skools-app-bg) shadow-xl",
+            "right-4 top-14",
+            "lg:top-auto lg:right-auto lg:bottom-p4",
+            collapsed
+              ? "lg:left-[calc(var(--size-s16)+8px)]"
+              : "lg:left-[calc(var(--size-s58)+8px)]",
           ].join(" ")}
         >
           <div className="flex items-center justify-between gap-p2 border-b border-(--skools-border-subtle) px-p4 py-p3">

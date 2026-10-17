@@ -56,9 +56,13 @@ export function SidebarFooter({
             </p>
           )}
         </div>
-        <ThemeToggle />
+        <span className="hidden lg:flex lg:justify-center">
+          <ThemeToggle />
+        </span>
         {role !== ROLES.SUPER_ADMIN && (
-          <NotificationsBell collapsed={collapsed} />
+          <span className="hidden lg:flex lg:justify-center">
+            <NotificationsBell collapsed={collapsed} onOpen={onCloseMobile} />
+          </span>
         )}
       </div>
       <span className={cx(collapsed && "lg:hidden")}>

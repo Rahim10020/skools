@@ -966,9 +966,9 @@
     "semantic_hash": ""
   },
   "apps/web/src/components/crud/CrudPage.tsx": {
-    "mtime": 1792201168.0840304,
-    "seen": 1792201923.023411,
-    "ast_hash": "2eda1544bfed8d30bd2ec2c0f3ecdf82",
+    "mtime": 1792202539.779505,
+    "seen": 1792239375.9908648,
+    "ast_hash": "debe11b94ed8b3f195df93cad5a0c117",
     "semantic_hash": ""
   },
   "apps/web/src/components/crud/crud-helpers.ts": {
@@ -1446,9 +1446,9 @@
     "semantic_hash": ""
   },
   "apps/web/src/features/academic/ClassroomsPage.tsx": {
-    "mtime": 1792201570.8621233,
-    "seen": 1792201923.0311086,
-    "ast_hash": "f5dec916d99c55d25f96768108d11203",
+    "mtime": 1792239329.7918167,
+    "seen": 1792239375.9991064,
+    "ast_hash": "8ad9f20421d0491101442353ba9b5bb3",
     "semantic_hash": ""
   },
   "apps/web/src/features/academic/CyclesPage.tsx": {
@@ -1620,8 +1620,8 @@
     "semantic_hash": ""
   },
   "apps/web/src/features/schedules/SchedulesPage.tsx": {
-    "mtime": 1792156064.399486,
-    "seen": 1792198247.8210247,
+    "mtime": 1792202350.9583802,
+    "seen": 1792239376.0032375,
     "ast_hash": "7aaf5f7d7b0c6a2e2284d837783f05f6",
     "semantic_hash": ""
   },
@@ -1638,9 +1638,9 @@
     "semantic_hash": ""
   },
   "apps/web/src/features/students/StudentsPage.tsx": {
-    "mtime": 1792201246.0002813,
-    "seen": 1792201923.0342672,
-    "ast_hash": "30f38644cd37e0693833689c1bcb7f3f",
+    "mtime": 1792239235.6704314,
+    "seen": 1792239376.0034804,
+    "ast_hash": "4028465ee554c1759675967511ff3ebc",
     "semantic_hash": ""
   },
   "apps/web/src/features/students/student-form.ts": {
@@ -1950,9 +1950,9 @@
     "semantic_hash": ""
   },
   "todo.txt": {
-    "mtime": 1792199299.6091893,
-    "seen": 1792201923.038914,
-    "ast_hash": "0cb067ca2f7ff4a89181d916310f85ef",
+    "mtime": 1792238869.5800536,
+    "seen": 1792239376.0093777,
+    "ast_hash": "225ade24461312599aec3b52c0cecf6b",
     "semantic_hash": ""
   },
   "apps/web/public/favicon.svg": {
