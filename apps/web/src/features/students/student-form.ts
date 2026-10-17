@@ -1,5 +1,7 @@
 import { z } from "zod";
 import type { CrudFieldDef } from "../../components/crud/CrudPage";
+import { GENDER_OPTIONS } from "../../lib/gender";
+import { loadStudentAccountOptions } from "../../lib/member-options";
 import {
   formatDateFr,
   omitEmptyStrings,
@@ -39,19 +41,22 @@ export const studentFields: CrudFieldDef[] = [
   {
     name: "gender",
     label: "Genre",
-    type: "text",
-    placeholder: "Ex : Féminin, Masculin",
+    type: "select",
+    placeholder: "Choisir un genre",
+    options: GENDER_OPTIONS,
   },
   { name: "dateOfBirth", label: "Date de naissance", type: "date" },
   { name: "placeOfBirth", label: "Lieu de naissance", type: "text" },
   { name: "phone", label: "Téléphone", type: "text" },
-  { name: "address", label: "Adresse", type: "text" },
+  { name: "address", label: "Adresse", type: "text", colSpan: "full" },
   {
     name: "userId",
     label: "Compte utilisateur",
-    type: "text",
-    placeholder: "UUID du compte (optionnel)",
+    type: "async-select",
+    placeholder: "Rechercher un compte élève…",
     helperText: "Lier ce dossier à un compte membre de l'établissement.",
+    loadOptions: loadStudentAccountOptions,
+    colSpan: "full",
   },
 ];
 

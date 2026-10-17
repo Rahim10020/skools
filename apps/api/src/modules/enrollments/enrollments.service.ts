@@ -6,6 +6,7 @@ import {
 } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service.js';
 import { CreateEnrollmentDto } from './dto/create-enrollment.dto.js';
+import { BulkCreateEnrollmentsDto } from './dto/bulk-enrollments.dto.js';
 import { UpdateEnrollmentDto } from './dto/update-enrollment.dto.js';
 import { EnrollmentStatus } from '@prisma/client';
 import {
@@ -108,6 +109,129 @@ export class EnrollmentsService {
     );
 
     return enrollment;
+  }
+
+  /**
+   * Inscription en masse d'élèves dans une classe pour une année.
+   * Chaque élève est traité indépendamment (erreurs par élève).
+   */
+  async bulkCreate(establishmentId: string, dto: BulkCreateEnrollmentsDto) {
+    const classroom = await this.prisma.classroom.findFirst({
+      where: { id: dto.classroomId, establishmentId, isActive: true },
+    });
+    if (!classroom) throw new BadRequestException('Classe invalide');
+
+    const academicYear = await this.prisma.academicYear.findFirst({
+      where: { id: dto.academicYearId, establishmentId, isActive: true },
+    });
+    if (!academicYear) throw new BadRequestException('Année scolaire invalide');
+
+    const uniqueIds = [...new Set(dto.studentIds)];
+    const students = await this.prisma.student.findMany({
+      where: { id: { in: uniqueIds }, establishmentId, isActive: true },
+      select: { id: true, firstName: true, lastName: true, userId: true },
+    });
+    const studentMap = new Map(students.map((student) => [student.id, student]));
+
+    const existing = await this.prisma.enrollment.findMany({
+      where: { studentId: { in: uniqueIds }, academicYearId: dto.academicYearId },
+      select: { studentId: true },
+    });
+    const alreadyEnrolled = new Set(existing.map((row) => row.studentId));
+
+    const errors: Array<{ studentId: string; message: string }> = [];
+    const createdStudents: typeof students = [];
+
+    for (const studentId of uniqueIds) {
+      const student = studentMap.get(studentId);
+      if (!student) {
+        errors.push({ studentId, message: 'Élève introuvable' });
+        continue;
+      }
+      if (alreadyEnrolled.has(studentId)) {
+        errors.push({
+          studentId,
+          message: `${student.firstName} ${student.lastName} : déjà inscrit pour cette année`,
+        });
+        continue;
+      }
+      try {
+        await this.prisma.enrollment.create({
+          data: {
+            establishmentId,
+            studentId,
+            classroomId: dto.classroomId,
+            academicYearId: dto.academicYearId,
+            status: EnrollmentStatus.APPROVED,
+            enrolledAt: new Date(),
+          },
+        });
+        alreadyEnrolled.add(studentId);
+        createdStudents.push(student);
+      } catch {
+        errors.push({
+          studentId,
+          message: `${student.firstName} ${student.lastName} : création impossible`,
+        });
+      }
+    }
+
+    if (createdStudents.length > 0) {
+      await this.notifyEnrollments(
+        establishmentId,
+        createdStudents,
+        `${classroom.name} · ${academicYear.name}`,
+      );
+    }
+
+    return {
+      total: uniqueIds.length,
+      created: createdStudents.length,
+      errors,
+    };
+  }
+
+  /** Notifie chaque nouvel inscrit (+ parents liés), en lots bornés. */
+  private async notifyEnrollments(
+    establishmentId: string,
+    students: Array<{
+      id: string;
+      firstName: string;
+      lastName: string;
+      userId: string | null;
+    }>,
+    message: string,
+  ) {
+    const links = await this.prisma.parentStudent.findMany({
+      where: { studentId: { in: students.map((student) => student.id) } },
+      include: { parent: { select: { userId: true } } },
+    });
+    const parentsByStudent = new Map<string, string[]>();
+    for (const link of links) {
+      if (!link.parent.userId) continue;
+      const list = parentsByStudent.get(link.studentId) ?? [];
+      list.push(link.parent.userId);
+      parentsByStudent.set(link.studentId, list);
+    }
+
+    const CHUNK = 20;
+    for (let index = 0; index < students.length; index += CHUNK) {
+      const slice = students.slice(index, index + CHUNK);
+      await Promise.all(
+        slice.map((student) =>
+          this.notificationsService.notify(
+            establishmentId,
+            [student.userId, ...(parentsByStudent.get(student.id) ?? [])],
+            {
+              type: 'INSCRIPTION',
+              title: `Inscription — ${student.firstName} ${student.lastName}`,
+              message,
+              link: '/schedules',
+            },
+          ),
+        ),
+      );
+    }
   }
 
   /**

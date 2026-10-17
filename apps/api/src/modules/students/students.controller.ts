@@ -14,6 +14,7 @@ import {
 import { Role } from '@prisma/client';
 import { StudentsService } from './students.service.js';
 import { CreateStudentDto } from './dto/create-student.dto.js';
+import { BulkCreateStudentsDto } from './dto/bulk-students.dto.js';
 import { UpdateStudentDto } from './dto/update-student.dto.js';
 import { ListStudentsQuery } from './dto/list-students.query.js';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard.js';
@@ -29,6 +30,12 @@ export class StudentsController {
   @Post()
   create(@Body() dto: CreateStudentDto, @Request() req: any) {
     return this.studentsService.create(req.user.establishmentId, dto);
+  }
+
+  // Avant '/:id' : import en masse (création + inscription par lot).
+  @Post('bulk')
+  bulkCreate(@Body() dto: BulkCreateStudentsDto, @Request() req: any) {
+    return this.studentsService.bulkCreate(req.user.establishmentId, dto);
   }
 
   @Get()

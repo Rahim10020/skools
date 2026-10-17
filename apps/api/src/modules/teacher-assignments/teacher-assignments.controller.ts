@@ -11,6 +11,7 @@ import {
 } from '@nestjs/common';
 import { TeacherAssignmentsService } from './teacher-assignments.service.js';
 import { CreateTeacherAssignmentDto } from './dto/create-teacher-assignment.dto.js';
+import { BulkCreateTeacherAssignmentsDto } from './dto/bulk-teacher-assignments.dto.js';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard.js';
 import { RolesGuard } from '../../common/guards/roles.guard.js';
 import { Roles } from '../../common/decorators/roles.decorator.js';
@@ -27,6 +28,17 @@ export class TeacherAssignmentsController {
   @Post()
   create(@Body() dto: CreateTeacherAssignmentDto, @Request() req: any) {
     return this.teacherAssignmentsService.create(req.user.establishmentId, dto);
+  }
+
+  @Post('bulk')
+  bulkCreate(
+    @Body() dto: BulkCreateTeacherAssignmentsDto,
+    @Request() req: any,
+  ) {
+    return this.teacherAssignmentsService.bulkCreate(
+      req.user.establishmentId,
+      dto,
+    );
   }
 
   @Get()

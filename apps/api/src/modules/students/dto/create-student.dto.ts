@@ -1,11 +1,13 @@
 import {
   IsDateString,
+  IsIn,
   IsNotEmpty,
   IsOptional,
   IsString,
   IsUUID,
   MinLength,
 } from 'class-validator';
+import { GENDERS } from '../../../common/constants/gender.js';
 
 export class CreateStudentDto {
   @IsString()
@@ -22,7 +24,7 @@ export class CreateStudentDto {
   @IsOptional()
   matricule?: string;
 
-  @IsString()
+  @IsIn(GENDERS)
   @IsOptional()
   gender?: string;
 

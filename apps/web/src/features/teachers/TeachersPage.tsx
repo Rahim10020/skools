@@ -5,6 +5,8 @@ import { ROUTES } from "../../lib/routes";
 import { z } from "zod";
 import { CrudPage } from "../../components/crud/CrudPage";
 import { useAuthStore } from "../../stores/auth-store";
+import { GENDER_OPTIONS } from "../../lib/gender";
+import { loadTeacherAccountOptions } from "../../lib/member-options";
 import {
   omitEmptyStrings,
   optionalUuidString,
@@ -66,8 +68,9 @@ export default function TeachersPage() {
         {
           name: "gender",
           label: "Genre",
-          type: "text",
-          placeholder: "Ex : Féminin, Masculin",
+          type: "select",
+          placeholder: "Choisir un genre",
+          options: GENDER_OPTIONS,
         },
         { name: "phone", label: "Téléphone", type: "text" },
         {
@@ -82,15 +85,18 @@ export default function TeachersPage() {
           type: "text",
           placeholder: "Ex : Mathématiques",
         },
-        { name: "address", label: "Adresse", type: "text" },
+        { name: "address", label: "Adresse", type: "text", colSpan: "full" },
         {
           name: "userId",
           label: "Compte utilisateur",
-          type: "text",
-          placeholder: "UUID du compte (optionnel)",
+          type: "async-select",
+          placeholder: "Rechercher un compte enseignant…",
           helperText: "Lier ce dossier à un compte membre de l'établissement.",
+          loadOptions: loadTeacherAccountOptions,
+          colSpan: "full",
         },
       ]}
+      formColumns={2}
       schema={schema}
       toDefaults={(teacher) => ({
         firstName: teacher?.firstName ?? "",

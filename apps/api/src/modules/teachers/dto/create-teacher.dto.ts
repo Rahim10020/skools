@@ -1,11 +1,13 @@
 import {
   IsEmail,
+  IsIn,
   IsNotEmpty,
   IsOptional,
   IsString,
   IsUUID,
   MinLength,
 } from 'class-validator';
+import { GENDERS } from '../../../common/constants/gender.js';
 
 export class CreateTeacherDto {
   @IsString()
@@ -22,7 +24,7 @@ export class CreateTeacherDto {
   @IsOptional()
   matricule?: string;
 
-  @IsString()
+  @IsIn(GENDERS)
   @IsOptional()
   gender?: string;
 

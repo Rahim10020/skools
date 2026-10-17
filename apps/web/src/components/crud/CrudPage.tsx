@@ -1,10 +1,12 @@
 import {
   useCallback,
+  useId,
   useMemo,
   useState,
   type FormEvent,
   type ReactNode,
 } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { useCrudResource, type ListParams } from "../../hooks/use-crud";
 import { getErrorMessage } from "../../lib/api";
 import { Button } from "../ui/button";
@@ -14,6 +16,7 @@ import { Select, type SelectOption } from "../ui/select";
 import { Textarea } from "../ui/textarea";
 import { Checkbox } from "../ui/checkbox";
 import { Modal } from "../ui/use-modal";
+import type { ModalSize } from "../ui/modal";
 import { EmptyState, ErrorState } from "../ui/empty-state";
 import { toast } from "../ui/toast";
 import PlusIcon from "../icons/PlusIcon";
@@ -36,7 +39,14 @@ export interface CrudFilterDef {
 }
 
 export type CrudFieldType =
-  "text" | "number" | "date" | "time" | "select" | "textarea" | "checkbox";
+  | "text"
+  | "number"
+  | "date"
+  | "time"
+  | "select"
+  | "async-select"
+  | "textarea"
+  | "checkbox";
 
 export interface CrudFieldDef {
   name: string;
@@ -47,6 +57,14 @@ export interface CrudFieldDef {
   required?: boolean;
   disableSelectSearch?: boolean;
   options?: SelectOption[];
+  /** Grille 2 colonnes : `full` = le champ occupe toute la largeur. */
+  colSpan?: "full";
+  /**
+   * `async-select` : options chargées côté serveur selon la recherche.
+   * `value` = sélection courante (permet de toujours l'inclure).
+   * `options` reste utilisé pour injecter des options statiques.
+   */
+  loadOptions?: (search: string, value: string) => Promise<SelectOption[]>;
 }
 
 export interface CrudColumn<T> {
@@ -81,8 +99,12 @@ export interface CrudPageProps<T> {
   listPath?: string;
   /** Contenu additionnel entre l'en-tête et la liste (ex. filtre). */
   toolbarExtra?: ReactNode;
+  /** Actions additionnelles dans l'en-tête, avant le bouton de création (ex. Import). */
+  headerActions?: ReactNode;
   columns: CrudColumn<T>[];
   fields: CrudFieldDef[];
+  /** Colonnes du formulaire (modal) : 1 (défaut) ou 2 pour les formulaires longs. */
+  formColumns?: 1 | 2;
   /** Champs du formulaire d'édition (défaut : fields). Ex. résolution disciplinaire (PATCH uniquement). */
   editFields?: CrudFieldDef[];
   schema: CrudSchema;
@@ -136,21 +158,78 @@ function FieldShell({
   );
 }
 
-export function CrudFormModal({
+function AsyncSelectField({
+  field,
+  value,
+  error,
+  onChange,
+}: {
+  field: CrudFieldDef;
+  value: string;
+  error?: string;
+  onChange: (value: string) => void;
+}) {
+  const [search, setSearch] = useState("");
+  const query = useQuery({
+    queryKey: ["async-select", field.name, search, value],
+    queryFn: () => field.loadOptions!(search, value),
+    enabled: !!field.loadOptions,
+    staleTime: 30_000,
+  });
+
+  const options = useMemo(() => {
+    const loaded = query.data ?? [];
+    const staticOptions = field.options ?? [];
+    const seen = new Set(loaded.map((option) => option.value));
+    return [
+      ...staticOptions.filter((option) => !seen.has(option.value)),
+      ...loaded,
+    ];
+  }, [query.data, field.options]);
+
+  return (
+    <FieldShell label={field.label} required={field.required} error={error}>
+      <Select
+        label={field.placeholder ?? field.label}
+        options={options}
+        value={value}
+        onChange={onChange}
+        onSearch={setSearch}
+        disableFilter
+        loading={query.isPending}
+        error={!!error}
+      />
+    </FieldShell>
+  );
+}
+
+function CrudFormBody({
+  titleId,
+  descriptionId,
+  formId,
   title,
+  description,
   submitLabel,
   fields,
   schema,
   defaults,
   pending,
+  submitDisabled,
+  columns = 1,
   onSubmit,
 }: {
+  titleId: string;
+  descriptionId: string;
+  formId: string;
   title: string;
+  description?: string;
   submitLabel: string;
   fields: CrudFieldDef[];
   schema: CrudSchema;
   defaults: Record<string, string>;
   pending: boolean;
+  submitDisabled?: boolean;
+  columns?: 1 | 2;
   onSubmit: (values: Record<string, string>) => Promise<unknown>;
 }) {
   const [values, setValues] = useState<Record<string, string>>(defaults);
@@ -210,6 +289,15 @@ export function CrudFormModal({
               error={!!error}
             />
           </FieldShell>
+        );
+      case "async-select":
+        return (
+          <AsyncSelectField
+            field={field}
+            value={value}
+            error={error}
+            onChange={(v) => setValue(field.name, v)}
+          />
         );
       case "textarea":
         return (
@@ -310,21 +398,39 @@ export function CrudFormModal({
 
   return (
     <>
-      <Modal.Header>
-        <Modal.Title id="crud-form-title">{title}</Modal.Title>
+      <Modal.Header className="flex flex-col gap-p1">
+        <Modal.Title id={titleId}>{title}</Modal.Title>
+        {description && (
+          <Modal.Description id={descriptionId}>{description}</Modal.Description>
+        )}
       </Modal.Header>
       <Modal.Body>
         <form
-          id="crud-form"
+          id={formId}
           onSubmit={handleSubmit}
-          className="flex flex-col gap-p4"
+          className={[
+            "grid gap-p4",
+            columns === 2 ? "grid-cols-1 sm:grid-cols-2" : "grid-cols-1",
+          ].join(" ")}
           noValidate
         >
           {fields.map((field) => (
-            <div key={field.name}>{renderField(field)}</div>
+            <div
+              key={field.name}
+              className={
+                columns === 2 && field.colSpan === "full"
+                  ? "sm:col-span-2"
+                  : undefined
+              }
+            >
+              {renderField(field)}
+            </div>
           ))}
           {serverError && (
-            <p role="alert" className="text-r14 text-(--common-red)">
+            <p
+              role="alert"
+              className="text-r14 text-(--common-red) sm:col-span-2"
+            >
               {serverError}
             </p>
           )}
@@ -339,14 +445,78 @@ export function CrudFormModal({
         <Button
           fullWidth={false}
           type="submit"
-          form="crud-form"
+          form={formId}
           variant={pending ? "loading" : "primary"}
-          disabled={pending}
+          disabled={pending || submitDisabled}
         >
           {submitLabel}
         </Button>
       </Modal.Footer>
     </>
+  );
+}
+
+export interface FormDialogProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  title: string;
+  description?: string;
+  submitLabel: string;
+  fields: CrudFieldDef[];
+  schema: CrudSchema;
+  defaults: Record<string, string>;
+  pending: boolean;
+  submitDisabled?: boolean;
+  size?: ModalSize;
+  columns?: 1 | 2;
+  onSubmit: (values: Record<string, string>) => Promise<unknown>;
+}
+
+/** Modal de formulaire standard (titre/description + champs + footer Annuler/Valider). */
+export function FormDialog({
+  open,
+  onOpenChange,
+  title,
+  description,
+  submitLabel,
+  fields,
+  schema,
+  defaults,
+  pending,
+  submitDisabled,
+  size = "md",
+  columns = 1,
+  onSubmit,
+}: FormDialogProps) {
+  const titleId = useId();
+  const descriptionId = useId();
+  const formId = useId();
+
+  return (
+    <Modal.Root open={open} onOpenChange={onOpenChange} size={size}>
+      {open && (
+        <Modal.Content
+          labelledBy={titleId}
+          describedBy={description ? descriptionId : undefined}
+        >
+          <CrudFormBody
+            titleId={titleId}
+            descriptionId={descriptionId}
+            formId={formId}
+            title={title}
+            description={description}
+            submitLabel={submitLabel}
+            fields={fields}
+            schema={schema}
+            defaults={defaults}
+            pending={pending}
+            submitDisabled={submitDisabled}
+            columns={columns}
+            onSubmit={onSubmit}
+          />
+        </Modal.Content>
+      )}
+    </Modal.Root>
   );
 }
 
@@ -367,8 +537,10 @@ export function CrudPage<T>({
   endpoint,
   listPath,
   toolbarExtra,
+  headerActions,
   columns,
   fields,
+  formColumns,
   editFields,
   schema,
   toDefaults,
@@ -564,6 +736,7 @@ export function CrudPage<T>({
         }}
         selectAll={selectAll}
         createButton={createButton}
+        extra={headerActions}
       />
 
       {toolbarExtra && <div className="mb-p6">{toolbarExtra}</div>}
@@ -618,29 +791,21 @@ export function CrudPage<T>({
         </div>
       )}
 
-      <Modal.Root
+      <FormDialog
+        key={editing === null ? "new" : editing ? idOf(editing) : "closed"}
         open={editing !== undefined}
         onOpenChange={(open) => {
           if (!open) setEditing(undefined);
         }}
-      >
-        {editing !== undefined && (
-          <Modal.Content labelledBy="crud-form-title">
-            <CrudFormModal
-              key={editing === null ? "new" : idOf(editing)}
-              title={
-                editing === null ? createLabel : `Modifier ${nameOf(editing)}`
-              }
-              submitLabel={editing === null ? "Créer" : "Enregistrer"}
-              fields={formFields}
-              schema={schema}
-              defaults={toDefaults(editing ?? undefined)}
-              pending={createOne.isPending || updateOne.isPending}
-              onSubmit={editing === null ? handleCreate : handleUpdate(editing)}
-            />
-          </Modal.Content>
-        )}
-      </Modal.Root>
+        title={editing === null ? createLabel : `Modifier ${nameOf(editing as T)}`}
+        submitLabel={editing === null ? "Créer" : "Enregistrer"}
+        fields={formFields}
+        schema={schema}
+        defaults={toDefaults(editing ?? undefined)}
+        pending={createOne.isPending || updateOne.isPending}
+        columns={formColumns}
+        onSubmit={editing === null ? handleCreate : handleUpdate(editing as T)}
+      />
 
       <Modal.Root
         size="sm"
@@ -650,12 +815,12 @@ export function CrudPage<T>({
         }}
       >
         {deleteTarget && (
-          <Modal.Content labelledBy="crud-delete-title">
-            <Modal.Header>
+          <Modal.Content labelledBy="crud-delete-title" describedBy="crud-delete-desc">
+            <Modal.Header className="flex flex-col gap-p1">
               <Modal.Title id="crud-delete-title">
                 Confirmer la suppression
               </Modal.Title>
-              <Modal.Description>
+              <Modal.Description id="crud-delete-desc">
                 Voulez-vous vraiment supprimer « {nameOf(deleteTarget)} » ?
                 Cette action est irréversible.
               </Modal.Description>
@@ -687,12 +852,12 @@ export function CrudPage<T>({
           if (!open) setBulkConfirmOpen(false);
         }}
       >
-        <Modal.Content labelledBy="crud-bulk-delete-title">
-          <Modal.Header>
+        <Modal.Content labelledBy="crud-bulk-delete-title" describedBy="crud-bulk-delete-desc">
+          <Modal.Header className="flex flex-col gap-p1">
             <Modal.Title id="crud-bulk-delete-title">
               Supprimer {selection.selectedCount} élément(s) ?
             </Modal.Title>
-            <Modal.Description>
+            <Modal.Description id="crud-bulk-delete-desc">
               Cette action est irréversible. Les éléments non supprimés
               (erreurs) seront signalés après l'opération.
             </Modal.Description>

@@ -14,6 +14,7 @@ import {
 import { EnrollmentsService } from './enrollments.service.js';
 import { ListEnrollmentsQuery } from './dto/list-enrollments.query.js';
 import { CreateEnrollmentDto } from './dto/create-enrollment.dto.js';
+import { BulkCreateEnrollmentsDto } from './dto/bulk-enrollments.dto.js';
 import { UpdateEnrollmentDto } from './dto/update-enrollment.dto.js';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard.js';
 import { RolesGuard } from '../../common/guards/roles.guard.js';
@@ -29,6 +30,11 @@ export class EnrollmentsController {
   @Post()
   create(@Body() dto: CreateEnrollmentDto, @Request() req: any) {
     return this.enrollmentsService.create(req.user.establishmentId, dto);
+  }
+
+  @Post('bulk')
+  bulkCreate(@Body() dto: BulkCreateEnrollmentsDto, @Request() req: any) {
+    return this.enrollmentsService.bulkCreate(req.user.establishmentId, dto);
   }
 
   @Get()

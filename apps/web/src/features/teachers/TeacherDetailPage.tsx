@@ -14,6 +14,7 @@ import {
   StickyBar,
 } from "../../components/detail/DetailSection";
 import { unwrapList, type PaginatedList } from "../../hooks/use-crud";
+import { genderLabel } from "../../lib/gender";
 
 interface TeacherDossier {
   id: string;
@@ -33,12 +34,6 @@ interface AssignmentRow {
   subject: { id: string; name: string };
   classroom: { id: string; name: string };
   academicYear: { id: string; name: string; isCurrent: boolean };
-}
-
-function genderLabel(gender: string | null) {
-  if (gender === "M") return "Masculin";
-  if (gender === "F") return "Féminin";
-  return gender || "—";
 }
 
 export default function TeacherDetailPage() {

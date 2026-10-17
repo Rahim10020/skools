@@ -4,8 +4,11 @@ import { API } from "../../lib/api-endpoints";
 import { KEYS } from "../../lib/query-keys";
 import { ROUTES } from "../../lib/routes";
 import { z } from "zod";
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { CrudPage } from "../../components/crud/CrudPage";
+import { EnrollStudentsDialog } from "../enrollments/EnrollStudentsDialog";
+import { Button } from "../../components/ui/button";
 import { useAuthStore } from "../../stores/auth-store";
 import api from "../../lib/api";
 import {
@@ -35,6 +38,8 @@ const schema = z.object({
 
 export default function ClassroomsPage() {
   const role = useAuthStore((state) => state.role);
+  const readOnly = role === ROLES.CENSEUR;
+  const [enrollOpen, setEnrollOpen] = useState(false);
   // CENSEUR : supervision en lecture seule (matrice), écritures refusées 403.
   const yearsQuery = useQuery({
     queryKey: KEYS.academicYears,
@@ -48,22 +53,39 @@ export default function ClassroomsPage() {
     queryKey: KEYS.series,
     queryFn: async () => (await api.get<IdName[]>(API.series)).data,
   });
+  const classroomOptionsQuery = useQuery({
+    queryKey: [...KEYS.classrooms, "options"],
+    queryFn: async () => (await api.get<IdName[]>(API.classrooms)).data,
+  });
 
   const toOptions = (data: IdName[] | undefined) =>
     (data ?? []).map((item) => ({ label: item.name, value: item.id }));
 
+  const enrollButton = readOnly ? undefined : (
+    <Button
+      variant="secondary"
+      fullWidth={false}
+      title="Inscrire des élèves"
+      onClick={() => setEnrollOpen(true)}
+    >
+      Inscrire des élèves
+    </Button>
+  );
+
   return (
-    <CrudPage<Classroom>
-      readOnly={role === ROLES.CENSEUR}
-      title="Classes"
-      description="Les classes de l'établissement, par année, niveau et série."
-      itemLabel="classe"
-      pluralLabel="classes"
-      createLabel="Nouvelle classe"
-      queryKey={KEYS.classrooms}
-      endpoint={API.classrooms}
-      pageSize={10}
-      rowTo={(classroom) => `${ROUTES.classrooms}/${classroom.id}`}
+    <>
+      <CrudPage<Classroom>
+        readOnly={readOnly}
+        title="Classes"
+        description="Les classes de l'établissement, par année, niveau et série."
+        itemLabel="classe"
+        pluralLabel="classes"
+        createLabel="Nouvelle classe"
+        queryKey={KEYS.classrooms}
+        endpoint={API.classrooms}
+        pageSize={10}
+        headerActions={enrollButton}
+        rowTo={(classroom) => `${ROUTES.classrooms}/${classroom.id}`}
       searchPlaceholder="Rechercher une classe…"
       filters={[
         {
@@ -171,6 +193,15 @@ export default function ClassroomsPage() {
         capacity: toOptionalNumber(values.capacity),
       })}
       nameOf={(classroom) => classroom.name}
-    />
+      />
+
+      <EnrollStudentsDialog
+        key={enrollOpen ? "open" : "closed"}
+        open={enrollOpen}
+        onOpenChange={setEnrollOpen}
+        classrooms={toOptions(classroomOptionsQuery.data)}
+        years={toOptions(yearsQuery.data)}
+      />
+    </>
   );
 }

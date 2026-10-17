@@ -1,12 +1,10 @@
-import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import api, { getErrorMessage } from "../../lib/api";
+import { z } from "zod";
+import api from "../../lib/api";
 import { API, apiPath } from "../../lib/api-endpoints";
 import { KEYS } from "../../lib/query-keys";
 import { roleLabel } from "../../lib/permissions";
-import { Button } from "../../components/ui/button";
-import { Modal } from "../../components/ui/use-modal";
-import { Select } from "../../components/ui/select";
+import { FormDialog, type CrudFieldDef } from "../../components/crud/CrudPage";
 import { toast } from "../../components/ui/toast";
 import { ASSIGNABLE_ROLES } from "./member-roles";
 
@@ -15,6 +13,22 @@ export interface EditMemberTarget {
   name: string;
   role: string;
 }
+
+const roleSchema = z.object({
+  role: z.string().min(1, "Choisissez un rôle"),
+});
+
+const roleFields: CrudFieldDef[] = [
+  {
+    name: "role",
+    label: "Rôle",
+    type: "select",
+    required: true,
+    placeholder: "Choisir un rôle",
+    options: ASSIGNABLE_ROLES,
+    disableSelectSearch: true,
+  },
+];
 
 /**
  * Changement de rôle partagé (liste + page détail).
@@ -28,11 +42,9 @@ export function EditMemberRoleModal({
   onClose: () => void;
 }) {
   const queryClient = useQueryClient();
-  const [role, setRole] = useState(member.role);
-  const [error, setError] = useState<string | null>(null);
 
   const mutation = useMutation({
-    mutationFn: async () =>
+    mutationFn: async (role: string) =>
       (
         await api.patch(apiPath.withId(API.userEstablishments, member.id), {
           role,
@@ -44,77 +56,24 @@ export function EditMemberRoleModal({
       toast.success("Rôle modifié avec succès");
       onClose();
     },
-    onError: (err) => setError(getErrorMessage(err)),
   });
 
-  const handleSubmit = async (event: React.FormEvent) => {
-    event.preventDefault();
-    if (!role) {
-      setError("Choisissez un rôle");
-      return;
-    }
-    setError(null);
-    try {
-      await mutation.mutateAsync();
-    } catch {
-      // Erreur déjà affichée via onError.
-    }
+  const handleSubmit = async (values: Record<string, string>) => {
+    await mutation.mutateAsync(values.role);
   };
 
   return (
-    <Modal.Root open onOpenChange={(open) => !open && onClose()}>
-      <Modal.Content labelledBy="member-role-title">
-        <Modal.Header>
-          <Modal.Title id="member-role-title">
-            Modifier le rôle de {member.name}
-          </Modal.Title>
-          <Modal.Description>
-            Rôle actuel : {roleLabel(member.role)}.
-          </Modal.Description>
-        </Modal.Header>
-        <Modal.Body>
-          <form
-            id="member-role-form"
-            onSubmit={handleSubmit}
-            className="flex flex-col gap-p4"
-            noValidate
-          >
-            <div className="flex flex-col gap-p1">
-              <span className="text-m12 text-(--skools-text-primary)">
-                Rôle
-              </span>
-              <Select
-                label="Choisir un rôle"
-                options={ASSIGNABLE_ROLES}
-                value={role}
-                onChange={setRole}
-                disableSearch
-              />
-            </div>
-            {error && (
-              <p role="alert" className="text-r14 text-(--common-red)">
-                {error}
-              </p>
-            )}
-          </form>
-        </Modal.Body>
-        <Modal.Footer>
-          <Modal.Close>
-            <Button variant="secondary" fullWidth={false}>
-              Annuler
-            </Button>
-          </Modal.Close>
-          <Button
-            fullWidth={false}
-            type="submit"
-            form="member-role-form"
-            variant={mutation.isPending ? "loading" : "primary"}
-            disabled={mutation.isPending}
-          >
-            Enregistrer
-          </Button>
-        </Modal.Footer>
-      </Modal.Content>
-    </Modal.Root>
+    <FormDialog
+      open
+      onOpenChange={(open) => !open && onClose()}
+      title={`Modifier le rôle de ${member.name}`}
+      description={`Rôle actuel : ${roleLabel(member.role)}.`}
+      submitLabel="Enregistrer"
+      fields={roleFields}
+      schema={roleSchema}
+      defaults={{ role: member.role }}
+      pending={mutation.isPending}
+      onSubmit={handleSubmit}
+    />
   );
 }

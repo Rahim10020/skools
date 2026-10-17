@@ -7,8 +7,7 @@ import { KEYS } from "../../lib/query-keys";
 import { canManageSchool } from "../../lib/roles";
 import { useAuthStore } from "../../stores/auth-store";
 import { Button } from "../../components/ui/button";
-import { Modal } from "../../components/ui/use-modal";
-import { CrudFormModal } from "../../components/crud/CrudPage";
+import { FormDialog } from "../../components/crud/CrudPage";
 import { ErrorState } from "../../components/ui/empty-state";
 import { ListHeader } from "../../components/data-list/ListHeader";
 import { ListSkeleton } from "../../components/data-list/ListSkeleton";
@@ -40,6 +39,7 @@ import {
   averageBand,
 } from "../../lib/status-meta";
 import { formatDateFr } from "../../components/crud/crud-helpers";
+import { genderLabel } from "../../lib/gender";
 
 /** « 1 note » / « 2 notes » pour les synthèses compactes. */
 const plural = (count: number, word: string) =>
@@ -106,12 +106,6 @@ interface DisciplineRow {
   status: "PENDING" | "ACTIVE" | "RESOLVED" | "CANCELLED";
   title: string;
   incidentDate: string;
-}
-
-function genderLabel(gender: string | null) {
-  if (gender === "M") return "Masculin";
-  if (gender === "F") return "Féminin";
-  return gender || "—";
 }
 
 export default function StudentDetailPage() {
@@ -301,27 +295,21 @@ export default function StudentDetailPage() {
         />
       </StickyBar>
 
-      <Modal.Root
+      <FormDialog
+        key={dossier.id}
         open={editOpen}
         onOpenChange={(open) => {
           if (!open) setEditOpen(false);
         }}
-      >
-        {editOpen && (
-          <Modal.Content labelledBy="crud-form-title">
-            <CrudFormModal
-              key={dossier.id}
-              title={`Modifier ${studentFullName(dossierForForm)}`}
-              submitLabel="Enregistrer"
-              fields={studentFields}
-              schema={studentSchema}
-              defaults={studentToDefaults(dossierForForm)}
-              pending={updateMutation.isPending}
-              onSubmit={handleUpdate}
-            />
-          </Modal.Content>
-        )}
-      </Modal.Root>
+        title={`Modifier ${studentFullName(dossierForForm)}`}
+        submitLabel="Enregistrer"
+        fields={studentFields}
+        schema={studentSchema}
+        defaults={studentToDefaults(dossierForForm)}
+        pending={updateMutation.isPending}
+        columns={2}
+        onSubmit={handleUpdate}
+      />
 
       <DetailContainer>
         <h2 className="font-semibold text-sb24 leading-9 text-(--skools-text-primary)">

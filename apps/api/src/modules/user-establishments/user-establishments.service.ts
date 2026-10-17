@@ -9,6 +9,7 @@ import { PrismaService } from '../../prisma/prisma.service.js';
 import { AddMemberDto } from './dto/add-member.dto.js';
 import { UpdateMemberRoleDto } from './dto/update-member-role.dto.js';
 import { ListMembersQuery } from './dto/list-members.query.js';
+import { LookupAccountsQuery } from './dto/lookup-accounts.query.js';
 import {
   containsInsensitive,
   paginate,
@@ -81,6 +82,87 @@ export class UserEstablishmentsService {
       }),
     ]);
     return paginate(items, total, parsed.page, parsed.limit);
+  }
+
+  /**
+   * Comptes candidats pour un sélecteur de liaison dossier → compte.
+   * Renvoie un tableau brut (pas de pagination).
+   */
+  async lookupAccounts(
+    establishmentId: string,
+    query: LookupAccountsQuery = {},
+  ) {
+    const where: Record<string, unknown> = {
+      establishmentId,
+      isActive: true,
+    };
+    if (query.role) where.role = query.role;
+    if (query.search) {
+      const match = containsInsensitive(query.search);
+      where.OR = [
+        { user: { firstName: match } },
+        { user: { lastName: match } },
+        { user: { email: match } },
+      ];
+    }
+    if (query.excludeLinked && query.role) {
+      const linked = await this.linkedUserIds(
+        establishmentId,
+        query.role,
+        query.includeUserId,
+      );
+      if (linked.length > 0) where.userId = { notIn: linked };
+    }
+
+    const items = await this.prisma.userEstablishment.findMany({
+      where,
+      select: MEMBER_SELECT,
+      orderBy: { user: { lastName: 'asc' } },
+      take: 20,
+    });
+
+    if (
+      query.includeUserId &&
+      !items.some((item) => item.user.id === query.includeUserId)
+    ) {
+      const current = await this.prisma.userEstablishment.findFirst({
+        where: { establishmentId, userId: query.includeUserId },
+        select: MEMBER_SELECT,
+      });
+      if (current) return [current, ...items];
+    }
+
+    return items;
+  }
+
+  /** Identifiants de comptes déjà liés à un dossier (par type de rôle). */
+  private async linkedUserIds(
+    establishmentId: string,
+    role: Role,
+    exceptUserId?: string,
+  ): Promise<string[]> {
+    const where = {
+      establishmentId,
+      userId: exceptUserId ? { not: exceptUserId } : { not: null },
+    };
+    const rows =
+      role === Role.TEACHER
+        ? await this.prisma.teacher.findMany({
+            where,
+            select: { userId: true },
+          })
+        : role === Role.PARENT
+          ? await this.prisma.parent.findMany({
+              where,
+              select: { userId: true },
+            })
+          : await this.prisma.student.findMany({
+              where,
+              select: { userId: true },
+            });
+    return rows
+      .map((row) => row.userId)
+      .filter((id): id is string => !!id);
   }
 
   async addMember(establishmentId: string, dto: AddMemberDto) {

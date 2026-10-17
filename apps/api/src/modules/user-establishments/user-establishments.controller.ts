@@ -16,6 +16,7 @@ import { UserEstablishmentsService } from './user-establishments.service.js';
 import { AddMemberDto } from './dto/add-member.dto.js';
 import { UpdateMemberRoleDto } from './dto/update-member-role.dto.js';
 import { ListMembersQuery } from './dto/list-members.query.js';
+import { LookupAccountsQuery } from './dto/lookup-accounts.query.js';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard.js';
 import { RolesGuard } from '../../common/guards/roles.guard.js';
 import { Roles } from '../../common/decorators/roles.decorator.js';
@@ -31,6 +32,16 @@ export class UserEstablishmentsController {
   @Get()
   findMembers(@Request() req: any, @Query() query: ListMembersQuery) {
     return this.userEstablishmentsService.findMembers(
+      req.user.establishmentId,
+      query,
+    );
+  }
+
+  /** Lecture élargie à ADMIN : alimente les sélecteurs de liaison de dossier. */
+  @Get('lookup')
+  @Roles(Role.DIRECTOR, Role.ADMIN)
+  lookupAccounts(@Request() req: any, @Query() query: LookupAccountsQuery) {
+    return this.userEstablishmentsService.lookupAccounts(
       req.user.establishmentId,
       query,
     );

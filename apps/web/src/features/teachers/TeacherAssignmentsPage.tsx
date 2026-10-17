@@ -15,6 +15,11 @@ import { Modal } from "../../components/ui/use-modal";
 import { EmptyState, ErrorState } from "../../components/ui/empty-state";
 import { Skeleton } from "../../components/ui/skeleton";
 import { toast } from "../../components/ui/toast";
+import {
+  BulkAssignDialog,
+  type BulkAssignPayload,
+  type BulkAssignResult,
+} from "./BulkAssignDialog";
 
 interface TeacherAssignment {
   id: string;
@@ -36,6 +41,7 @@ export default function TeacherAssignmentsPage() {
   const [removeTarget, setRemoveTarget] = useState<TeacherAssignment | null>(
     null,
   );
+  const [bulkOpen, setBulkOpen] = useState(false);
 
   const assignmentsQuery = useQuery({
     queryKey: isTeacher
@@ -89,6 +95,25 @@ export default function TeacherAssignmentsPage() {
     onError: (error) => setFormError(getErrorMessage(error)),
   });
 
+  const bulkMutation = useMutation({
+    mutationFn: async (payload: BulkAssignPayload) =>
+      (
+        await api.post<BulkAssignResult>(
+          `${API.teacherAssignments}/bulk`,
+          payload,
+        )
+      ).data,
+  });
+
+  const handleBulkAssign = async (payload: BulkAssignPayload) => {
+    const result = await bulkMutation.mutateAsync(payload);
+    queryClient.invalidateQueries({ queryKey: KEYS.teacherAssignments });
+    if (result.created > 0) {
+      toast.success(`${result.created} affectation(s) créée(s)`);
+    }
+    return result;
+  };
+
   const removeMutation = useMutation({
     mutationFn: async (id: string) =>
       (await api.delete(apiPath.withId(API.teacherAssignments, id))).data,
@@ -133,9 +158,18 @@ export default function TeacherAssignmentsPage() {
       <div className="flex flex-col gap-p6">
         {!isTeacher && (
           <Card className="p-p4">
-            <h2 className="text-sb16 text-(--skools-text-primary)">
-              Nouvelle affectation
-            </h2>
+            <div className="flex items-center justify-between gap-p4 flex-wrap">
+              <h2 className="text-sb16 text-(--skools-text-primary)">
+                Nouvelle affectation
+              </h2>
+              <Button
+                variant="secondary"
+                fullWidth={false}
+                onClick={() => setBulkOpen(true)}
+              >
+                Affecter plusieurs classes
+              </Button>
+            </div>
             <form
               onSubmit={handleCreate}
               className="mt-p4 grid grid-cols-1 gap-p4 md:grid-cols-2"
@@ -328,6 +362,29 @@ export default function TeacherAssignmentsPage() {
           </Modal.Content>
         )}
       </Modal.Root>
+
+      <BulkAssignDialog
+        key={bulkOpen ? "open" : "closed"}
+        open={bulkOpen}
+        onOpenChange={setBulkOpen}
+        teachers={(teachersQuery.data ?? []).map((teacher) => ({
+          label: `${teacher.lastName} ${teacher.firstName}`,
+          value: teacher.id,
+        }))}
+        subjects={(subjectsQuery.data ?? []).map((subject) => ({
+          label: subject.name,
+          value: subject.id,
+        }))}
+        classrooms={(classroomsQuery.data ?? []).map((classroom) => ({
+          label: classroom.name,
+          value: classroom.id,
+        }))}
+        years={(yearsQuery.data ?? []).map((year) => ({
+          label: year.name,
+          value: year.id,
+        }))}
+        onSubmit={handleBulkAssign}
+      />
     </div>
   );
 }

@@ -4,6 +4,7 @@ import { KEYS } from "../../lib/query-keys";
 import { z } from "zod";
 import { CrudPage } from "../../components/crud/CrudPage";
 import { useAuthStore } from "../../stores/auth-store";
+import { loadParentAccountOptions } from "../../lib/member-options";
 import {
   omitEmptyStrings,
   optionalUuidString,
@@ -58,15 +59,18 @@ export default function ParentsPage() {
         { name: "phone", label: "Téléphone", type: "text" },
         { name: "email", label: "Email", type: "text" },
         { name: "profession", label: "Profession", type: "text" },
-        { name: "address", label: "Adresse", type: "text" },
+        { name: "address", label: "Adresse", type: "text", colSpan: "full" },
         {
           name: "userId",
           label: "Compte utilisateur",
-          type: "text",
-          placeholder: "UUID du compte (optionnel)",
+          type: "async-select",
+          placeholder: "Rechercher un compte parent…",
           helperText: "Lier ce dossier à un compte membre de l'établissement.",
+          loadOptions: loadParentAccountOptions,
+          colSpan: "full",
         },
       ]}
+      formColumns={2}
       schema={schema}
       toDefaults={(parent) => ({
         firstName: parent?.firstName ?? "",

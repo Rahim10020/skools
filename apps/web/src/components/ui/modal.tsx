@@ -73,13 +73,51 @@ export function ModalTrigger({
 }) {
   const { open } = useModalContext();
   return (
-    <div className={className} onClick={disabled ? undefined : open}>
+    <button
+      type="button"
+      className={["text-left", className].filter(Boolean).join(" ")}
+      disabled={disabled}
+      onClick={disabled ? undefined : open}
+    >
       {children}
-    </div>
+    </button>
   );
 }
 
 const EXIT_ANIMATION_MS = 200;
+
+const FOCUSABLE_SELECTOR = [
+  "a[href]",
+  "button:not([disabled])",
+  "textarea:not([disabled])",
+  "input:not([disabled])",
+  "select:not([disabled])",
+  '[tabindex]:not([tabindex="-1"])',
+].join(",");
+
+/** Compteur global : empile les modals sans restaurer le scroll au premier fermé. */
+let scrollLockCount = 0;
+let savedOverflow = "";
+let savedPaddingRight = "";
+
+function lockBodyScroll() {
+  if (scrollLockCount === 0) {
+    savedOverflow = document.body.style.overflow;
+    savedPaddingRight = document.body.style.paddingRight;
+    const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth;
+    document.body.style.overflow = "hidden";
+    if (scrollbarWidth > 0) document.body.style.paddingRight = `${scrollbarWidth}px`;
+  }
+  scrollLockCount += 1;
+}
+
+function unlockBodyScroll() {
+  scrollLockCount = Math.max(0, scrollLockCount - 1);
+  if (scrollLockCount === 0) {
+    document.body.style.overflow = savedOverflow;
+    document.body.style.paddingRight = savedPaddingRight;
+  }
+}
 
 export function ModalContent({
   children,
@@ -87,12 +125,14 @@ export function ModalContent({
   closeOnOutsideClick = true,
   closeOnEscape = true,
   labelledBy,
+  describedBy,
 }: {
   children: ReactNode;
   className?: string;
   closeOnOutsideClick?: boolean;
   closeOnEscape?: boolean;
   labelledBy?: string;
+  describedBy?: string;
 }) {
   const { isOpen, close, size } = useModalContext();
   const overlayRef = useRef<HTMLDivElement>(null);
@@ -126,10 +166,9 @@ export function ModalContent({
     if (!shouldRender) return;
     const previouslyFocused = document.activeElement as HTMLElement | null;
     contentRef.current?.focus({ preventScroll: true });
-    const previousOverflow = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
+    lockBodyScroll();
     return () => {
-      document.body.style.overflow = previousOverflow;
+      unlockBodyScroll();
       previouslyFocused?.focus?.({ preventScroll: true });
     };
   }, [shouldRender]);
@@ -143,9 +182,35 @@ export function ModalContent({
     return () => document.removeEventListener("keydown", handleKeyDown);
   }, [isOpen, closeOnEscape, close]);
 
+  // Piège de focus : empêche la tabulation de sortir du modal.
+  const handleTabTrap = (event: React.KeyboardEvent<HTMLDivElement>) => {
+    if (event.key !== "Tab") return;
+    const node = contentRef.current;
+    if (!node) return;
+    const focusables = Array.from(
+      node.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR),
+    ).filter((el) => el.offsetParent !== null);
+    if (focusables.length === 0) {
+      event.preventDefault();
+      node.focus({ preventScroll: true });
+      return;
+    }
+    const first = focusables[0];
+    const last = focusables[focusables.length - 1];
+    const active = document.activeElement;
+    if (event.shiftKey && (active === first || active === node)) {
+      event.preventDefault();
+      last.focus();
+    } else if (!event.shiftKey && active === last) {
+      event.preventDefault();
+      first.focus();
+    }
+  };
+
   if (!shouldRender) return null;
 
-  const overlay = (    <div
+  const overlay = (
+    <div
       ref={overlayRef}
       onMouseDown={(e) => {
         if (closeOnOutsideClick && e.target === overlayRef.current) close();
@@ -160,7 +225,9 @@ export function ModalContent({
         role="dialog"
         aria-modal="true"
         aria-labelledby={labelledBy}
+        aria-describedby={describedBy}
         tabIndex={-1}
+        onKeyDown={handleTabTrap}
         className={[
           "popup-content-ref flex flex-col gap-3 bg-(--skools-sidebar-bg) text-(--skools-text-primary)",
           "rounded-r4 p-8 shadow-xl",
@@ -192,9 +259,9 @@ export function ModalTitle({ children, className, id }: { children: ReactNode; c
   );
 }
 
-export function ModalDescription({ children, className }: { children: ReactNode; className?: string }) {
+export function ModalDescription({ children, className, id }: { children: ReactNode; className?: string; id?: string }) {
   return (
-    <p className={["text-r14 text-(--skools-text-muted)", className].filter(Boolean).join(" ")}>
+    <p id={id} className={["text-r14 text-(--skools-text-muted)", className].filter(Boolean).join(" ")}>
       {children}
     </p>
   );
@@ -212,17 +279,21 @@ export function ModalFooter({ children, className }: { children: ReactNode; clas
   );
 }
 
+/**
+ * Zone cliquable de fermeture. Rend un `<span>` (et non un bouton) car les usages
+ * enveloppent déjà un `<Button>` (élément focusable au clavier).
+ */
 export function ModalClose({
   children,
   className,
 }: {
   children: ReactNode;
   className?: string;
-} & ComponentProps<"div">) {
+} & ComponentProps<"span">) {
   const { close } = useModalContext();
   return (
-    <div onClick={close} className={className}>
+    <span onClick={close} className={className}>
       {children}
-    </div>
+    </span>
   );
 }

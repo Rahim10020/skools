@@ -1,8 +1,9 @@
 import { API, apiPath } from "../../lib/api-endpoints";
 import { KEYS } from "../../lib/query-keys";
 import { ROUTES } from "../../lib/routes";
-import { useCallback, useMemo, useState, type FormEvent } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { z } from "zod";
 import { unwrapList, type PaginatedList } from "../../hooks/use-crud";
 import api, { getErrorMessage } from "../../lib/api";
 import { roleLabel } from "../../lib/permissions";
@@ -10,8 +11,7 @@ import { ASSIGNABLE_ROLES } from "./member-roles";
 import { EditMemberRoleModal } from "./EditMemberRoleModal";
 import { useAuthStore } from "../../stores/auth-store";
 import { Button } from "../../components/ui/button";
-import { Input } from "../../components/ui/input";
-import { Select } from "../../components/ui/select";
+import { FormDialog, type CrudFieldDef } from "../../components/crud/CrudPage";
 import { Modal } from "../../components/ui/use-modal";
 import { EmptyState, ErrorState } from "../../components/ui/empty-state";
 import { toast } from "../../components/ui/toast";
@@ -36,6 +36,30 @@ interface Member {
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
+const addMemberSchema = z.object({
+  email: z.string().regex(EMAIL_RE, "Email invalide"),
+  role: z.string().min(1, "Choisissez un rôle"),
+});
+
+const addMemberFields: CrudFieldDef[] = [
+  {
+    name: "email",
+    label: "Email",
+    type: "text",
+    required: true,
+    placeholder: "adresse@exemple.com",
+  },
+  {
+    name: "role",
+    label: "Rôle",
+    type: "select",
+    required: true,
+    placeholder: "Choisir un rôle",
+    options: ASSIGNABLE_ROLES,
+    disableSelectSearch: true,
+  },
+];
+
 const memberName = (member: Member) =>
   `${member.user.lastName} ${member.user.firstName}`;
 
@@ -43,9 +67,6 @@ export default function UsersPage() {
   const queryClient = useQueryClient();
   const currentUserId = useAuthStore((state) => state.user?.id);
   const [addOpen, setAddOpen] = useState(false);
-  const [email, setEmail] = useState("");
-  const [role, setRole] = useState("");
-  const [formError, setFormError] = useState<string | null>(null);
   const [editing, setEditing] = useState<Member | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<Member | null>(null);
   const [bulkConfirmOpen, setBulkConfirmOpen] = useState(false);
@@ -104,9 +125,8 @@ export default function UsersPage() {
     queryClient.invalidateQueries({ queryKey: KEYS.members });
 
   const addMutation = useMutation({
-    mutationFn: async () =>
-      (await api.post(API.userEstablishments, { email: email.trim(), role }))
-        .data,
+    mutationFn: async (payload: { email: string; role: string }) =>
+      (await api.post(API.userEstablishments, payload)).data,
   });
 
   const deleteMutation = useMutation({
@@ -114,27 +134,14 @@ export default function UsersPage() {
       (await api.delete(apiPath.withId(API.userEstablishments, id))).data,
   });
 
-  const handleAdd = async (event: FormEvent) => {
-    event.preventDefault();
-    if (!EMAIL_RE.test(email.trim())) {
-      setFormError("Email invalide");
-      return;
-    }
-    if (!role) {
-      setFormError("Choisissez un rôle");
-      return;
-    }
-    setFormError(null);
-    try {
-      await addMutation.mutateAsync();
-      invalidate();
-      toast.success("Membre ajouté avec succès");
-      setAddOpen(false);
-      setEmail("");
-      setRole("");
-    } catch (error) {
-      setFormError(getErrorMessage(error));
-    }
+  const handleAdd = async (values: Record<string, string>) => {
+    await addMutation.mutateAsync({
+      email: values.email.trim(),
+      role: values.role,
+    });
+    invalidate();
+    toast.success("Membre ajouté avec succès");
+    setAddOpen(false);
   };
 
   const openEdit = (member: Member) => {
@@ -323,75 +330,18 @@ export default function UsersPage() {
       )}
 
       {/* Ajout */}
-      <Modal.Root
+      <FormDialog
         open={addOpen}
         onOpenChange={(open) => !open && setAddOpen(false)}
-      >
-        {addOpen && (
-          <Modal.Content labelledBy="users-add-title">
-            <Modal.Header>
-              <Modal.Title id="users-add-title">Ajouter un membre</Modal.Title>
-              <Modal.Description>
-                Le compte doit exister et ne pas appartenir à un autre
-                établissement.
-              </Modal.Description>
-            </Modal.Header>
-            <Modal.Body>
-              <form
-                id="users-add-form"
-                onSubmit={handleAdd}
-                className="flex flex-col gap-p4"
-                noValidate
-              >
-                <div className="flex flex-col gap-p1">
-                  <span className="text-m12 text-(--skools-text-primary)">
-                    Email <span className="text-(--common-red)"> *</span>
-                  </span>
-                  <Input
-                    label="adresse@exemple.com"
-                    value={email}
-                    onChange={setEmail}
-                    autoComplete="email"
-                  />
-                </div>
-                <div className="flex flex-col gap-p1">
-                  <span className="text-m12 text-(--skools-text-primary)">
-                    Rôle <span className="text-(--common-red)"> *</span>
-                  </span>
-                  <Select
-                    label="Choisir un rôle"
-                    options={ASSIGNABLE_ROLES}
-                    value={role}
-                    onChange={setRole}
-                    disableSearch
-                  />
-                </div>
-                {formError && (
-                  <p role="alert" className="text-r14 text-(--common-red)">
-                    {formError}
-                  </p>
-                )}
-              </form>
-            </Modal.Body>
-            <Modal.Footer>
-              <Modal.Close>
-                <Button variant="secondary" fullWidth={false}>
-                  Annuler
-                </Button>
-              </Modal.Close>
-              <Button
-                fullWidth={false}
-                type="submit"
-                form="users-add-form"
-                variant={addMutation.isPending ? "loading" : "primary"}
-                disabled={addMutation.isPending}
-              >
-                Ajouter
-              </Button>
-            </Modal.Footer>
-          </Modal.Content>
-        )}
-      </Modal.Root>
+        title="Ajouter un membre"
+        description="Le compte doit exister et ne pas appartenir à un autre établissement."
+        submitLabel="Ajouter"
+        fields={addMemberFields}
+        schema={addMemberSchema}
+        defaults={{ email: "", role: "" }}
+        pending={addMutation.isPending}
+        onSubmit={handleAdd}
+      />
 
       {/* Changement de rôle (modal partagé avec la page détail) */}
       {editing && (
