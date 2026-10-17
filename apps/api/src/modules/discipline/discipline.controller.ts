@@ -15,6 +15,7 @@ import { Role } from '@prisma/client';
 import { DisciplineService } from './discipline.service.js';
 import { CreateDisciplineDto } from './dto/create-discipline.dto.js';
 import { UpdateDisciplineDto } from './dto/update-discipline.dto.js';
+import { ListDisciplineQuery } from './dto/list-discipline.query.js';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard.js';
 import { RolesGuard } from '../../common/guards/roles.guard.js';
 import { Roles } from '../../common/decorators/roles.decorator.js';
@@ -42,8 +43,8 @@ export class DisciplineController {
     Role.STUDENT,
     Role.PARENT,
   )
-  findAll(@Request() req: any, @Query('studentId') studentId?: string) {
-    return this.disciplineService.findAll(req.user.establishmentId, studentId, {
+  findAll(@Request() req: any, @Query() query: ListDisciplineQuery) {
+    return this.disciplineService.findAll(req.user.establishmentId, query, {
       id: req.user.id,
       role: req.user.role,
     });

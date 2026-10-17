@@ -7,9 +7,15 @@ import {
 import { PrismaService } from '../../prisma/prisma.service.js';
 import { CreateDisciplineDto } from './dto/create-discipline.dto.js';
 import { UpdateDisciplineDto } from './dto/update-discipline.dto.js';
+import { ListDisciplineQuery } from './dto/list-discipline.query.js';
 import { DisciplineStatus } from '@prisma/client';
 import type { RequestActor } from '../../common/types/request-actor.js';
 import { assertStudentVisible } from '../../common/helpers/family-scope.js';
+import {
+  containsInsensitive,
+  paginate,
+  parseListQuery,
+} from '../../common/helpers/list-query.js';
 import { NotificationsService } from '../notifications/notifications.service.js';
 
 @Injectable()
@@ -73,54 +79,91 @@ export class DisciplineService {
     return record;
   }
 
-  async findAll(establishmentId: string, studentId?: string, actor?: RequestActor) {
+  /**
+   * Liste avec recherche, filtres et pagination :
+   * `?search=&studentId=&status=&type=&page=&limit=`.
+   * Périmètre famille préservé (élève visible obligatoire). Sans param → tableau brut.
+   */
+  async findAll(
+    establishmentId: string,
+    query: ListDisciplineQuery = {},
+    actor?: RequestActor,
+  ) {
+    const where: Record<string, unknown> = {
+      establishmentId,
+      isActive: true,
+    };
+
     if (actor?.role === 'STUDENT' || actor?.role === 'PARENT') {
-      // Périmètre restreint : un élève filtré est obligatoire.
-      if (!studentId) {
+      // Périmètre restreint : un élève filtré (et visible) est obligatoire.
+      if (!query.studentId) {
         throw new ForbiddenException('Précisez un élève');
       }
-      await assertStudentVisible(this.prisma, actor, studentId, establishmentId);
-      return this.findByStudent(studentId, establishmentId);
+      await assertStudentVisible(
+        this.prisma,
+        actor,
+        query.studentId,
+        establishmentId,
+      );
+      where.studentId = query.studentId;
+    } else if (query.studentId) {
+      where.studentId = query.studentId;
     }
 
-    if (studentId) {
-      return this.findByStudent(studentId, establishmentId);
+    const include = {
+      student: {
+        select: {
+          id: true,
+          firstName: true,
+          lastName: true,
+          matricule: true,
+        },
+      },
+      reportedBy: {
+        select: { id: true, firstName: true, lastName: true },
+      },
+    };
+
+    const parsed = parseListQuery({
+      page: query.page,
+      limit: query.limit,
+      search: query.search,
+      hasFilter:
+        query.studentId !== undefined ||
+        query.status !== undefined ||
+        query.type !== undefined,
+    });
+    if (!parsed.paginated) {
+      return this.prisma.disciplineRecord.findMany({
+        where,
+        include,
+        orderBy: { incidentDate: 'desc' },
+      });
     }
 
-    return this.prisma.disciplineRecord.findMany({
-      where: { establishmentId, isActive: true },
-      include: {
-        student: {
-          select: {
-            id: true,
-            firstName: true,
-            lastName: true,
-            matricule: true,
-          },
-        },
-        reportedBy: {
-          select: { id: true, firstName: true, lastName: true },
-        },
-      },
-      orderBy: { incidentDate: 'desc' },
-    });
-  }
+    if (query.status) where.status = query.status;
+    if (query.type) where.type = query.type;
+    if (parsed.search) {
+      const match = containsInsensitive(parsed.search);
+      where.OR = [
+        { title: match },
+        { description: match },
+        { student: { firstName: match } },
+        { student: { lastName: match } },
+      ];
+    }
 
-  async findByStudent(studentId: string, establishmentId: string) {
-    return this.prisma.disciplineRecord.findMany({
-      where: { studentId, establishmentId, isActive: true },
-      include: {
-        student: {
-          select: {
-            id: true,
-            firstName: true,
-            lastName: true,
-            matricule: true,
-          },
-        },
-      },
-      orderBy: { incidentDate: 'desc' },
-    });
+    const [total, items] = await this.prisma.$transaction([
+      this.prisma.disciplineRecord.count({ where }),
+      this.prisma.disciplineRecord.findMany({
+        where,
+        include,
+        orderBy: { incidentDate: 'desc' },
+        skip: parsed.skip,
+        take: parsed.limit,
+      }),
+    ]);
+    return paginate(items, total, parsed.page, parsed.limit);
   }
 
   async findOne(id: string, establishmentId: string) {

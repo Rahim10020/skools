@@ -6,6 +6,7 @@ import { z } from "zod";
 import { useQuery } from "@tanstack/react-query";
 import { CrudPage } from "../../components/crud/CrudPage";
 import { Badge, type BadgeVariant } from "../../components/ui/badge";
+import { DISCIPLINE_PILL } from "../../lib/status-meta";
 import { PageHeader } from "../../layouts/PageHeader";
 import { EmptyState } from "../../components/ui/empty-state";
 import { Skeleton } from "../../components/ui/skeleton";
@@ -200,6 +201,37 @@ export default function DisciplinePage() {
         isFamily ? apiPath.disciplineByStudent(familyStudentId) : undefined
       }
       toolbarExtra={isParent ? <ChildSelector /> : undefined}
+      searchPlaceholder="Rechercher une fiche…"
+      filters={[
+        { key: "status", label: "Statut", param: "status", options: STATUS_OPTIONS },
+        {
+          key: "type",
+          label: "Type",
+          param: "type",
+          options: TYPE_OPTIONS.map((option) => ({
+            label: option.label,
+            value: option.value as string,
+          })),
+        },
+      ]}
+      statusPill={(record) => DISCIPLINE_PILL[record.status]}
+      csvFilename={isFamily ? undefined : "discipline"}
+      csvHeaders={
+        isFamily
+          ? undefined
+          : ["Élève", "Fiche", "Type", "Incident le", "Statut"]
+      }
+      toCsvRow={
+        isFamily
+          ? undefined
+          : (record) => [
+              `${record.student.lastName} ${record.student.firstName}`,
+              record.title,
+              TYPE_LABELS[record.type],
+              formatDateFr(record.incidentDate),
+              STATUS_META[record.status].label,
+            ]
+      }
       columns={[
         {
           header: "Élève",
@@ -217,13 +249,6 @@ export default function DisciplinePage() {
         {
           header: "Incident le",
           render: (record) => formatDateFr(record.incidentDate),
-        },
-        {
-          header: "Statut",
-          render: (record) => {
-            const meta = STATUS_META[record.status];
-            return <Badge variant={meta.variant}>{meta.label}</Badge>;
-          },
         },
       ]}
       fields={baseFields}

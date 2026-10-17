@@ -76,7 +76,7 @@
   - `GET /attendances/student?studentId=` (« Mes absences ») : STUDENT/PARENT (lui-même / ses enfants, 403 sinon), TEACHER (élève inscrit dans ses classes), staff. Inclut `classroom{name}`, tri date desc.
 - `schedules` CRUD : `classroomId, subjectId, academicYearId, dayOfWeek: MONDAY..SUNDAY, startTime/endTime `HH:mm` (regex stricte), teacherId?, room?`. `GET /schedules?classroomId=` optionnel. TEACHER : `GET /` et `GET /:id` restreints aux classes assignées (« Mon emploi du temps »). STUDENT/PARENT : restreints aux classes d'inscription (lui-même / ses enfants, 403 si `classroomId` hors périmètre).
 - `enrollments` : `GET /` et `GET /:id` ouverts à TEACHER (ses classes), STUDENT (siennes), PARENT (ses enfants). Écritures DIRECTOR/ADMIN.
-- `discipline` CRUD + `GET /discipline?studentId=` optionnel : `studentId, type: WARNING\|REPRIMAND\|DETENTION\|SUSPENSION\|EXPULSION\|OBSERVATION\|OTHER, title (≥3), incidentDate ISO, description?, status?: PENDING\|ACTIVE\|RESOLVED\|CANCELLED`. PATCH accepte en plus `resolution?, resolvedAt?`. `reportedById` injecté serveur.
+- `discipline` CRUD : `studentId, type: WARNING\|REPRIMAND\|DETENTION\|SUSPENSION\|EXPULSION\|OBSERVATION\|OTHER, title (≥3), incidentDate ISO, description?, status?: PENDING\|ACTIVE\|RESOLVED\|CANCELLED`. PATCH accepte en plus `resolution?, resolvedAt?`. `reportedById` injecté serveur. `GET /discipline?search=&studentId=&status=&type=&page=&limit=` (search = titre/description/prénom/nom) → `{ data, pagination }` paginée ; **sans param → tableau brut** (compat). STUDENT/PARENT : `studentId` obligatoire et visible (403 sinon).
 
 ## Notifications (JWT, tous les rôles d'établissement sauf SUPER_ADMIN)
 

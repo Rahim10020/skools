@@ -75,7 +75,7 @@ export function AppShell() {
         <main
           id="contenu"
           tabIndex={-1}
-          className="flex-1 w-full max-w-[1280px] mx-auto px-p4 sm:px-p10 pt-p13 pb-p10 outline-none"
+          className="flex-1 w-full max-w-7xl mx-auto px-p4 sm:px-p10 pt-p8 pb-p10 outline-none"
         >
           <Outlet />
         </main>
