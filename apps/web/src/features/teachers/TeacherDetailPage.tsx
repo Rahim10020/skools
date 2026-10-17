@@ -2,8 +2,7 @@ import { useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import api, { getErrorMessage } from "../../lib/api";
 import { API, apiPath } from "../../lib/api-endpoints";
-import { ROUTES } from "../../lib/routes";
-import { EmptyState, ErrorState } from "../../components/ui/empty-state";
+import { ErrorState } from "../../components/ui/empty-state";
 import { ListHeader } from "../../components/data-list/ListHeader";
 import { ListSkeleton } from "../../components/data-list/ListSkeleton";
 import {
@@ -12,6 +11,7 @@ import {
   DetailRow,
   DetailSection,
   HairlineList,
+  StickyBar,
 } from "../../components/detail/DetailSection";
 import { unwrapList, type PaginatedList } from "../../hooks/use-crud";
 
@@ -74,13 +74,13 @@ export default function TeacherDetailPage() {
   if (teacher.isPending) {
     return (
       <div>
-        <ListHeader
-          title="Enseignants"
-          backTo={ROUTES.teachers}
-          backLabel="Enseignants"
-          count={teachersTotal.data ?? 0}
-          countLabel="enseignants"
-        />
+        <StickyBar>
+          <ListHeader
+            title="Enseignants"
+            count={teachersTotal.data ?? 0}
+            countLabel="enseignants"
+          />
+        </StickyBar>
         <ListSkeleton label="Chargement du dossier" />
       </div>
     );
@@ -89,13 +89,13 @@ export default function TeacherDetailPage() {
   if (teacher.isError) {
     return (
       <div>
-        <ListHeader
-          title="Enseignants"
-          backTo={ROUTES.teachers}
-          backLabel="Enseignants"
-          count={teachersTotal.data ?? 0}
-          countLabel="enseignants"
-        />
+        <StickyBar>
+          <ListHeader
+            title="Enseignants"
+            count={teachersTotal.data ?? 0}
+            countLabel="enseignants"
+          />
+        </StickyBar>
         <ErrorState
           title="Impossible de charger ce dossier"
           message={getErrorMessage(teacher.error)}
@@ -119,13 +119,13 @@ export default function TeacherDetailPage() {
 
   return (
     <div>
-      <ListHeader
-        title="Enseignants"
-        backTo={ROUTES.teachers}
-        backLabel="Enseignants"
-        count={teachersTotal.data ?? 0}
-        countLabel="enseignants"
-      />
+      <StickyBar>
+        <ListHeader
+          title="Enseignants"
+          count={teachersTotal.data ?? 0}
+          countLabel="enseignants"
+        />
+      </StickyBar>
 
       <DetailContainer>
         <h2 className="font-semibold text-sb24 leading-9 text-(--skools-text-primary)">
@@ -136,27 +136,24 @@ export default function TeacherDetailPage() {
           <DetailFields fields={dossierFields} />
         </DetailSection>
 
-        <DetailSection title="Affectations" count={assignments.data?.length ?? 0}>
-          {assignments.isPending ? (
-            <ListSkeleton label="Chargement des affectations" rows={2} />
-          ) : (assignments.data ?? []).length === 0 ? (
-            <EmptyState
-              title="Aucune affectation"
-              description="Cet enseignant n'est affecté à aucune classe pour le moment."
-            />
-          ) : (
-            <HairlineList
-              items={assignments.data ?? []}
-              idOf={(row) => row.id}
-              render={(row) => (
-                <DetailRow
-                  primary={`${row.subject.name} — ${row.classroom.name}`}
-                  secondary={`${row.academicYear.name}${row.academicYear.isCurrent ? " (En cours)" : ""}`}
-                />
-              )}
-            />
-          )}
-        </DetailSection>
+        {(assignments.isPending || (assignments.data ?? []).length > 0) && (
+          <DetailSection title="Affectations" count={assignments.data?.length ?? 0}>
+            {assignments.isPending ? (
+              <ListSkeleton label="Chargement des affectations" rows={2} />
+            ) : (
+              <HairlineList
+                items={assignments.data ?? []}
+                idOf={(row) => row.id}
+                render={(row) => (
+                  <DetailRow
+                    primary={`${row.subject.name} — ${row.classroom.name}`}
+                    secondary={`${row.academicYear.name}${row.academicYear.isCurrent ? " (En cours)" : ""}`}
+                  />
+                )}
+              />
+            )}
+          </DetailSection>
+        )}
       </DetailContainer>
     </div>
   );

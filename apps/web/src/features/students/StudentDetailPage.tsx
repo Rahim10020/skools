@@ -4,13 +4,12 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import api, { getErrorMessage } from "../../lib/api";
 import { API, apiPath } from "../../lib/api-endpoints";
 import { KEYS } from "../../lib/query-keys";
-import { ROUTES } from "../../lib/routes";
 import { canManageSchool } from "../../lib/roles";
 import { useAuthStore } from "../../stores/auth-store";
 import { Button } from "../../components/ui/button";
 import { Modal } from "../../components/ui/use-modal";
 import { CrudFormModal } from "../../components/crud/CrudPage";
-import { EmptyState, ErrorState } from "../../components/ui/empty-state";
+import { ErrorState } from "../../components/ui/empty-state";
 import { ListHeader } from "../../components/data-list/ListHeader";
 import { ListSkeleton } from "../../components/data-list/ListSkeleton";
 import { unwrapList, type PaginatedList } from "../../hooks/use-crud";
@@ -21,7 +20,9 @@ import {
   DetailFields,
   DetailRow,
   DetailSection,
+  DetailStat,
   HairlineList,
+  StickyBar,
 } from "../../components/detail/DetailSection";
 import {
   fullName as studentFullName,
@@ -32,12 +33,17 @@ import {
   type Student,
 } from "./student-form";
 import {
-  ATTENDANCE_PILL,
   DISCIPLINE_PILL,
   ENROLLMENT_PILL,
   RELATION_LABELS,
+  attendanceRateBand,
+  averageBand,
 } from "../../lib/status-meta";
 import { formatDateFr } from "../../components/crud/crud-helpers";
+
+/** « 1 note » / « 2 notes » pour les synthèses compactes. */
+const plural = (count: number, word: string) =>
+  `${count} ${word}${count > 1 ? "s" : ""}`;
 
 interface StudentDossier {
   id: string;
@@ -136,8 +142,7 @@ export default function StudentDetailPage() {
   });
   const enrollments = useQuery({
     queryKey: ["student-enrollments", id],
-    queryFn: async () =>
-      (await api.get<EnrollmentRow[]>(API.enrollments)).data,
+    queryFn: async () => (await api.get<EnrollmentRow[]>(API.enrollments)).data,
     enabled: !!id && student.isSuccess,
     select: (rows) => rows.filter((row) => row.studentId === id),
   });
@@ -184,13 +189,13 @@ export default function StudentDetailPage() {
   if (student.isPending) {
     return (
       <div>
-        <ListHeader
-          title="Élèves"
-          backTo={ROUTES.students}
-          backLabel="Élèves"
-          count={studentsTotal.data ?? 0}
-          countLabel="élèves"
-        />
+        <StickyBar>
+          <ListHeader
+            title="Élèves"
+            count={studentsTotal.data ?? 0}
+            countLabel="élèves"
+          />
+        </StickyBar>
         <ListSkeleton label="Chargement du dossier" />
       </div>
     );
@@ -199,13 +204,13 @@ export default function StudentDetailPage() {
   if (student.isError) {
     return (
       <div>
-        <ListHeader
-          title="Élèves"
-          backTo={ROUTES.students}
-          backLabel="Élèves"
-          count={studentsTotal.data ?? 0}
-          countLabel="élèves"
-        />
+        <StickyBar>
+          <ListHeader
+            title="Élèves"
+            count={studentsTotal.data ?? 0}
+            countLabel="élèves"
+          />
+        </StickyBar>
         <ErrorState
           title="Impossible de charger ce dossier"
           message={getErrorMessage(student.error)}
@@ -217,10 +222,40 @@ export default function StudentDetailPage() {
 
   const dossier = student.data;
   const fullName = `${dossier.lastName} ${dossier.firstName}`;
-  const attendanceCounts = (attendances.data ?? []).reduce(
+
+  // Assiduité : les excusés sont exclus du calcul (ni présents ni comptés).
+  const attendanceRows = attendances.data ?? [];
+  const attendanceCounts = attendanceRows.reduce(
     (acc, row) => ({ ...acc, [row.status]: (acc[row.status] ?? 0) + 1 }),
-    {} as Partial<Record<AttendanceRow["status"], number>>,
+    {} as Record<AttendanceRow["status"], number>,
   );
+  const countedAttendances =
+    (attendanceCounts.PRESENT ?? 0) +
+    (attendanceCounts.ABSENT ?? 0) +
+    (attendanceCounts.LATE ?? 0);
+  const attendanceRate =
+    countedAttendances > 0
+      ? Math.round(
+          (((attendanceCounts.PRESENT ?? 0) + (attendanceCounts.LATE ?? 0)) /
+            countedAttendances) *
+            100,
+        )
+      : null;
+
+  // Notes : moyenne sur 20 des notes chiffrées (absences exclues).
+  const gradeRows = grades.data ?? [];
+  const scoredGrades = gradeRows.filter(
+    (grade) => !grade.isAbsent && grade.score !== null,
+  );
+  const gradeAbsences = gradeRows.length - scoredGrades.length;
+  const average =
+    scoredGrades.length > 0
+      ? scoredGrades.reduce(
+          (sum, grade) =>
+            sum + ((grade.score ?? 0) / (grade.exam.maxScore || 20)) * 20,
+          0,
+        ) / scoredGrades.length
+      : null;
 
   const dossierFields: Array<[string, string]> = [
     ["Matricule", dossier.matricule || "—"],
@@ -257,14 +292,14 @@ export default function StudentDetailPage() {
 
   return (
     <div>
-      <ListHeader
-        title="Élèves"
-        backTo={ROUTES.students}
-        backLabel="Élèves"
-        count={studentsTotal.data ?? 0}
-        countLabel="élèves"
-        extra={editButton}
-      />
+      <StickyBar>
+        <ListHeader
+          title="Élèves"
+          count={studentsTotal.data ?? 0}
+          countLabel="élèves"
+          extra={editButton}
+        />
+      </StickyBar>
 
       <Modal.Root
         open={editOpen}
@@ -297,127 +332,126 @@ export default function StudentDetailPage() {
           <DetailFields fields={dossierFields} />
         </DetailSection>
 
-        <DetailSection title="Inscriptions" count={enrollments.data?.length ?? 0}>
-          {enrollments.isPending ? (
-            <ListSkeleton label="Chargement des inscriptions" rows={2} />
-          ) : (enrollments.data ?? []).length === 0 ? (
-            <EmptyState title="Aucune inscription" description="Cet élève n'est inscrit dans aucune classe pour le moment." />
-          ) : (
-            <HairlineList
-              items={enrollments.data ?? []}
-              idOf={(row) => row.id}
-              render={(row) => {
-                const meta = ENROLLMENT_PILL[row.status];
-                return (
-                  <DetailRow
-                    primary={row.classroom.name}
-                    secondary={row.academicYear.name}
-                    right={<StatusPill label={meta.label} variant={meta.variant} />}
-                  />
-                );
-              }}
-            />
-          )}
-        </DetailSection>
-
-        <DetailSection title="Parents" count={parents.data?.length ?? 0}>
-          {parents.isPending ? (
-            <ListSkeleton label="Chargement des parents" rows={2} />
-          ) : (parents.data ?? []).length === 0 ? (
-            <EmptyState title="Aucun parent lié" description="Utilisez « Lier parents » pour rattacher un parent à cet élève." />
-          ) : (
-            <HairlineList
-              items={parents.data ?? []}
-              idOf={(link) => link.id}
-              render={(link) => (
-                <DetailRow
-                  primary={`${link.parent.lastName} ${link.parent.firstName}`}
-                  secondary={`${RELATION_LABELS[link.relation]}${link.isPrimary ? " • Contact principal" : ""}${link.parent.phone ? ` • ${link.parent.phone}` : ""}`}
-                />
-              )}
-            />
-          )}
-        </DetailSection>
-
-        <DetailSection title="Dernières notes" count={grades.data?.length ?? 0}>
-          {grades.isPending ? (
-            <ListSkeleton label="Chargement des notes" rows={3} />
-          ) : (grades.data ?? []).length === 0 ? (
-            <EmptyState title="Aucune note" description="Aucune note saisie pour cet élève." />
-          ) : (
-            <HairlineList
-              items={(grades.data ?? []).slice(0, 8)}
-              idOf={(grade) => grade.id}
-              render={(grade) => (
-                <DetailRow
-                  primary={`${grade.exam.subject.name} — ${grade.exam.name}`}
-                  secondary={formatDateFr(grade.exam.examDate)}
-                  right={
-                    grade.isAbsent ? (
-                      <StatusPill label="Absent" variant="destructive" />
-                    ) : (
-                      <span className="text-r14 font-medium text-(--skools-text-primary)">
-                        {grade.score} / {grade.exam.maxScore}
-                      </span>
-                    )
-                  }
-                />
-              )}
-            />
-          )}
-        </DetailSection>
-
-        <DetailSection title="Présences" count={attendances.data?.length ?? 0}>
-          {attendances.isPending ? (
-            <ListSkeleton label="Chargement des présences" rows={3} />
-          ) : (attendances.data ?? []).length === 0 ? (
-            <EmptyState title="Aucun appel" description="Aucune présence enregistrée pour cet élève." />
-          ) : (
-            <div className="flex flex-col gap-p3">
-              <p className="text-r12 text-(--skools-text-muted)">
-                {attendanceCounts.PRESENT ?? 0} présent(s) • {attendanceCounts.ABSENT ?? 0} absent(s) •{" "}
-                {attendanceCounts.LATE ?? 0} retard(s) • {attendanceCounts.EXCUSED ?? 0} excusé(s)
-              </p>
+        {(enrollments.isPending || (enrollments.data ?? []).length > 0) && (
+          <DetailSection
+            title="Inscriptions"
+            count={enrollments.data?.length ?? 0}
+          >
+            {enrollments.isPending ? (
+              <ListSkeleton label="Chargement des inscriptions" rows={2} />
+            ) : (
               <HairlineList
-                items={(attendances.data ?? []).slice(0, 5)}
+                items={enrollments.data ?? []}
                 idOf={(row) => row.id}
                 render={(row) => {
-                  const meta = ATTENDANCE_PILL[row.status];
+                  const meta = ENROLLMENT_PILL[row.status];
                   return (
                     <DetailRow
-                      primary={formatDateFr(row.date)}
-                      secondary={row.classroom.name}
-                      right={<StatusPill label={meta.label} variant={meta.variant} />}
+                      primary={row.classroom.name}
+                      secondary={row.academicYear.name}
+                      right={
+                        <StatusPill label={meta.label} variant={meta.variant} />
+                      }
                     />
                   );
                 }}
               />
-            </div>
-          )}
-        </DetailSection>
+            )}
+          </DetailSection>
+        )}
 
-        <DetailSection title="Discipline" count={discipline.data?.length ?? 0}>
-          {discipline.isPending ? (
-            <ListSkeleton label="Chargement des fiches" rows={2} />
-          ) : (discipline.data ?? []).length === 0 ? (
-            <EmptyState title="Rien à signaler" description="Aucune fiche disciplinaire pour cet élève." />
-          ) : (
-            <HairlineList
-              items={discipline.data ?? []}
-              idOf={(row) => row.id}
-              render={(row) => {
-                const meta = DISCIPLINE_PILL[row.status];
-                return (
+        {(parents.isPending || (parents.data ?? []).length > 0) && (
+          <DetailSection title="Parents" count={parents.data?.length ?? 0}>
+            {parents.isPending ? (
+              <ListSkeleton label="Chargement des parents" rows={2} />
+            ) : (
+              <HairlineList
+                items={parents.data ?? []}
+                idOf={(link) => link.id}
+                render={(link) => (
                   <DetailRow
-                    primary={row.title}
-                    secondary={formatDateFr(row.incidentDate)}
-                    right={<StatusPill label={meta.label} variant={meta.variant} />}
+                    primary={`${link.parent.lastName} ${link.parent.firstName}`}
+                    secondary={`${RELATION_LABELS[link.relation]}${link.isPrimary ? " • Contact principal" : ""}${link.parent.phone ? ` • ${link.parent.phone}` : ""}`}
                   />
-                );
-              }}
-            />
-          )}
-        </DetailSection>
+                )}
+              />
+            )}
+          </DetailSection>
+        )}
+
+        {(grades.isPending || scoredGrades.length > 0) && (
+          <DetailSection title="Notes">
+            {grades.isPending ? (
+              <ListSkeleton label="Chargement des notes" rows={2} />
+            ) : (
+              average !== null && (
+                <DetailStat
+                  badge={<StatusPill {...averageBand(average)} />}
+                  value={`${average.toFixed(1)}/20 de moyenne`}
+                  caption={[
+                    plural(scoredGrades.length, "note"),
+                    gradeAbsences > 0 ? plural(gradeAbsences, "absence") : null,
+                  ]
+                    .filter(Boolean)
+                    .join(" • ")}
+                />
+              )
+            )}
+          </DetailSection>
+        )}
+
+        {(attendances.isPending || attendanceRate !== null) && (
+          <DetailSection title="Assiduité">
+            {attendances.isPending ? (
+              <ListSkeleton label="Chargement de l'assiduité" rows={2} />
+            ) : (
+              attendanceRate !== null && (
+                <DetailStat
+                  badge={<StatusPill {...attendanceRateBand(attendanceRate)} />}
+                  value={`${attendanceRate}% de présence`}
+                  caption={[
+                    plural(attendanceCounts.PRESENT ?? 0, "présent"),
+                    plural(attendanceCounts.ABSENT ?? 0, "absent"),
+                    plural(attendanceCounts.LATE ?? 0, "retard"),
+                    (attendanceCounts.EXCUSED ?? 0) > 0
+                      ? plural(attendanceCounts.EXCUSED ?? 0, "excusé")
+                      : null,
+                  ]
+                    .filter(Boolean)
+                    .join(" • ")}
+                />
+              )
+            )}
+          </DetailSection>
+        )}
+
+        {(discipline.isPending || (discipline.data ?? []).length > 0) && (
+          <DetailSection
+            title="Discipline"
+            count={discipline.data?.length ?? 0}
+          >
+            {discipline.isPending ? (
+              <ListSkeleton label="Chargement des fiches" rows={2} />
+            ) : (
+              <HairlineList
+                items={discipline.data ?? []}
+                idOf={(row) => row.id}
+                render={(row) => {
+                  const meta = DISCIPLINE_PILL[row.status];
+                  return (
+                    <DetailRow
+                      primary={row.title}
+                      secondary={formatDateFr(row.incidentDate)}
+                      right={
+                        <StatusPill label={meta.label} variant={meta.variant} />
+                      }
+                    />
+                  );
+                }}
+              />
+            )}
+          </DetailSection>
+        )}
       </DetailContainer>
     </div>
   );

@@ -2,8 +2,7 @@ import { useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import api, { getErrorMessage } from "../../lib/api";
 import { API, apiPath } from "../../lib/api-endpoints";
-import { ROUTES } from "../../lib/routes";
-import { EmptyState, ErrorState } from "../../components/ui/empty-state";
+import { ErrorState } from "../../components/ui/empty-state";
 import { ListHeader } from "../../components/data-list/ListHeader";
 import { ListSkeleton } from "../../components/data-list/ListSkeleton";
 import { StatusPill } from "../../components/data-list/StatusPill";
@@ -13,6 +12,7 @@ import {
   DetailRow,
   DetailSection,
   HairlineList,
+  StickyBar,
 } from "../../components/detail/DetailSection";
 import { ENROLLMENT_PILL } from "../../lib/status-meta";
 import { unwrapList, type PaginatedList } from "../../hooks/use-crud";
@@ -103,13 +103,13 @@ export default function ClassroomDetailPage() {
   if (classroom.isPending) {
     return (
       <div>
-        <ListHeader
-          title="Classes"
-          backTo={ROUTES.classrooms}
-          backLabel="Classes"
-          count={classroomsTotal.data ?? 0}
-          countLabel="classes"
-        />
+        <StickyBar>
+          <ListHeader
+            title="Classes"
+            count={classroomsTotal.data ?? 0}
+            countLabel="classes"
+          />
+        </StickyBar>
         <ListSkeleton label="Chargement de la classe" />
       </div>
     );
@@ -118,13 +118,13 @@ export default function ClassroomDetailPage() {
   if (classroom.isError) {
     return (
       <div>
-        <ListHeader
-          title="Classes"
-          backTo={ROUTES.classrooms}
-          backLabel="Classes"
-          count={classroomsTotal.data ?? 0}
-          countLabel="classes"
-        />
+        <StickyBar>
+          <ListHeader
+            title="Classes"
+            count={classroomsTotal.data ?? 0}
+            countLabel="classes"
+          />
+        </StickyBar>
         <ErrorState
           title="Impossible de charger cette classe"
           message={getErrorMessage(classroom.error)}
@@ -144,13 +144,13 @@ export default function ClassroomDetailPage() {
 
   return (
     <div>
-      <ListHeader
-        title="Classes"
-        backTo={ROUTES.classrooms}
-        backLabel="Classes"
-        count={classroomsTotal.data ?? 0}
-        countLabel="classes"
-      />
+      <StickyBar>
+        <ListHeader
+          title="Classes"
+          count={classroomsTotal.data ?? 0}
+          countLabel="classes"
+        />
+      </StickyBar>
 
       <DetailContainer>
         <h2 className="font-semibold text-sb24 leading-9 text-(--skools-text-primary)">
@@ -161,61 +161,55 @@ export default function ClassroomDetailPage() {
           <DetailFields fields={dossierFields} />
         </DetailSection>
 
-        <DetailSection
-          title="Élèves inscrits"
-          count={enrollments.data?.length ?? 0}
-        >
-          {enrollments.isPending ? (
-            <ListSkeleton label="Chargement des inscrits" rows={3} />
-          ) : (enrollments.data ?? []).length === 0 ? (
-            <EmptyState
-              title="Aucun inscrit"
-              description="Aucun élève inscrit dans cette classe pour le moment."
-            />
-          ) : (
-            <HairlineList
-              items={enrollments.data ?? []}
-              idOf={(row) => row.id}
-              render={(row) => {
-                const meta = ENROLLMENT_PILL[row.status];
-                return (
-                  <DetailRow
-                    primary={`${row.student.lastName} ${row.student.firstName}`}
-                    secondary={row.student.matricule ?? undefined}
-                    right={
-                      <StatusPill label={meta.label} variant={meta.variant} />
-                    }
-                  />
-                );
-              }}
-            />
-          )}
-        </DetailSection>
+        {(enrollments.isPending || (enrollments.data ?? []).length > 0) && (
+          <DetailSection
+            title="Élèves inscrits"
+            count={enrollments.data?.length ?? 0}
+          >
+            {enrollments.isPending ? (
+              <ListSkeleton label="Chargement des inscrits" rows={3} />
+            ) : (
+              <HairlineList
+                items={enrollments.data ?? []}
+                idOf={(row) => row.id}
+                render={(row) => {
+                  const meta = ENROLLMENT_PILL[row.status];
+                  return (
+                    <DetailRow
+                      primary={`${row.student.lastName} ${row.student.firstName}`}
+                      secondary={row.student.matricule ?? undefined}
+                      right={
+                        <StatusPill label={meta.label} variant={meta.variant} />
+                      }
+                    />
+                  );
+                }}
+              />
+            )}
+          </DetailSection>
+        )}
 
-        <DetailSection
-          title="Emploi du temps"
-          count={schedules.data?.length ?? 0}
-        >
-          {schedules.isPending ? (
-            <ListSkeleton label="Chargement des créneaux" rows={3} />
-          ) : (schedules.data ?? []).length === 0 ? (
-            <EmptyState
-              title="Aucun créneau"
-              description="Aucun cours planifié pour cette classe."
-            />
-          ) : (
-            <HairlineList
-              items={schedules.data ?? []}
-              idOf={(row) => row.id}
-              render={(row) => (
-                <DetailRow
-                  primary={`${DAY_LABELS[row.dayOfWeek] ?? row.dayOfWeek} ${row.startTime} – ${row.endTime}`}
-                  secondary={`${row.subject.name}${row.teacher ? ` • ${row.teacher.lastName} ${row.teacher.firstName}` : ""}${row.room ? ` • Salle ${row.room}` : ""}`}
-                />
-              )}
-            />
-          )}
-        </DetailSection>
+        {(schedules.isPending || (schedules.data ?? []).length > 0) && (
+          <DetailSection
+            title="Emploi du temps"
+            count={schedules.data?.length ?? 0}
+          >
+            {schedules.isPending ? (
+              <ListSkeleton label="Chargement des créneaux" rows={3} />
+            ) : (
+              <HairlineList
+                items={schedules.data ?? []}
+                idOf={(row) => row.id}
+                render={(row) => (
+                  <DetailRow
+                    primary={`${DAY_LABELS[row.dayOfWeek] ?? row.dayOfWeek} ${row.startTime} – ${row.endTime}`}
+                    secondary={`${row.subject.name}${row.teacher ? ` • ${row.teacher.lastName} ${row.teacher.firstName}` : ""}${row.room ? ` • Salle ${row.room}` : ""}`}
+                  />
+                )}
+              />
+            )}
+          </DetailSection>
+        )}
       </DetailContainer>
     </div>
   );

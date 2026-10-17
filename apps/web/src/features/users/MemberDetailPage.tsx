@@ -3,7 +3,6 @@ import { useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import api, { getErrorMessage } from "../../lib/api";
 import { API } from "../../lib/api-endpoints";
-import { ROUTES } from "../../lib/routes";
 import { roleLabel } from "../../lib/permissions";
 import { useAuthStore } from "../../stores/auth-store";
 import { Button } from "../../components/ui/button";
@@ -14,6 +13,7 @@ import { StatusPill } from "../../components/data-list/StatusPill";
 import {
   DetailContainer,
   DetailFields,
+  StickyBar,
 } from "../../components/detail/DetailSection";
 import { EditMemberRoleModal } from "./EditMemberRoleModal";
 
@@ -58,13 +58,13 @@ export default function MemberDetailPage() {
   if (members.isPending) {
     return (
       <div>
-        <ListHeader
-          title="Utilisateurs & rôles"
-          backTo={ROUTES.users}
-          backLabel="Utilisateurs"
-          count={0}
-          countLabel="membres"
-        />
+        <StickyBar>
+          <ListHeader
+            title="Utilisateurs & rôles"
+            count={0}
+            countLabel="membres"
+          />
+        </StickyBar>
         <ListSkeleton label="Chargement du membre" />
       </div>
     );
@@ -73,13 +73,13 @@ export default function MemberDetailPage() {
   if (members.isError) {
     return (
       <div>
-        <ListHeader
-          title="Utilisateurs & rôles"
-          backTo={ROUTES.users}
-          backLabel="Utilisateurs"
-          count={0}
-          countLabel="membres"
-        />
+        <StickyBar>
+          <ListHeader
+            title="Utilisateurs & rôles"
+            count={0}
+            countLabel="membres"
+          />
+        </StickyBar>
         <ErrorState
           title="Impossible de charger ce membre"
           message={getErrorMessage(members.error)}
@@ -92,13 +92,13 @@ export default function MemberDetailPage() {
   if (!members.data.member) {
     return (
       <div>
-        <ListHeader
-          title="Utilisateurs & rôles"
-          backTo={ROUTES.users}
-          backLabel="Utilisateurs"
-          count={total}
-          countLabel="membres"
-        />
+        <StickyBar>
+          <ListHeader
+            title="Utilisateurs & rôles"
+            count={total}
+            countLabel="membres"
+          />
+        </StickyBar>
         <EmptyState
           title="Membre introuvable"
           description="Ce membre n'appartient plus à l'établissement ou le lien est invalide."
@@ -141,14 +141,14 @@ export default function MemberDetailPage() {
 
   return (
     <div>
-      <ListHeader
-        title="Utilisateurs & rôles"
-        backTo={ROUTES.users}
-        backLabel="Utilisateurs"
-        count={total}
-        countLabel="membres"
-        extra={editButton}
-      />
+      <StickyBar>
+        <ListHeader
+          title="Utilisateurs & rôles"
+          count={total}
+          countLabel="membres"
+          extra={editButton}
+        />
+      </StickyBar>
       <DetailContainer>
         <h2 className="font-semibold text-sb24 leading-9 text-(--skools-text-primary)">
           {memberName}

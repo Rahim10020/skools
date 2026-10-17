@@ -64,6 +64,27 @@ export const PERIOD_CURRENT_PILL = {
   variant: "success" as StatusPillVariant,
 };
 
+export interface RateBand {
+  label: string;
+  variant: StatusPillVariant;
+}
+
+/** Assiduité (taux de présence en %) : seuils 95 / 90 / 80. */
+export function attendanceRateBand(rate: number): RateBand {
+  if (rate >= 95) return { label: "Excellent", variant: "success" };
+  if (rate >= 90) return { label: "Bien", variant: "default" };
+  if (rate >= 80) return { label: "À surveiller", variant: "neutral" };
+  return { label: "Critique", variant: "destructive" };
+}
+
+/** Moyenne générale sur 20 : seuils 16 / 14 / 10. */
+export function averageBand(avg: number): RateBand {
+  if (avg >= 16) return { label: "Excellent", variant: "success" };
+  if (avg >= 14) return { label: "Bien", variant: "default" };
+  if (avg >= 10) return { label: "Passable", variant: "neutral" };
+  return { label: "Insuffisant", variant: "destructive" };
+}
+
 /** Lien parent ↔ élève (miroir de ParentRelation côté API). */
 export type ParentRelation = "FATHER" | "MOTHER" | "GUARDIAN" | "OTHER";
 

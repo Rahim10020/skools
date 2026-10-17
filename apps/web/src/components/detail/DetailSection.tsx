@@ -2,11 +2,24 @@ import type { ReactNode } from "react";
 
 /**
  * Socle des pages détail (fiches) : colonne centrée, sections titrées,
- * paires label/valeur inline, sous-listes hairline. Mêmes classes partout.
+ * paires label/valeur inline, sous-listes hairline.
  */
 export function DetailContainer({ children }: { children: ReactNode }) {
   return (
-    <div className="w-full max-w-[760px] mx-auto flex flex-col gap-p8 pb-p20">
+    <div className="w-full max-w-190 mx-auto flex flex-col gap-p8 pb-p20 mt-p10">
+      {children}
+    </div>
+  );
+}
+
+/**
+ * Barre d'en-tête fixe des fiches : reste collée en haut au scroll
+ * (le scroll est sur window, pas de conteneur contraint).
+ * `top-14` compense la topbar mobile fixe, `lg:top-0` sur desktop.
+ */
+export function StickyBar({ children }: { children: ReactNode }) {
+  return (
+    <div className="sticky top-14 lg:top-0 z-20 bg-(--skools-app-bg) py-p2">
       {children}
     </div>
   );
@@ -33,6 +46,32 @@ export function DetailSection({
       </h3>
       {children}
     </section>
+  );
+}
+
+/**
+ * Ligne de synthèse (taux de présence, moyenne…) : pastille d'évaluation,
+ * valeur mise en avant et détail compact, dans le style inline des fiches.
+ */
+export function DetailStat({
+  badge,
+  value,
+  caption,
+}: {
+  badge?: ReactNode;
+  value: ReactNode;
+  caption?: ReactNode;
+}) {
+  return (
+    <div className="flex flex-wrap items-center gap-p2">
+      {badge}
+      <span className="font-semibold text-r14 text-(--skools-text-primary)">
+        {value}
+      </span>
+      {caption && (
+        <span className="text-r12 text-(--skools-text-muted)">{caption}</span>
+      )}
+    </div>
   );
 }
 

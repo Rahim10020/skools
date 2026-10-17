@@ -1,7 +1,5 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
-import { Link } from "react-router-dom";
 import { FilterDropdown, type FilterOption } from "./FilterDropdown";
-import { ArrowBackIcon } from "../icons/ArrowBackIcon";
 import { DownloadIcon } from "../icons/DownloadIcon";
 import { TrashIcon } from "../icons/TrashIcon";
 
@@ -41,8 +39,6 @@ function useDebouncedValue(value: string, delayMs: number) {
 export function ListHeader({
   title,
   description,
-  backTo,
-  backLabel,
   count,
   countLabel,
   filters = [],
@@ -56,9 +52,6 @@ export function ListHeader({
 }: {
   title?: string;
   description?: string;
-  /** Lien retour discret au-dessus du titre (mode fiche). */
-  backTo?: string;
-  backLabel?: string;
   count: number;
   countLabel: string;
   filters?: ListFilterDef[];
@@ -89,15 +82,6 @@ export function ListHeader({
   return (
     <div className="w-full flex items-start lg:items-center justify-between gap-p1 flex-wrap">
       <div className="min-w-0">
-        {backTo && (
-          <Link
-            to={backTo}
-            className="inline-flex items-center gap-p1 text-r12 text-(--skools-text-muted) hover:text-(--skools-text-primary) mb-p2"
-          >
-            <ArrowBackIcon className="size-4" />
-            {backLabel ?? "Retour"}
-          </Link>
-        )}
         {title && (
           <div className="flex gap-p4 items-center">
             <h1 className="font-semibold text-sb32 leading-9 text-(--skools-text-primary)">
