@@ -401,7 +401,9 @@ function CrudFormBody({
       <Modal.Header className="flex flex-col gap-p1">
         <Modal.Title id={titleId}>{title}</Modal.Title>
         {description && (
-          <Modal.Description id={descriptionId}>{description}</Modal.Description>
+          <Modal.Description id={descriptionId}>
+            {description}
+          </Modal.Description>
         )}
       </Modal.Header>
       <Modal.Body>
@@ -797,14 +799,14 @@ export function CrudPage<T>({
         onOpenChange={(open) => {
           if (!open) setEditing(undefined);
         }}
-        title={editing === null ? createLabel : `Modifier ${nameOf(editing as T)}`}
+        title={editing ? `Modifier ${nameOf(editing)}` : createLabel}
         submitLabel={editing === null ? "Créer" : "Enregistrer"}
         fields={formFields}
         schema={schema}
         defaults={toDefaults(editing ?? undefined)}
         pending={createOne.isPending || updateOne.isPending}
         columns={formColumns}
-        onSubmit={editing === null ? handleCreate : handleUpdate(editing as T)}
+        onSubmit={editing ? handleUpdate(editing) : handleCreate}
       />
 
       <Modal.Root
@@ -815,7 +817,10 @@ export function CrudPage<T>({
         }}
       >
         {deleteTarget && (
-          <Modal.Content labelledBy="crud-delete-title" describedBy="crud-delete-desc">
+          <Modal.Content
+            labelledBy="crud-delete-title"
+            describedBy="crud-delete-desc"
+          >
             <Modal.Header className="flex flex-col gap-p1">
               <Modal.Title id="crud-delete-title">
                 Confirmer la suppression
@@ -852,7 +857,10 @@ export function CrudPage<T>({
           if (!open) setBulkConfirmOpen(false);
         }}
       >
-        <Modal.Content labelledBy="crud-bulk-delete-title" describedBy="crud-bulk-delete-desc">
+        <Modal.Content
+          labelledBy="crud-bulk-delete-title"
+          describedBy="crud-bulk-delete-desc"
+        >
           <Modal.Header className="flex flex-col gap-p1">
             <Modal.Title id="crud-bulk-delete-title">
               Supprimer {selection.selectedCount} élément(s) ?
