@@ -48,5 +48,3 @@ est ce une bonne pratique ? comment simplifier le travail aux utilisateurs et au
 endroits ou on pourrais avoir ce genere de soucis. et aussi au niveau du genre , on a un champ texte au 
 lieu d'un select. ne serait il pas mieux de mieux gerer ca ? ou bien c'est bon comme ca ? trouver les 
 autres soucis de ce genre et on va les corriger.
-
---continuer avec les modifs page details
