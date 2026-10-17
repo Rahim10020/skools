@@ -42,9 +42,3 @@ mobile. actuellement aussi sur desktop, j'aimerais que ca s'affiche exactement a
 sinon ca cache une partie de la sidebar et l'icone de notification et celle pour basculer entre le light 
 et le dark mode ne sont plus visibles
 
-- les modals, trouver une meilleure gestions de ces modals. et puis il ya un truc. supposons qu'il y ait 
-500 eleves dans l'etablissement. est ce un seule personne qui va les enregistrer via le formulaire du modal ? 
-est ce une bonne pratique ? comment simplifier le travail aux utilisateurs et aussi identifie les autres 
-endroits ou on pourrais avoir ce genere de soucis. et aussi au niveau du genre , on a un champ texte au 
-lieu d'un select. ne serait il pas mieux de mieux gerer ca ? ou bien c'est bon comme ca ? trouver les 
-autres soucis de ce genre et on va les corriger.
