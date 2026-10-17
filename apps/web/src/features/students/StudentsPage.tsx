@@ -45,8 +45,7 @@ export default function StudentsPage() {
 
   const importMutation = useMutation({
     mutationFn: async (students: Record<string, string>[]) =>
-      (await api.post<ImportResult>(`${API.students}/bulk`, { students }))
-        .data,
+      (await api.post<ImportResult>(`${API.students}/bulk`, { students })).data,
   });
 
   const handleImport = async (rows: Record<string, string>[]) => {
@@ -60,7 +59,7 @@ export default function StudentsPage() {
 
   const importButton = canManage ? (
     <Button
-      variant="secondary"
+      variant="tag"
       fullWidth={false}
       icon={<UploadIcon className="size-full" />}
       iconPosition="left"
@@ -112,7 +111,10 @@ export default function StudentsPage() {
         toCsvRow={studentToCsvRow}
         columns={[
           { header: "Élève", primary: true, render: fullName },
-          { header: "Matricule", render: (student) => student.matricule || "—" },
+          {
+            header: "Matricule",
+            render: (student) => student.matricule || "—",
+          },
           {
             header: "Naissance",
             render: (student) => formatDateFr(student.dateOfBirth),
