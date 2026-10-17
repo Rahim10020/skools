@@ -1,37 +1,37 @@
 # Graph Report - skools  (2026-10-17)
 
 ## Corpus Check
-- 334 files · ~81,179 words
+- 346 files · ~87,367 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 2118 nodes · 5441 edges · 95 communities (79 shown, 12 thin omitted)
-- Extraction: 97% EXTRACTED · 3% INFERRED · 0% AMBIGUOUS · INFERRED: 157 edges (avg confidence: 0.81)
+- 2215 nodes · 5709 edges · 93 communities (81 shown, 8 thin omitted)
+- Extraction: 97% EXTRACTED · 3% INFERRED · 0% AMBIGUOUS · INFERRED: 165 edges (avg confidence: 0.81)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `af7fbcb4`
+- Built from commit: `391799c1`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
 ## Community Hubs (Navigation)
-- api-endpoints.ts
-- CrudPage.tsx
+- StudentsPage.tsx
+- StudentDetailPage.tsx
 - index.tsx
 - @nestjs/common
 - ui/index.ts
-- AttendancesPage.tsx
-- Roles
-- PrismaService
-- academic-years.controller.ts
+- getErrorMessage
+- @prisma/client
+- RequestActor
+- CreateAcademicYearDto
 - series.controller.ts
 - CreateExamDto
 - CreatePeriodDto
-- ListStudentsQuery
-- user-establishments.service.ts
+- StudentsService
+- LookupAccountsQuery
 - CreateClassroomDto
 - CreateLevelDto
-- CreateParentDto
+- parents.controller.ts
 - CreateTeacherDto
 - useAuthStore
 - sidebar-nav.ts
@@ -39,38 +39,38 @@
 - icons/index.ts
 - ListSubjectsQuery
 - CreateGradeDto
-- SettingsPage.tsx
+- lib/api.ts
 - paginate
 - api/package.json
 - ParentStudentsController
-- BulkAttendanceDto
+- CreateAttendanceDto
 - CreateScheduleDto
 - web/package.json
 - SidebarNavEntry.tsx
-- NotificationsService
+- PrismaService
 - TeacherAssignmentsController
 - devDependencies
 - compilerOptions
 - compilerOptions
-- lib/api.ts
+- CrudPage.tsx
 - Skools — Matrice d'accès par rôle (source de vérité)
-- students.controller.ts
-- EstablishmentsController
+- students.service.ts
+- EstablishmentsService
 - react
 - compilerOptions
 - dependencies
 - scripts
-- AuthController
-- EnrollmentsController
+- auth.service.ts
+- ListEnrollmentsQuery
 - devDependencies
 - main.tsx
-- auth.service.ts
-- DisciplineController
-- establishments.controller.ts
+- AttendancesPage.tsx
+- ListDisciplineQuery
+- Roles
 - ReportCardsService
 - package.json
 - ListHeader.tsx
-- HeaderSelect.tsx
+- DataList.tsx
 - Skools — Reste à faire (post Phase 6)
 - tasks
 - Contrats frontend ↔ API — état de référence (Phase 0, amendé Phase 6)
@@ -78,119 +78,117 @@
 - seed.ts
 - api/README.md
 - AppService
-- DisciplineService
-- CreateDisciplineDto
+- CsvImportDialog.tsx
+- BulkAttendanceDto
 - Pagination.tsx
 - compilerOptions
-- ListDisciplineQuery
-- ListEnrollmentsQuery
+- EnrollStudentsDialog.tsx
+- ListMembersQuery
 - dependencies
-- EstablishmentsService
+- ExamsService
 - main.ts
 - oxlint.json
-- AuthService
-- CreateEnrollmentDto
-- EnrollmentsService
+- levels.controller.ts
+- periods.controller.ts
+- vite.config.ts
 - tsconfig.build.json
 - nest-cli.json
-- classrooms.controller.ts
+- ClassroomsModule
 - cycles.controller.ts
 - subjects.controller.ts
-- parents.controller.ts
-- use-local-storage.ts
+- SubjectsModule
+- Sidebar
 - scripts
 - React + TypeScript + Vite
-- PrismaModule
-- vite-tsconfig-paths
-- ArrowForwardIcon.tsx
-- DateIcon.tsx
-- InfoCircleIcon.tsx
+- prisma.module.ts
+- StudentsModule
+- TeacherAssignmentsModule
 - web/tsconfig.json
 
 ## God Nodes (most connected - your core abstractions)
-1. `react` - 91 edges
+1. `react` - 95 edges
 2. `@nestjs/common` - 84 edges
-3. `Roles()` - 82 edges
+3. `Roles()` - 83 edges
 4. `useAuthStore` - 75 edges
 5. `PrismaService` - 54 edges
-6. `@prisma/client` - 47 edges
-7. `getErrorMessage()` - 43 edges
-8. `class-validator` - 41 edges
-9. `API` - 39 edges
-10. `@tanstack/react-query` - 36 edges
+6. `@prisma/client` - 48 edges
+7. `getErrorMessage()` - 47 edges
+8. `class-validator` - 45 edges
+9. `API` - 41 edges
+10. `@tanstack/react-query` - 38 edges
 
 ## Surprising Connections (you probably didn't know these)
+- `SeriesPage()` --calls--> `useAuthStore`  [EXTRACTED]
+  apps/web/src/features/academic/SeriesPage.tsx → apps/web/src/stores/auth-store.ts
 - `GradesTableProps` --references--> `StudentRow`  [EXTRACTED]
   apps/web/src/features/grades/GradesTable.tsx → apps/web/src/types/api.ts
-- `LinkParentStudentPage()` --calls--> `getErrorMessage()`  [EXTRACTED]
-  apps/web/src/features/parents/LinkParentStudentPage.tsx → apps/web/src/lib/api.ts
+- `ParentsPage()` --indirect_call--> `loadParentAccountOptions()`  [INFERRED]
+  apps/web/src/features/parents/ParentsPage.tsx → apps/web/src/lib/member-options.ts
+- `TeachersPage()` --indirect_call--> `loadTeacherAccountOptions()`  [INFERRED]
+  apps/web/src/features/teachers/TeachersPage.tsx → apps/web/src/lib/member-options.ts
 - `AcademicYearsController` --references--> `Roles()`  [EXTRACTED]
   apps/api/src/modules/academic/academic-years/academic-years.controller.ts → apps/api/src/common/decorators/roles.decorator.ts
-- `ClassroomsController` --references--> `Roles()`  [EXTRACTED]
-  apps/api/src/modules/academic/classrooms/classrooms.controller.ts → apps/api/src/common/decorators/roles.decorator.ts
-- `CyclesController` --references--> `Roles()`  [EXTRACTED]
-  apps/api/src/modules/academic/cycles/cycles.controller.ts → apps/api/src/common/decorators/roles.decorator.ts
 
 ## Import Cycles
 - None detected.
 
-## Communities (95 total, 12 thin omitted)
+## Communities (93 total, 8 thin omitted)
 
-### Community 0 - "api-endpoints.ts"
-Cohesion: 0.07
-Nodes (71): formatDateFr(), omitEmptyStrings(), optionalNumberString(), optionalUuidString(), toDateInput(), toOptionalNumber(), CrudPage(), AcademicYear (+63 more)
-
-### Community 1 - "CrudPage.tsx"
+### Community 0 - "StudentsPage.tsx"
 Cohesion: 0.06
-Nodes (65): CrudColumn, CrudFieldDef, CrudFieldType, CrudFilterDef, CrudFormModal(), CrudSchema, NO_FILTERS, exportToCsv() (+57 more)
+Nodes (70): formatDateFr(), omitEmptyStrings(), optionalNumberString(), optionalUuidString(), toDateInput(), toOptionalNumber(), CrudPage(), AcademicYear (+62 more)
+
+### Community 1 - "StudentDetailPage.tsx"
+Cohesion: 0.09
+Nodes (43): ListSkeleton(), StatusPill(), DetailContainer(), DetailFields(), DetailRow(), DetailSection(), DetailStat(), HairlineList() (+35 more)
 
 ### Community 2 - "index.tsx"
-Cohesion: 0.05
-Nodes (55): BOTTOM_NAV, MeEstablishments, pruneEntries(), Sidebar(), SidebarFooter(), Avatar(), IconButton(), IconButtonProps (+47 more)
+Cohesion: 0.07
+Nodes (41): BOTTOM_NAV, MeEstablishments, SidebarFooter(), IconButton(), IconButtonProps, Wordmark(), AuthLayout(), AppNotification (+33 more)
 
 ### Community 3 - "@nestjs/common"
-Cohesion: 0.06
-Nodes (47): ClassroomsModule, Module, CyclesModule, Module, LevelsModule, Module, PeriodsModule, Module (+39 more)
+Cohesion: 0.08
+Nodes (39): AcademicYearsModule, Module, CyclesModule, Module, LevelsModule, Module, PeriodsModule, Module (+31 more)
 
 ### Community 4 - "ui/index.ts"
-Cohesion: 0.06
-Nodes (60): BadgeProps, badgeStyles, BadgeVariant, ButtonProps, ButtonVariant, LoadingDots(), CardHeader(), BaseInputProps (+52 more)
+Cohesion: 0.05
+Nodes (64): CrudFormBody(), CrudSchema, FormDialogProps, Avatar(), ButtonProps, ButtonVariant, LoadingDots(), CardHeader() (+56 more)
 
-### Community 5 - "AttendancesPage.tsx"
+### Community 5 - "getErrorMessage"
 Cohesion: 0.07
-Nodes (52): DataList(), EmptyState(), EmptyStateProps, ErrorStateProps, Skeleton(), SkeletonProps, toast, AttendancesPage() (+44 more)
+Nodes (55): DataList(), ArrowForwardIcon(), IconProps, Button(), variantClasses, Card(), CardTitle(), EmptyState() (+47 more)
 
-### Community 6 - "Roles"
-Cohesion: 0.11
-Nodes (20): Roles(), ROLES_KEY, RolesGuard, Injectable, UpdateLevelDto, AttendanceItemDto, IsEnum, IsOptional (+12 more)
+### Community 6 - "@prisma/client"
+Cohesion: 0.15
+Nodes (5): UpdateEnrollmentDto, UpdateExamDto, class-transformer, class-validator, @prisma/client
 
-### Community 7 - "PrismaService"
-Cohesion: 0.13
-Nodes (19): assertStudentVisible(), resolveEnrolledClassroomIds(), resolveVisibleStudentIds(), assertClassroomAssigned(), assignedClassroomIds(), ASSIGNMENT_INCLUDE, examInScope(), listTeacherAssignments() (+11 more)
+### Community 7 - "RequestActor"
+Cohesion: 0.16
+Nodes (15): assertStudentVisible(), resolveEnrolledClassroomIds(), resolveVisibleStudentIds(), assertClassroomAssigned(), assignedClassroomIds(), ASSIGNMENT_INCLUDE, listTeacherAssignments(), resolveTeacherId() (+7 more)
 
-### Community 8 - "academic-years.controller.ts"
+### Community 8 - "CreateAcademicYearDto"
 Cohesion: 0.07
-Nodes (31): AcademicYearsController, Body, Controller, Delete, Get, Param, Patch, Post (+23 more)
+Nodes (29): AcademicYearsController, Body, Controller, Delete, Get, Param, Patch, Post (+21 more)
 
 ### Community 9 - "series.controller.ts"
 Cohesion: 0.08
 Nodes (29): CreateSeriesDto, IsNotEmpty, IsOptional, IsString, IsUUID, MinLength, ListSeriesQuery, IsInt (+21 more)
 
 ### Community 10 - "CreateExamDto"
-Cohesion: 0.06
-Nodes (33): CreateExamDto, IsBoolean, IsDateString, IsEnum, IsNotEmpty, IsNumber, IsOptional, IsString (+25 more)
+Cohesion: 0.07
+Nodes (31): CreateExamDto, IsBoolean, IsDateString, IsEnum, IsNotEmpty, IsNumber, IsOptional, IsString (+23 more)
 
 ### Community 11 - "CreatePeriodDto"
 Cohesion: 0.07
 Nodes (31): CreatePeriodDto, IsDateString, IsInt, IsNotEmpty, IsOptional, IsString, IsUUID, Min (+23 more)
 
-### Community 12 - "ListStudentsQuery"
-Cohesion: 0.07
-Nodes (29): CreateStudentDto, IsDateString, IsNotEmpty, IsOptional, IsString, IsUUID, MinLength, ListStudentsQuery (+21 more)
+### Community 12 - "StudentsService"
+Cohesion: 0.13
+Nodes (13): StudentsController, Body, Controller, Delete, Get, Param, Patch, Post (+5 more)
 
-### Community 13 - "user-establishments.service.ts"
+### Community 13 - "LookupAccountsQuery"
 Cohesion: 0.08
-Nodes (28): AddMemberDto, IsEmail, IsEnum, ListMembersQuery, IsEnum, IsInt, IsOptional, IsString (+20 more)
+Nodes (26): AddMemberDto, IsEmail, IsEnum, LookupAccountsQuery, IsBoolean, IsEnum, IsOptional, IsString (+18 more)
 
 ### Community 14 - "CreateClassroomDto"
 Cohesion: 0.07
@@ -200,21 +198,21 @@ Nodes (30): ClassroomsController, Body, Controller, Delete, Get, Param, Patch, P
 Cohesion: 0.07
 Nodes (30): CreateLevelDto, IsInt, IsNotEmpty, IsOptional, IsString, IsUUID, Min, MinLength (+22 more)
 
-### Community 16 - "CreateParentDto"
+### Community 16 - "parents.controller.ts"
 Cohesion: 0.07
-Nodes (28): CreateParentDto, IsEmail, IsNotEmpty, IsOptional, IsString, IsUUID, MinLength, ListParentsQuery (+20 more)
+Nodes (33): DOSSIER_LABEL, DossierModel, EXPECTED_ROLE, validateDossierUserLink(), CreateParentDto, IsEmail, IsNotEmpty, IsOptional (+25 more)
 
 ### Community 17 - "CreateTeacherDto"
 Cohesion: 0.07
-Nodes (28): CreateTeacherDto, IsEmail, IsNotEmpty, IsOptional, IsString, IsUUID, MinLength, ListTeachersQuery (+20 more)
+Nodes (29): CreateTeacherDto, IsEmail, IsIn, IsNotEmpty, IsOptional, IsString, IsUUID, MinLength (+21 more)
 
 ### Community 18 - "useAuthStore"
-Cohesion: 0.11
-Nodes (33): ChildSelector(), Badge(), Card(), CardTitle(), SeriesPage(), MyAbsencesPage(), MyChildrenPage(), Shortcut (+25 more)
+Cohesion: 0.08
+Nodes (40): ChildSelector(), Badge(), BadgeProps, badgeStyles, BadgeVariant, MyAbsencesPage(), MyChildrenPage(), DashboardPage() (+32 more)
 
 ### Community 19 - "sidebar-nav.ts"
-Cohesion: 0.07
-Nodes (26): CalendarIcon(), CheckCircleIcon(), ClockIcon(), ContactsIcon(), IconProps, DashboardIcon(), DoorIcon(), ExamIcon() (+18 more)
+Cohesion: 0.08
+Nodes (23): CalendarIcon(), CheckCircleIcon(), ClockIcon(), ContactsIcon(), IconProps, DashboardIcon(), DateIcon(), IconProps (+15 more)
 
 ### Community 20 - "CreateCycleDto"
 Cohesion: 0.07
@@ -222,7 +220,7 @@ Nodes (28): CyclesController, Body, Controller, Delete, Get, Param, Patch, Post 
 
 ### Community 21 - "icons/index.ts"
 Cohesion: 0.07
-Nodes (25): AddIcon(), IconProps, ArrowBackIcon(), IconProps, BellIcon(), IconProps, CheckSmallIcon(), IconProps (+17 more)
+Nodes (24): AddIcon(), IconProps, ArrowBackIcon(), IconProps, BellIcon(), IconProps, CheckSmallIcon(), IconProps (+16 more)
 
 ### Community 22 - "ListSubjectsQuery"
 Cohesion: 0.08
@@ -230,47 +228,47 @@ Nodes (26): CreateSubjectDto, IsNotEmpty, IsOptional, IsString, MinLength, ListS
 
 ### Community 23 - "CreateGradeDto"
 Cohesion: 0.09
-Nodes (25): BulkGradesDto, IsArray, IsUUID, Type, ValidateNested, CreateGradeDto, IsBoolean, IsNumber (+17 more)
+Nodes (26): BulkGradesDto, IsArray, IsUUID, Type, ValidateNested, CreateGradeDto, IsBoolean, IsNumber (+18 more)
 
-### Community 24 - "SettingsPage.tsx"
-Cohesion: 0.09
-Nodes (30): Button(), variantClasses, Input(), Select(), AuthField(), AuthRootError(), LoginForm, LoginPage() (+22 more)
+### Community 24 - "lib/api.ts"
+Cohesion: 0.07
+Nodes (38): ActiveYearSelector(), yearLabel(), schema, Series, SeriesPage(), AuthField(), AuthRootError(), LoginForm (+30 more)
 
 ### Community 25 - "paginate"
-Cohesion: 0.16
-Nodes (11): buildPagination(), containsInsensitive(), LIST_DEFAULT_LIMIT, LIST_MAX_LIMIT, paginate(), PaginatedResult, PaginationEnvelope, ParsedListQuery (+3 more)
+Cohesion: 0.17
+Nodes (10): buildPagination(), containsInsensitive(), LIST_DEFAULT_LIMIT, LIST_MAX_LIMIT, paginate(), PaginatedResult, PaginationEnvelope, ParsedListQuery (+2 more)
 
 ### Community 26 - "api/package.json"
-Cohesion: 0.07
-Nodes (27): author, description, prettier, @types/node, typescript, license, name, private (+19 more)
+Cohesion: 0.05
+Nodes (33): author, description, prettier, @types/node, typescript, license, name, private (+25 more)
 
 ### Community 27 - "ParentStudentsController"
 Cohesion: 0.11
 Nodes (16): LinkParentStudentDto, IsBoolean, IsEnum, IsOptional, IsUUID, ParentStudentsController, Body, Controller (+8 more)
 
-### Community 28 - "BulkAttendanceDto"
-Cohesion: 0.10
-Nodes (20): AttendancesController, Body, Controller, Get, Post, Query, Request, UseGuards (+12 more)
+### Community 28 - "CreateAttendanceDto"
+Cohesion: 0.15
+Nodes (14): AttendancesController, Body, Controller, Get, Post, Query, Request, UseGuards (+6 more)
 
 ### Community 29 - "CreateScheduleDto"
 Cohesion: 0.11
 Nodes (18): CreateScheduleDto, IsEnum, IsNotEmpty, IsOptional, IsString, IsUUID, SchedulesController, Body (+10 more)
 
 ### Community 30 - "web/package.json"
-Cohesion: 0.11
-Nodes (21): @types/node, typescript, name, private, type, version, axios, eslint (+13 more)
+Cohesion: 0.12
+Nodes (18): @types/node, typescript, name, private, type, version, axios, eslint (+10 more)
 
 ### Community 31 - "SidebarNavEntry.tsx"
 Cohesion: 0.15
-Nodes (19): CrudPageProps, DataColumn, DataSelection, HeaderSelect(), StatusPill(), StatusPillSpec, StatusPillVariant, VARIANT_CLASSES (+11 more)
+Nodes (18): FlyoutPanel(), Icon(), IconProps, SkoolsIconProps, SidebarNavChild, SidebarNavEntry, isRouteActive(), LeafLink() (+10 more)
 
-### Community 32 - "NotificationsService"
-Cohesion: 0.13
-Nodes (10): NotificationsController, Controller, Get, Param, Patch, Post, Request, UseGuards (+2 more)
+### Community 32 - "PrismaService"
+Cohesion: 0.09
+Nodes (13): NotificationsController, Controller, Get, Param, Patch, Post, Request, UseGuards (+5 more)
 
 ### Community 33 - "TeacherAssignmentsController"
-Cohesion: 0.12
-Nodes (13): CreateTeacherAssignmentDto, IsUUID, TeacherAssignmentsController, Body, Controller, Delete, Get, Param (+5 more)
+Cohesion: 0.10
+Nodes (17): BulkCreateTeacherAssignmentsDto, BulkTeacherAssignmentItemDto, IsArray, IsUUID, Type, ValidateNested, TeacherAssignmentsController, Body (+9 more)
 
 ### Community 34 - "devDependencies"
 Cohesion: 0.10
@@ -284,25 +282,25 @@ Nodes (19): compilerOptions, allowSyntheticDefaultImports, declaration, emitDeco
 Cohesion: 0.10
 Nodes (19): compilerOptions, allowArbitraryExtensions, allowImportingTsExtensions, erasableSyntaxOnly, jsx, lib, module, moduleDetection (+11 more)
 
-### Community 37 - "lib/api.ts"
-Cohesion: 0.17
-Nodes (13): ActiveYearSelector(), yearLabel(), API_BASE_URL, RetryableRequest, navigateTo(), AcademicYearState, useAcademicYearStore, AuthState (+5 more)
+### Community 37 - "CrudPage.tsx"
+Cohesion: 0.09
+Nodes (30): CrudColumn, CrudFieldDef, CrudFieldType, CrudFilterDef, CrudPageProps, FormDialog(), NO_FILTERS, exportToCsv() (+22 more)
 
 ### Community 38 - "Skools — Matrice d'accès par rôle (source de vérité)"
 Cohesion: 0.11
 Nodes (17): Contexte général, Règles de génération de la sidebar, Règles de génération du header, Règles de protection des routes, Règles transverses (valables pour tous les rôles), Récapitulatif des accès par module, Rôle ADMIN (secrétariat / administration), Rôle BIBLIOTECAIRE (+9 more)
 
-### Community 39 - "students.controller.ts"
-Cohesion: 0.22
-Nodes (6): DOSSIER_LABEL, DossierModel, EXPECTED_ROLE, validateDossierUserLink(), UpdateStudentDto, UpdateTeacherDto
+### Community 39 - "students.service.ts"
+Cohesion: 0.09
+Nodes (29): Gender, GENDERS, BulkCreateStudentsDto, BulkStudentRowDto, IsArray, IsOptional, IsString, IsUUID (+21 more)
 
-### Community 40 - "EstablishmentsController"
-Cohesion: 0.18
-Nodes (10): EstablishmentsController, Body, Controller, Delete, Get, Param, Patch, Post (+2 more)
+### Community 40 - "EstablishmentsService"
+Cohesion: 0.10
+Nodes (19): CreateEstablishmentDto, IsEnum, IsNotEmpty, IsOptional, IsString, MinLength, UpdateEstablishmentDto, EstablishmentsController (+11 more)
 
 ### Community 41 - "react"
 Cohesion: 0.15
-Nodes (9): FlyoutPanel(), DoubleCaretIcon(), IconProps, ProfilIcon(), SearchIcon(), SettingsNavIcon(), NavSearch(), Separator() (+1 more)
+Nodes (9): DoubleCaretIcon(), IconProps, IconProps, LinkIcon(), ProfilIcon(), SearchIcon(), SettingsNavIcon(), NavSearch() (+1 more)
 
 ### Community 42 - "compilerOptions"
 Cohesion: 0.12
@@ -316,33 +314,33 @@ Nodes (16): dependencies, bcrypt, class-transformer, class-validator, @nestjs/co
 Cohesion: 0.12
 Nodes (16): scripts, build, deploy, dev, format, lint, postinstall, seed (+8 more)
 
-### Community 45 - "AuthController"
-Cohesion: 0.21
-Nodes (8): AuthController, Body, Controller, Get, Post, Request, UseGuards, HttpCode
+### Community 45 - "auth.service.ts"
+Cohesion: 0.10
+Nodes (20): AuthController, Body, Controller, Get, Post, Request, UseGuards, AuthService (+12 more)
 
-### Community 46 - "EnrollmentsController"
-Cohesion: 0.19
-Nodes (11): EnrollmentsController, Body, Controller, Delete, Get, Param, Patch, Post (+3 more)
+### Community 46 - "ListEnrollmentsQuery"
+Cohesion: 0.06
+Nodes (33): BulkCreateEnrollmentsDto, IsArray, IsUUID, CreateEnrollmentDto, IsEnum, IsOptional, IsString, IsUUID (+25 more)
 
 ### Community 47 - "devDependencies"
 Cohesion: 0.12
 Nodes (16): devDependencies, eslint, @eslint/js, eslint-plugin-react-hooks, eslint-plugin-react-refresh, globals, tailwindcss, @tailwindcss/vite (+8 more)
 
 ### Community 48 - "main.tsx"
-Cohesion: 0.19
-Nodes (9): ThemeToggle(), queryClient, AppRoutes(), applyThemeClass(), initTheme(), SkoolsTheme, ThemeState, useThemeStore (+1 more)
-
-### Community 49 - "auth.service.ts"
 Cohesion: 0.21
-Nodes (10): LoginDto, IsEmail, IsString, MinLength, RegisterDto, IsEmail, IsNotEmpty, IsString (+2 more)
+Nodes (8): ThemeToggle(), queryClient, AppRoutes(), applyThemeClass(), initTheme(), SkoolsTheme, ThemeState, useThemeStore
 
-### Community 50 - "DisciplineController"
-Cohesion: 0.21
-Nodes (10): DisciplineController, Body, Controller, Delete, Get, Param, Patch, Query (+2 more)
+### Community 49 - "AttendancesPage.tsx"
+Cohesion: 0.16
+Nodes (17): StatusPillVariant, VARIANT_CLASSES, AttendancesPage(), ExistingAttendance, MyAssignment, todayLocal(), AttendanceHistoryItem, ATTENDANCE_PILL (+9 more)
 
-### Community 51 - "establishments.controller.ts"
-Cohesion: 0.24
-Nodes (9): CreateEstablishmentDto, IsEnum, IsNotEmpty, IsOptional, IsString, MinLength, UpdateEstablishmentDto, EstablishmentsModule (+1 more)
+### Community 50 - "ListDisciplineQuery"
+Cohesion: 0.06
+Nodes (35): DisciplineController, Body, Controller, Delete, Get, Param, Patch, Post (+27 more)
+
+### Community 51 - "Roles"
+Cohesion: 0.25
+Nodes (9): Roles(), ROLES_KEY, RolesGuard, Injectable, JwtAuthGuard, Injectable, ESTABLISHMENT_ROLES, CreateTeacherAssignmentDto (+1 more)
 
 ### Community 52 - "ReportCardsService"
 Cohesion: 0.21
@@ -353,12 +351,12 @@ Cohesion: 0.14
 Nodes (13): devDependencies, prettier, turbo, prettier, name, packageManager, private, scripts (+5 more)
 
 ### Community 54 - "ListHeader.tsx"
-Cohesion: 0.22
-Nodes (9): FilterDropdown(), FilterOption, BulkSelection, ListFilterDef, useDebouncedValue(), DownloadIcon(), IconProps, IconProps (+1 more)
+Cohesion: 0.23
+Nodes (9): FilterOption, BulkSelection, ListFilterDef, ListHeader(), useDebouncedValue(), DownloadIcon(), IconProps, IconProps (+1 more)
 
-### Community 55 - "HeaderSelect.tsx"
-Cohesion: 0.21
-Nodes (8): CheckIcon(), IconProps, ChevronDownwardIcon(), IconProps, Checkbox(), CheckboxProps, GradesTable(), GradesTableProps
+### Community 55 - "DataList.tsx"
+Cohesion: 0.16
+Nodes (14): DataColumn, DataSelection, FilterDropdown(), HeaderSelect(), CheckIcon(), IconProps, ChevronDownwardIcon(), IconProps (+6 more)
 
 ### Community 56 - "Skools — Reste à faire (post Phase 6)"
 Cohesion: 0.15
@@ -388,13 +386,13 @@ Nodes (10): Compile and run the project, Deployment, Description, License, Obser
 Cohesion: 0.29
 Nodes (5): AppController, Controller, Get, AppService, Injectable
 
-### Community 63 - "DisciplineService"
-Cohesion: 0.24
-Nodes (6): DisciplineService, Injectable, IsDateString, IsOptional, IsString, UpdateDisciplineDto
+### Community 63 - "CsvImportDialog.tsx"
+Cohesion: 0.16
+Nodes (15): buildHeaderIndex(), CsvImportDialog(), CsvImportDialogProps, ImportColumn, ImportPreviewRow, ImportResult, normalizeHeader(), detectDelimiter() (+7 more)
 
-### Community 64 - "CreateDisciplineDto"
+### Community 64 - "BulkAttendanceDto"
 Cohesion: 0.20
-Nodes (9): Post, CreateDisciplineDto, IsDateString, IsEnum, IsNotEmpty, IsOptional, IsString, IsUUID (+1 more)
+Nodes (10): AttendanceItemDto, BulkAttendanceDto, IsArray, IsDateString, IsEnum, IsOptional, IsString, IsUUID (+2 more)
 
 ### Community 65 - "Pagination.tsx"
 Cohesion: 0.27
@@ -404,17 +402,21 @@ Nodes (7): Pagination(), ChevronBackIcon(), IconProps, ChevronForwardIcon(), Ico
 Cohesion: 0.18
 Nodes (10): compilerOptions, declaration, esModuleInterop, module, outDir, rootDir, skipLibCheck, strict (+2 more)
 
-### Community 67 - "ListDisciplineQuery"
-Cohesion: 0.20
-Nodes (10): ListDisciplineQuery, IsEnum, IsInt, IsOptional, IsString, IsUUID, Max, MaxLength (+2 more)
+### Community 67 - "EnrollStudentsDialog.tsx"
+Cohesion: 0.27
+Nodes (8): IconProps, XIcon(), EnrollmentResult, EnrollStudentsDialog(), label(), Option, StudentRow, useDebouncedValue()
 
-### Community 68 - "ListEnrollmentsQuery"
-Cohesion: 0.20
-Nodes (10): ListEnrollmentsQuery, IsEnum, IsInt, IsOptional, IsString, IsUUID, Max, MaxLength (+2 more)
+### Community 68 - "ListMembersQuery"
+Cohesion: 0.22
+Nodes (9): ListMembersQuery, IsEnum, IsInt, IsOptional, IsString, Max, MaxLength, Min (+1 more)
 
 ### Community 69 - "dependencies"
 Cohesion: 0.20
 Nodes (10): dependencies, axios, @hookform/resolvers, react, react-dom, react-hook-form, react-router-dom, @tanstack/react-query (+2 more)
+
+### Community 70 - "ExamsService"
+Cohesion: 0.39
+Nodes (3): examInScope(), ExamsService, Injectable
 
 ### Community 71 - "main.ts"
 Cohesion: 0.25
@@ -424,9 +426,9 @@ Nodes (5): AppModule, Module, @nestjs/core, @nestjs/testing, supertest
 Cohesion: 0.29
 Nodes (6): env, node, rules, @typescript-eslint/no-explicit-any, @typescript-eslint/no-floating-promises, $schema
 
-### Community 74 - "CreateEnrollmentDto"
-Cohesion: 0.29
-Nodes (5): CreateEnrollmentDto, IsEnum, IsOptional, IsString, IsUUID
+### Community 75 - "vite.config.ts"
+Cohesion: 0.50
+Nodes (3): @tailwindcss/vite, vite, @vitejs/plugin-react
 
 ### Community 76 - "tsconfig.build.json"
 Cohesion: 0.29
@@ -436,9 +438,13 @@ Nodes (6): compilerOptions, rootDir, exclude, extends, include, ./tsconfig.json
 Cohesion: 0.33
 Nodes (5): collection, compilerOptions, deleteOutDir, $schema, sourceRoot
 
-### Community 82 - "use-local-storage.ts"
-Cohesion: 0.53
-Nodes (4): flagParse(), flagSerialize(), useLocalStorage(), useLocalStorageFlag()
+### Community 79 - "cycles.controller.ts"
+Cohesion: 0.15
+Nodes (5): UpdateClassroomDto, UpdateCycleDto, UpdateScheduleDto, UpdateTeacherDto, @nestjs/mapped-types
+
+### Community 82 - "Sidebar"
+Cohesion: 0.21
+Nodes (10): isNavParent(), pruneEntries(), Sidebar(), renderEntry(), SidebarNavEntry(), flagParse(), flagSerialize(), useLocalStorage() (+2 more)
 
 ### Community 83 - "scripts"
 Cohesion: 0.40
@@ -448,29 +454,29 @@ Nodes (5): scripts, build, dev, lint, preview
 Cohesion: 0.50
 Nodes (3): Expanding the ESLint configuration, React Compiler, React + TypeScript + Vite
 
-### Community 85 - "PrismaModule"
-Cohesion: 0.67
+### Community 85 - "prisma.module.ts"
+Cohesion: 0.50
 Nodes (3): PrismaModule, Module, Global
 
 ## Knowledge Gaps
-- **436 isolated node(s):** `$schema`, `collection`, `sourceRoot`, `deleteOutDir`, `$schema` (+431 more)
-  These have ≤1 connection - possible missing edges or undocumented components. (Counts symbols only; 891 node(s) total have ≤1 connection when file, concept and rationale nodes are included.)
-- **12 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
+- **450 isolated node(s):** `$schema`, `collection`, `sourceRoot`, `deleteOutDir`, `$schema` (+445 more)
+  These have ≤1 connection - possible missing edges or undocumented components. (Counts symbols only; 922 node(s) total have ≤1 connection when file, concept and rationale nodes are included.)
+- **8 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `Roles()` connect `Roles` to `academic-years.controller.ts`, `series.controller.ts`, `CreateExamDto`, `CreatePeriodDto`, `ListStudentsQuery`, `user-establishments.service.ts`, `CreateClassroomDto`, `CreateLevelDto`, `CreateParentDto`, `CreateTeacherDto`, `CreateCycleDto`, `ListSubjectsQuery`, `CreateGradeDto`, `paginate`, `ParentStudentsController`, `BulkAttendanceDto`, `CreateScheduleDto`, `NotificationsService`, `TeacherAssignmentsController`, `students.controller.ts`, `EstablishmentsController`, `EnrollmentsController`, `DisciplineController`, `establishments.controller.ts`, `ReportCardsService`, `classrooms.controller.ts`, `cycles.controller.ts`, `subjects.controller.ts`, `parents.controller.ts`?**
-  _High betweenness centrality (0.157) - this node is a cross-community bridge._
-- **Why does `@nestjs/common` connect `@nestjs/common` to `Roles`, `PrismaService`, `students.controller.ts`, `main.ts`, `academic-years.controller.ts`, `series.controller.ts`, `user-establishments.service.ts`, `classrooms.controller.ts`, `cycles.controller.ts`, `subjects.controller.ts`, `auth.service.ts`, `parents.controller.ts`, `establishments.controller.ts`, `paginate`, `api/package.json`, `AppService`?**
-  _High betweenness centrality (0.060) - this node is a cross-community bridge._
-- **Why does `react` connect `react` to `api-endpoints.ts`, `CrudPage.tsx`, `index.tsx`, `ui/index.ts`, `AttendancesPage.tsx`, `useAuthStore`, `sidebar-nav.ts`, `icons/index.ts`, `SettingsPage.tsx`, `web/package.json`, `SidebarNavEntry.tsx`, `lib/api.ts`, `main.tsx`, `ListHeader.tsx`, `HeaderSelect.tsx`, `Pagination.tsx`, `use-local-storage.ts`, `ArrowForwardIcon.tsx`, `DateIcon.tsx`, `InfoCircleIcon.tsx`?**
-  _High betweenness centrality (0.033) - this node is a cross-community bridge._
+- **Why does `Roles()` connect `Roles` to `@prisma/client`, `CreateAcademicYearDto`, `series.controller.ts`, `CreateExamDto`, `CreatePeriodDto`, `StudentsService`, `LookupAccountsQuery`, `CreateClassroomDto`, `CreateLevelDto`, `parents.controller.ts`, `CreateTeacherDto`, `CreateCycleDto`, `ListSubjectsQuery`, `CreateGradeDto`, `ParentStudentsController`, `CreateAttendanceDto`, `CreateScheduleDto`, `PrismaService`, `TeacherAssignmentsController`, `students.service.ts`, `EstablishmentsService`, `ListEnrollmentsQuery`, `ListDisciplineQuery`, `ReportCardsService`, `levels.controller.ts`, `periods.controller.ts`, `cycles.controller.ts`, `subjects.controller.ts`?**
+  _High betweenness centrality (0.143) - this node is a cross-community bridge._
+- **Why does `@nestjs/common` connect `@nestjs/common` to `PrismaService`, `@prisma/client`, `RequestActor`, `main.ts`, `levels.controller.ts`, `periods.controller.ts`, `series.controller.ts`, `EstablishmentsService`, `auth.service.ts`, `students.service.ts`, `cycles.controller.ts`, `parents.controller.ts`, `subjects.controller.ts`, `Roles`, `prisma.module.ts`, `paginate`, `api/package.json`, `AppService`?**
+  _High betweenness centrality (0.062) - this node is a cross-community bridge._
+- **Why does `@prisma/client` connect `@prisma/client` to `PrismaService`, `RequestActor`, `EstablishmentsService`, `levels.controller.ts`, `periods.controller.ts`, `series.controller.ts`, `students.service.ts`, `cycles.controller.ts`, `parents.controller.ts`, `subjects.controller.ts`, `Roles`, `paginate`, `api/package.json`, `seed.ts`?**
+  _High betweenness centrality (0.031) - this node is a cross-community bridge._
 - **What connects `$schema`, `collection`, `sourceRoot` to the rest of the system?**
-  _436 weakly-connected nodes found - possible documentation gaps or missing edges._
-- **Should `api-endpoints.ts` be split into smaller, more focused modules?**
-  _Cohesion score 0.06664964249233912 - nodes in this community are weakly interconnected._
-- **Should `CrudPage.tsx` be split into smaller, more focused modules?**
-  _Cohesion score 0.06327160493827161 - nodes in this community are weakly interconnected._
+  _450 weakly-connected nodes found - possible documentation gaps or missing edges._
+- **Should `StudentsPage.tsx` be split into smaller, more focused modules?**
+  _Cohesion score 0.06292749658002736 - nodes in this community are weakly interconnected._
+- **Should `StudentDetailPage.tsx` be split into smaller, more focused modules?**
+  _Cohesion score 0.09125188536953242 - nodes in this community are weakly interconnected._
 - **Should `index.tsx` be split into smaller, more focused modules?**
-  _Cohesion score 0.0518326545723806 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.06704260651629072 - nodes in this community are weakly interconnected._

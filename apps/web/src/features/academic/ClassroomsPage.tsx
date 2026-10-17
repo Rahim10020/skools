@@ -63,7 +63,7 @@ export default function ClassroomsPage() {
 
   const enrollButton = readOnly ? undefined : (
     <Button
-      variant="secondary"
+      variant="tag"
       fullWidth={false}
       title="Inscrire des élèves"
       onClick={() => setEnrollOpen(true)}
@@ -86,113 +86,114 @@ export default function ClassroomsPage() {
         pageSize={10}
         headerActions={enrollButton}
         rowTo={(classroom) => `${ROUTES.classrooms}/${classroom.id}`}
-      searchPlaceholder="Rechercher une classe…"
-      filters={[
-        {
-          key: "level",
-          label: "Niveau",
-          param: "levelId",
-          options: toOptions(levelsQuery.data),
-        },
-        {
-          key: "series",
-          label: "Série",
-          param: "seriesId",
-          options: toOptions(seriesQuery.data),
-        },
-        {
-          key: "year",
-          label: "Année",
-          param: "academicYearId",
-          options: toOptions(yearsQuery.data),
-        },
-      ]}
-      csvFilename="classes"
-      csvHeaders={[
-        "Classe",
-        "Année scolaire",
-        "Niveau",
-        "Série",
-        "Effectif max",
-      ]}
-      toCsvRow={(classroom) => [
-        classroom.name,
-        classroom.academicYear.name,
-        classroom.level.name,
-        classroom.series?.name ?? "",
-        classroom.capacity != null ? String(classroom.capacity) : "",
-      ]}
-      columns={[
-        {
-          header: "Classe",
-          primary: true,
-          render: (classroom) => classroom.name,
-        },
-        {
-          header: "Année scolaire",
-          render: (classroom) => classroom.academicYear.name,
-        },
-        { header: "Niveau", render: (classroom) => classroom.level.name },
-        {
-          header: "Série",
-          render: (classroom) => classroom.series?.name ?? "—",
-        },
-        {
-          header: "Effectif max",
-          render: (classroom) => classroom.capacity ?? "—",
-        },
-      ]}
-      fields={[
-        {
-          name: "academicYearId",
-          label: "Année scolaire",
-          type: "select",
-          required: true,
-          options: toOptions(yearsQuery.data),
-        },
-        {
-          name: "levelId",
-          label: "Niveau",
-          type: "select",
-          required: true,
-          options: toOptions(levelsQuery.data),
-        },
-        {
-          name: "seriesId",
-          label: "Série (optionnel)",
-          type: "select",
-          options: toOptions(seriesQuery.data),
-        },
-        {
-          name: "name",
-          label: "Nom",
-          type: "text",
-          placeholder: "Ex : 6ème A",
-          required: true,
-        },
-        {
-          name: "capacity",
-          label: "Effectif maximum",
-          type: "number",
-          placeholder: "Ex : 40",
-        },
-      ]}
-      schema={schema}
-      toDefaults={(classroom) => ({
-        academicYearId: classroom?.academicYearId ?? "",
-        levelId: classroom?.levelId ?? "",
-        seriesId: classroom?.seriesId ?? "",
-        name: classroom?.name ?? "",
-        capacity: classroom?.capacity != null ? String(classroom.capacity) : "",
-      })}
-      toSubmit={(values) => ({
-        academicYearId: values.academicYearId,
-        levelId: values.levelId,
-        seriesId: values.seriesId === "" ? undefined : values.seriesId,
-        name: values.name,
-        capacity: toOptionalNumber(values.capacity),
-      })}
-      nameOf={(classroom) => classroom.name}
+        searchPlaceholder="Rechercher une classe…"
+        filters={[
+          {
+            key: "level",
+            label: "Niveau",
+            param: "levelId",
+            options: toOptions(levelsQuery.data),
+          },
+          {
+            key: "series",
+            label: "Série",
+            param: "seriesId",
+            options: toOptions(seriesQuery.data),
+          },
+          {
+            key: "year",
+            label: "Année",
+            param: "academicYearId",
+            options: toOptions(yearsQuery.data),
+          },
+        ]}
+        csvFilename="classes"
+        csvHeaders={[
+          "Classe",
+          "Année scolaire",
+          "Niveau",
+          "Série",
+          "Effectif max",
+        ]}
+        toCsvRow={(classroom) => [
+          classroom.name,
+          classroom.academicYear.name,
+          classroom.level.name,
+          classroom.series?.name ?? "",
+          classroom.capacity != null ? String(classroom.capacity) : "",
+        ]}
+        columns={[
+          {
+            header: "Classe",
+            primary: true,
+            render: (classroom) => classroom.name,
+          },
+          {
+            header: "Année scolaire",
+            render: (classroom) => classroom.academicYear.name,
+          },
+          { header: "Niveau", render: (classroom) => classroom.level.name },
+          {
+            header: "Série",
+            render: (classroom) => classroom.series?.name ?? "—",
+          },
+          {
+            header: "Effectif max",
+            render: (classroom) => classroom.capacity ?? "—",
+          },
+        ]}
+        fields={[
+          {
+            name: "academicYearId",
+            label: "Année scolaire",
+            type: "select",
+            required: true,
+            options: toOptions(yearsQuery.data),
+          },
+          {
+            name: "levelId",
+            label: "Niveau",
+            type: "select",
+            required: true,
+            options: toOptions(levelsQuery.data),
+          },
+          {
+            name: "seriesId",
+            label: "Série (optionnel)",
+            type: "select",
+            options: toOptions(seriesQuery.data),
+          },
+          {
+            name: "name",
+            label: "Nom",
+            type: "text",
+            placeholder: "Ex : 6ème A",
+            required: true,
+          },
+          {
+            name: "capacity",
+            label: "Effectif maximum",
+            type: "number",
+            placeholder: "Ex : 40",
+          },
+        ]}
+        schema={schema}
+        toDefaults={(classroom) => ({
+          academicYearId: classroom?.academicYearId ?? "",
+          levelId: classroom?.levelId ?? "",
+          seriesId: classroom?.seriesId ?? "",
+          name: classroom?.name ?? "",
+          capacity:
+            classroom?.capacity != null ? String(classroom.capacity) : "",
+        })}
+        toSubmit={(values) => ({
+          academicYearId: values.academicYearId,
+          levelId: values.levelId,
+          seriesId: values.seriesId === "" ? undefined : values.seriesId,
+          name: values.name,
+          capacity: toOptionalNumber(values.capacity),
+        })}
+        nameOf={(classroom) => classroom.name}
       />
 
       <EnrollStudentsDialog
